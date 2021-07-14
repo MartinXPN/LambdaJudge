@@ -1,10 +1,11 @@
+import glob
+import zipfile
 import json
-from threading import Timer
 from pathlib import Path
 from subprocess import Popen, PIPE
+from threading import Timer
 
 import boto3
-
 
 ROOT = Path('/tmp/')
 
@@ -37,14 +38,18 @@ def lambda_handler(event, context):
     s3 = boto3.resource('s3')
     bucket = s3.Bucket('lambda-judge-bucket')
 
-    test_cases = []
-    for o in bucket.objects.filter(Prefix=f'problems/{problem}/', Delimiter='/'):
-        save_path = ROOT / Path(o.key)
-        print(f'Saving `{o.key}` \tto\t `{save_path}`', end='...', flush=True)
-        save_path.parent.mkdir(parents=True, exist_ok=True)
-        bucket.download_file(o.key, str(save_path))
-        test_cases.append(save_path)
-        print('Done!')
+    save_path = ROOT / f'{problem}.zip'
+    problem_path = ROOT / f'{problem}/'
+    problem_path.mkdir(parents=True, exist_ok=True)
+
+    print(f'Saving `{problem}.zip` \tto\t `{save_path}`', end='...', flush=True)
+    bucket.download_file(f'{problem}.zip', str(save_path))
+    print('Done!')
+
+    print(f'Extracting `{save_path}` to `{problem_path}`', end='...', flush=True)
+    with zipfile.ZipFile(save_path, 'r') as zip_ref:
+        zip_ref.extractall(problem_path)
+    print('Done!')
 
     submission_path = ROOT / submission
     print(f'Saving `submissions/{submission}` \tto\t `{submission_path}`', end='...', flush=True)
@@ -61,9 +66,10 @@ def lambda_handler(event, context):
         # Compile error
         if errs:
             return {
-                "statusCode": 200,
-                "body": json.dumps({
-                    "solutionStatus": "FAIL",
+                'statusCode': 200,
+                'body': json.dumps({
+                    'status': 'OK',
+                    'solutionStatus': 'FAIL',
                 }),
             }
 
@@ -73,18 +79,22 @@ def lambda_handler(event, context):
         raise ValueError(f'{submission_path.suffix} submissions are not supported yet')
 
     is_correct = True
-    for test_case in test_cases:
-        if '.out' in str(test_case):
+    for test_case in glob.glob(str(problem_path)):
+        print('Test case path:', test_case)
+        if '.a' in str(test_case):
             continue
 
         input_file = str(test_case)
-        output_file = input_file.replace('.in', '.out')
+        output_file = input_file + '.a'
         print('Input file:', input_file)
         print('Output file:', output_file)
 
-        outs, errs = run_shell(f'cat {input_file} | {executable_path}', timeout=5)
-        output = outs.strip()
+        outs, errs = run_shell(f'ulimit -Sv 128000 && cat {input_file} | {executable_path}', timeout=5)
+        if errs:
+            is_correct = False
+            break
 
+        output = outs.strip()
         with open(output_file, 'r') as f:
             target = f.read().strip()
 
@@ -95,9 +105,9 @@ def lambda_handler(event, context):
             break
 
     return {
-        "statusCode": 200,
-        "body": json.dumps({
-            "message": "hello world",
-            "solutionStatus": "OK" if is_correct else "FAIL",
+        'statusCode': 200,
+        'body': json.dumps({
+            'status': 'OK',
+            'solutionStatus': 'OK' if is_correct else 'FAIL',
         }),
     }
