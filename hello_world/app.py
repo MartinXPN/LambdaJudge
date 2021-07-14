@@ -1,8 +1,8 @@
 import glob
+import subprocess
 import zipfile
 import json
 from pathlib import Path
-from subprocess import Popen, PIPE
 from threading import Timer
 
 import boto3
@@ -11,16 +11,17 @@ ROOT = Path('/tmp/')
 
 
 def run_shell(command: str, timeout: float):
-    p = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
-    timer = Timer(timeout, p.kill)
+    proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    timer = Timer(timeout, proc.kill)
     try:
         timer.start()
-        outs, errs = p.communicate()
-        if outs:
-            outs = outs.decode('utf-8')
-        if errs:
-            errs = errs.decode('utf-8')
+        outs, errs = proc.communicate(timeout=timeout)
+        if outs: outs = outs.decode('utf-8')
+        if errs: errs = errs.decode('utf-8')
+    except subprocess.TimeoutExpired:
+        outs, errs = None, 'Time limit exceeded'
     finally:
+        proc.kill()
         timer.cancel()
 
     if outs is None and errs is None:
