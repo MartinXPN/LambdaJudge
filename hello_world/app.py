@@ -1,6 +1,4 @@
 import glob
-import pathlib
-import shutil
 import subprocess
 import zipfile
 import json
@@ -33,8 +31,7 @@ def run_shell(command: str, timeout: float, memory_limit_mb: int = 512):
         proc.kill()
         timer.cancel()
 
-    if outs is None and errs is None:
-        errs = 'Time limit exceeded'
+    assert outs is not None or errs is not None
     return outs, errs
 
 
@@ -52,9 +49,7 @@ def lambda_handler(event, context):
     extract_path = ROOT
 
     # Avoid having no space left on device issues
-    for content in glob.glob(str(ROOT) + '/*/'):
-        shutil.rmtree(content, ignore_errors=True)
-        pathlib.Path(content).unlink(missing_ok=True)
+    run_shell('rm -rf /tmp/*', timeout=5)
 
     print(f'Saving `{problem}.zip` \tto\t `{save_path}`', end='...', flush=True)
     bucket.download_file(f'{problem}.zip', str(save_path))
@@ -95,14 +90,12 @@ def lambda_handler(event, context):
 
     is_correct = True
     for test_case in glob.glob(f'{extract_path}/{problem}/*'):
-        print('Test case path:', test_case)
         if '.a' in str(test_case):
             continue
 
         input_file = str(test_case)
         output_file = input_file + '.a'
-        print('Input file:', input_file)
-        print('Output file:', output_file)
+        print('Test files:', input_file, output_file)
 
         outs, errs = run_shell(f'cat {input_file} | {executable_path}', timeout=5, memory_limit_mb=512)
         if errs:
@@ -114,9 +107,10 @@ def lambda_handler(event, context):
         with open(output_file, 'r') as f:
             target = f.read().strip()
 
-        print('Output:', output)
-        print('Target:', target)
         if target != output:
+            print('Wrong answer!')
+            print('Output:', output)
+            print('Target:', target)
             is_correct = False
             break
 
