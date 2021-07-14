@@ -1,10 +1,30 @@
 import json
-import boto3
+from threading import Timer
 from pathlib import Path
-import subprocess
+from subprocess import Popen, PIPE
+
+import boto3
 
 
 ROOT = Path('/tmp/')
+
+
+def run_shell(command: str, timeout: float):
+    p = Popen(command, shell=True, stdout=PIPE, stderr=PIPE)
+    timer = Timer(timeout, p.kill)
+    try:
+        timer.start()
+        outs, errs = p.communicate()
+        if outs:
+            outs = outs.decode('utf-8')
+        if errs:
+            errs = errs.decode('utf-8')
+    finally:
+        timer.cancel()
+
+    if outs is None and errs is None:
+        errs = 'Time limit exceeded'
+    return outs, errs
 
 
 def lambda_handler(event, context):
@@ -34,13 +54,19 @@ def lambda_handler(event, context):
     if '.cpp' == submission_path.suffix:
         executable_path = (ROOT / submission_path.stem).with_suffix('.o')
         print('Creating executable at:', executable_path)
-        p = subprocess.Popen(f'g++ -std=c++11 {submission_path} -o {executable_path}',
-                             shell=True,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        outs, errs = p.communicate()
-        print('Out:', outs.decode("utf-8"))
-        print('Err:', errs)
+        outs, errs = run_shell(f'g++ -std=c++11 {submission_path} -o {executable_path}', timeout=30)
+        print('Compile out:', outs)
+        print('Compile err:', errs)
+
+        # Compile error
+        if errs:
+            return {
+                "statusCode": 200,
+                "body": json.dumps({
+                    "solutionStatus": "FAIL",
+                }),
+            }
+
     elif '.py' == submission_path.suffix:
         executable_path = f'python {submission_path}'
     else:
@@ -56,12 +82,8 @@ def lambda_handler(event, context):
         print('Input file:', input_file)
         print('Output file:', output_file)
 
-        p = subprocess.Popen(f'cat {input_file} | {executable_path}',
-                             shell=True,
-                             stdout=subprocess.PIPE,
-                             stderr=subprocess.STDOUT)
-        outs, errs = p.communicate(timeout=5)
-        output = outs.decode('utf-8').strip()
+        outs, errs = run_shell(f'cat {input_file} | {executable_path}', timeout=5)
+        output = outs.strip()
 
         with open(output_file, 'r') as f:
             target = f.read().strip()
