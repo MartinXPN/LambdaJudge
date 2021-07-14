@@ -42,14 +42,17 @@ def lambda_handler(event, context):
     save_path = ROOT / f'{problem}.zip'
     extract_path = ROOT
 
-    print(f'Saving `{problem}.zip` \tto\t `{save_path}`', end='...', flush=True)
-    bucket.download_file(f'{problem}.zip', str(save_path))
-    print('Done!')
+    if save_path.exists():
+        print(f'Saving `{problem}.zip` \tto\t `{save_path}`', end='...', flush=True)
+        bucket.download_file(f'{problem}.zip', str(save_path))
+        print('Done!')
 
-    print(f'Extracting `{save_path}` to `{extract_path}`', end='...', flush=True)
-    with zipfile.ZipFile(save_path, 'r') as zip_ref:
-        zip_ref.extractall(extract_path)
-    print('Done!')
+        print(f'Extracting `{save_path}` to `{extract_path}`', end='...', flush=True)
+        with zipfile.ZipFile(save_path, 'r') as zip_ref:
+            zip_ref.extractall(extract_path)
+        print('Done!')
+    else:
+        print('File already exists!')
 
     submission_path = ROOT / submission
     print(f'Saving `submissions/{submission}` \tto\t `{submission_path}`', end='...', flush=True)
