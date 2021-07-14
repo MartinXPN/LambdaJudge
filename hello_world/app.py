@@ -39,16 +39,15 @@ def lambda_handler(event, context):
     bucket = s3.Bucket('lambda-judge-bucket')
 
     save_path = ROOT / f'{problem}.zip'
-    problem_path = ROOT / f'{problem}/'
-    problem_path.mkdir(parents=True, exist_ok=True)
+    extract_path = ROOT
 
     print(f'Saving `{problem}.zip` \tto\t `{save_path}`', end='...', flush=True)
     bucket.download_file(f'{problem}.zip', str(save_path))
     print('Done!')
 
-    print(f'Extracting `{save_path}` to `{problem_path}`', end='...', flush=True)
+    print(f'Extracting `{save_path}` to `{extract_path}`', end='...', flush=True)
     with zipfile.ZipFile(save_path, 'r') as zip_ref:
-        zip_ref.extractall(problem_path)
+        zip_ref.extractall(extract_path)
     print('Done!')
 
     submission_path = ROOT / submission
@@ -75,11 +74,12 @@ def lambda_handler(event, context):
 
     elif '.py' == submission_path.suffix:
         executable_path = f'python {submission_path}'
+        print(f'Evaluating python submission with: `{executable_path}`')
     else:
         raise ValueError(f'{submission_path.suffix} submissions are not supported yet')
 
     is_correct = True
-    for test_case in glob.glob(str(problem_path)):
+    for test_case in glob.glob(f'{extract_path}/{problem}/*'):
         print('Test case path:', test_case)
         if '.a' in str(test_case):
             continue
