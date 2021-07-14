@@ -6,12 +6,17 @@ from pathlib import Path
 from threading import Timer
 
 import boto3
+import resource
 
 ROOT = Path('/tmp/')
 
 
-def run_shell(command: str, timeout: float):
-    proc = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+def run_shell(command: str, timeout: float, memory_limit_mb: int = 512):
+    memory_bits = memory_limit_mb * 1024 * 1024
+    proc = subprocess.Popen(
+        command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_AS, (memory_bits, memory_bits))
+    )
     timer = Timer(timeout, proc.kill)
     try:
         timer.start()
@@ -93,7 +98,7 @@ def lambda_handler(event, context):
         print('Input file:', input_file)
         print('Output file:', output_file)
 
-        outs, errs = run_shell(f'ulimit -Sv 128000 && cat {input_file} | {executable_path}', timeout=5)
+        outs, errs = run_shell(f'cat {input_file} | {executable_path}', timeout=5, memory_limit_mb=128)
         if errs:
             is_correct = False
             break
