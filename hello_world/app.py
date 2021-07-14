@@ -1,4 +1,6 @@
 import glob
+import pathlib
+import shutil
 import subprocess
 import zipfile
 import json
@@ -12,10 +14,10 @@ ROOT = Path('/tmp/')
 
 
 def run_shell(command: str, timeout: float, memory_limit_mb: int = 512):
-    memory_bits = memory_limit_mb * 1024 * 1024
+    memory_bytes = memory_limit_mb * 1024 * 1024
     proc = subprocess.Popen(
         command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-        preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_AS, (memory_bits, memory_bits))
+        preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_AS, (memory_bytes, memory_bytes))
     )
     timer = Timer(timeout, proc.kill)
     try:
@@ -25,6 +27,8 @@ def run_shell(command: str, timeout: float, memory_limit_mb: int = 512):
         if errs: errs = errs.decode('utf-8')
     except subprocess.TimeoutExpired:
         outs, errs = None, 'Time limit exceeded'
+    except MemoryError:
+        outs, errs = None, 'Memory limit exceeded'
     finally:
         proc.kill()
         timer.cancel()
@@ -47,17 +51,19 @@ def lambda_handler(event, context):
     save_path = ROOT / f'{problem}.zip'
     extract_path = ROOT
 
-    if save_path.exists():
-        print(f'Saving `{problem}.zip` \tto\t `{save_path}`', end='...', flush=True)
-        bucket.download_file(f'{problem}.zip', str(save_path))
-        print('Done!')
+    # Avoid having no space left on device issues
+    for content in glob.glob(str(ROOT) + '/*/'):
+        shutil.rmtree(content, ignore_errors=True)
+        pathlib.Path(content).unlink(missing_ok=True)
 
-        print(f'Extracting `{save_path}` to `{extract_path}`', end='...', flush=True)
-        with zipfile.ZipFile(save_path, 'r') as zip_ref:
-            zip_ref.extractall(extract_path)
-        print('Done!')
-    else:
-        print('File already exists!')
+    print(f'Saving `{problem}.zip` \tto\t `{save_path}`', end='...', flush=True)
+    bucket.download_file(f'{problem}.zip', str(save_path))
+    print('Done!')
+
+    print(f'Extracting `{save_path}` to `{extract_path}`', end='...', flush=True)
+    with zipfile.ZipFile(save_path, 'r') as zip_ref:
+        zip_ref.extractall(extract_path)
+    print('Done!')
 
     submission_path = ROOT / submission
     print(f'Saving `submissions/{submission}` \tto\t `{submission_path}`', end='...', flush=True)
@@ -98,8 +104,9 @@ def lambda_handler(event, context):
         print('Input file:', input_file)
         print('Output file:', output_file)
 
-        outs, errs = run_shell(f'cat {input_file} | {executable_path}', timeout=2, memory_limit_mb=128)
+        outs, errs = run_shell(f'cat {input_file} | {executable_path}', timeout=5, memory_limit_mb=512)
         if errs:
+            print('Errs:', errs)
             is_correct = False
             break
 
