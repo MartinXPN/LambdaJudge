@@ -98,7 +98,7 @@ def lambda_handler(event, context):
         print('Input file:', input_file)
         print('Output file:', output_file)
 
-        outs, errs = run_shell(f'cat {input_file} | {executable_path}', timeout=5, memory_limit_mb=128)
+        outs, errs = run_shell(f'cat {input_file} | {executable_path}', timeout=2, memory_limit_mb=128)
         if errs:
             is_correct = False
             break
