@@ -108,7 +108,7 @@ def lambda_handler(event, context):
         print('Test files:', input_file, output_file)
 
         outs, errs = run_shell(f'cat {input_file} | {executable_path}', timeout=5, memory_limit_mb=512)
-        if errs:
+        if not outs and errs:
             print('Errs:', errs)
             is_correct = False
             break
