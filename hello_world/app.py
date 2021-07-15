@@ -1,7 +1,7 @@
 import glob
+import json
 import subprocess
 import zipfile
-import json
 from pathlib import Path
 from threading import Timer
 
@@ -23,6 +23,8 @@ def run_shell(command: str, timeout: float, memory_limit_mb: int = 512):
         outs, errs = proc.communicate(timeout=timeout)
         if outs: outs = outs.decode('utf-8')
         if errs: errs = errs.decode('utf-8')
+        if proc.returncode != 0:
+            errs = 'Runtime error - did not exit with exit code 0'
     except subprocess.TimeoutExpired:
         outs, errs = None, 'Time limit exceeded'
     except MemoryError:
@@ -33,6 +35,14 @@ def run_shell(command: str, timeout: float, memory_limit_mb: int = 512):
 
     assert outs is not None or errs is not None
     return outs, errs
+
+
+def is_float(value: str):
+    try:
+        float(value)
+        return True
+    except ValueError:
+        return False
 
 
 def lambda_handler(event, context):
@@ -107,6 +117,8 @@ def lambda_handler(event, context):
         with open(output_file, 'r') as f:
             target = f.read().strip()
 
+        if is_float(target) and is_float(output):
+            target, output = f'{float(target):.3f}', f'{float(output):.3f}'
         if target != output:
             print('Wrong answer!')
             print('Output:', output)
