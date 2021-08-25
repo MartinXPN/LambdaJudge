@@ -5,7 +5,7 @@ from services import check_equality
 def equality_checker_lambda(event, context):
     print('Event:', event)
     print('Context:', context)
-    request = SubmissionRequest.from_dict(event)
+    request = SubmissionRequest.from_json(event['body'])
     print('ALl the params:', request)
 
     assert request.problem.endswith('.zip')
