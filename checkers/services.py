@@ -5,7 +5,7 @@ from typing import List
 
 import boto3
 
-from models import Status, SubmissionRequest, SubmissionResult
+from models import Status, SubmissionResult
 from process import Process
 
 
@@ -39,28 +39,29 @@ def download_s3_file(bucket, bucket_path: str, save_path: Path) -> Path:
     return save_path
 
 
-def check_equality(request: SubmissionRequest) -> SubmissionResult:
+def check_equality(problem: str, submission: str, language: str, memory_limit: int, time_limit: int,
+                   return_outputs: bool, return_compile_outputs: bool, stop_on_first_fail: bool) -> SubmissionResult:
     ROOT = Path('/tmp/')
     s3 = boto3.resource('s3')
     bucket = s3.Bucket('lambda-judge-bucket')
 
-    save_path = ROOT / f'{request.problem}'
+    save_path = ROOT / f'{problem}'
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
 
     extract_path = extract_s3_zip(bucket,
-                                  bucket_path=f'problems/{request.problem}',
+                                  bucket_path=f'problems/{problem}',
                                   save_path=save_path,
                                   cached=True)
 
     submission_path = download_s3_file(bucket,
-                                       bucket_path=f'submissions/{request.submission}',
-                                       save_path=ROOT / request.submission)
+                                       bucket_path=f'submissions/{submission}',
+                                       save_path=ROOT / submission)
 
     compile_res = None
-    if 'c++' in request.language:
+    if 'c++' in language:
         executable_path = submission_path.with_suffix('.o')
         print('Creating executable at:', executable_path)
-        compile_res = Process(f'g++ -std={request.language} {submission_path} -o {executable_path}',
+        compile_res = Process(f'g++ -std={language} {submission_path} -o {executable_path}',
                               timeout=30,
                               memory_limit_mb=512).run()
         print('Compile res', compile_res)
@@ -71,11 +72,11 @@ def check_equality(request: SubmissionRequest) -> SubmissionResult:
                                     memory=compile_res.max_rss, time=compile_res.total_time, score=0,
                                     compile_outputs=compile_res.outputs + compile_res.errors)
 
-    elif 'python' in request.language:
+    elif 'python' in language:
         executable_path = f'python {submission_path}'
         print(f'Evaluating python submission with: `{executable_path}`')
     else:
-        raise ValueError(f'{request.language} submissions are not supported yet')
+        raise ValueError(f'{language} submissions are not supported yet')
 
     test_results: List[SubmissionResult] = []
     for test_case in glob.glob(f'{extract_path}/*'):
@@ -87,8 +88,8 @@ def check_equality(request: SubmissionRequest) -> SubmissionResult:
         print('Test files:', input_file, output_file)
 
         test_res = Process(f'cat {input_file} | {executable_path}',
-                           timeout=request.time_limit,
-                           memory_limit_mb=request.memory_limit).run()
+                           timeout=time_limit,
+                           memory_limit_mb=memory_limit).run()
         if test_res.return_code != 0 or (not test_res.outputs and test_res.errors):
             print('Errs:', test_res.errors)
             print('Return code:', test_res.return_code)
@@ -97,10 +98,10 @@ def check_equality(request: SubmissionRequest) -> SubmissionResult:
                 memory=test_res.max_rss,
                 time=test_res.total_time,
                 score=0,
-                outputs=test_res.outputs if request.return_outputs else None,
+                outputs=test_res.outputs if return_outputs else None,
                 compile_outputs=None
             ))
-            if request.stop_on_first_fail:
+            if stop_on_first_fail:
                 break
             else:
                 continue
@@ -117,7 +118,7 @@ def check_equality(request: SubmissionRequest) -> SubmissionResult:
             memory=test_res.max_rss,
             time=test_res.total_time,
             score=0 if target != output else 100,
-            outputs=test_res.outputs if request.return_outputs else None,
+            outputs=test_res.outputs if return_outputs else None,
             compile_outputs=None
         ))
 
@@ -132,5 +133,5 @@ def check_equality(request: SubmissionRequest) -> SubmissionResult:
         memory=max_memory,
         time=max_time,
         score=100 * nb_success / nb_test_cases,
-        outputs='\n-------------\n'.join([x.outputs for x in test_results]) if request.return_outputs else None,
-        compile_outputs=compile_res.outputs if compile_res and request.return_compile_outputs else None)
+        outputs='\n-------------\n'.join([x.outputs for x in test_results]) if return_outputs else None,
+        compile_outputs=compile_res.outputs if compile_res and return_compile_outputs else None)
