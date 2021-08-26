@@ -17,7 +17,7 @@ class Status:
 @dataclass
 class SubmissionRequest:
     problem: str
-    submission: str
+    submission_download_url: str
     language: str
     memory_limit: int = 512
     time_limit: int = 5

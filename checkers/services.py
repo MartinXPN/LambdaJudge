@@ -1,8 +1,11 @@
 import glob
 import zipfile
+from os.path import splitext, basename
 from pathlib import Path
 from typing import List
+from urllib.parse import urlparse
 
+import requests
 import boto3
 
 from models import Status, SubmissionResult
@@ -32,14 +35,19 @@ def extract_s3_zip(bucket, bucket_path: str, save_path: Path, cached: bool = Tru
     return folder_path
 
 
-def download_s3_file(bucket, bucket_path: str, save_path: Path) -> Path:
-    print(f'Saving `submissions/{bucket_path}` \tto\t `{save_path}`', end='...', flush=True)
-    bucket.download_file(f'{bucket_path}', str(save_path))
-    print('Done!')
+def download_file(url: str, save_dir: Path) -> Path:
+    print('Downloading file from:', url)
+    r = requests.get(url, allow_redirects=True)
+    filename, file_ext = splitext(basename(urlparse(url).path))
+    save_path = save_dir / (filename + file_ext)
+    print('save path:', save_path)
+
+    with open(save_path, 'wb') as f:
+        f.write(r.content)
     return save_path
 
 
-def check_equality(problem: str, submission: str, language: str, memory_limit: int, time_limit: int,
+def check_equality(problem: str, submission_download_url: str, language: str, memory_limit: int, time_limit: int,
                    return_outputs: bool, return_compile_outputs: bool, stop_on_first_fail: bool) -> SubmissionResult:
     ROOT = Path('/tmp/')
     s3 = boto3.resource('s3')
@@ -48,14 +56,8 @@ def check_equality(problem: str, submission: str, language: str, memory_limit: i
     save_path = ROOT / f'{problem}'
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
 
-    extract_path = extract_s3_zip(bucket,
-                                  bucket_path=f'problems/{problem}',
-                                  save_path=save_path,
-                                  cached=True)
-
-    submission_path = download_s3_file(bucket,
-                                       bucket_path=f'submissions/{submission}',
-                                       save_path=ROOT / submission)
+    submission_path = download_file(submission_download_url, save_dir=ROOT)
+    extract_path = extract_s3_zip(bucket, bucket_path=f'problems/{problem}', save_path=save_path, cached=True)
 
     compile_res = None
     if 'c++' in language:
