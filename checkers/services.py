@@ -79,7 +79,7 @@ def check_equality(problem: str, submission: str, language: str, memory_limit: i
         raise ValueError(f'{language} submissions are not supported yet')
 
     test_results: List[SubmissionResult] = []
-    for test_case in glob.glob(f'{extract_path}/*'):
+    for test_case in sorted(glob.glob(f'{extract_path}/*')):
         if '.a' in str(test_case):
             continue
 
@@ -94,7 +94,9 @@ def check_equality(problem: str, submission: str, language: str, memory_limit: i
             print('Errs:', test_res.errors)
             print('Return code:', test_res.return_code)
             test_results.append(SubmissionResult(
-                status=Status.RUNTIME_ERROR if test_res.errors not in {Status.MLE, Status.TLE} else test_res.errors,
+                status=Status.MLE if test_res.max_rss > memory_limit or test_res.errors == Status.MLE
+                else Status.TLE if 1.1 * test_res.total_time > time_limit or test_res.errors == Status.TLE
+                else Status.RUNTIME_ERROR,
                 memory=test_res.max_rss,
                 time=test_res.total_time,
                 score=0,
