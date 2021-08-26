@@ -53,11 +53,11 @@ def check_equality(problem: str, submission_download_url: str, language: str, me
     s3 = boto3.resource('s3')
     bucket = s3.Bucket('lambda-judge-bucket')
 
-    save_path = ROOT / f'{problem}'
+    save_path = ROOT / f'{problem}.zip'
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
 
     submission_path = download_file(submission_download_url, save_dir=ROOT)
-    extract_path = extract_s3_zip(bucket, bucket_path=f'problems/{problem}', save_path=save_path, cached=True)
+    extract_path = extract_s3_zip(bucket, bucket_path=f'problems/{problem}.zip', save_path=save_path, cached=True)
 
     compile_res = None
     if 'c++' in language:
