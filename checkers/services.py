@@ -29,10 +29,9 @@ def extract_s3_zip(bucket, bucket_path: str, save_path: Path, cached: bool = Tru
     print(f'Extracting `{save_path}` to `{extract_path}`', end='...', flush=True)
     with zipfile.ZipFile(save_path, 'r') as zip_ref:
         zip_ref.extractall(extract_path)
-        folder_path = extract_path / zip_ref.namelist()[0]  # ['A/', 'A/018.a', 'A/012.a', ... ]
     print('Done!')
 
-    return folder_path
+    return extract_path
 
 
 def download_file(url: str, save_dir: Path) -> Path:
@@ -71,7 +70,7 @@ def check_equality(problem: str, submission_download_url: str, language: str, me
         # Compile error
         if compile_res.errors:
             return SubmissionResult(status=Status.COMPILATION_ERROR,
-                                    memory=compile_res.max_rss, time=compile_res.total_time, score=0,
+                                    memory=compile_res.max_rss, time=0, score=0,
                                     compile_outputs=compile_res.outputs + compile_res.errors)
 
     elif 'python' in language:
@@ -81,12 +80,8 @@ def check_equality(problem: str, submission_download_url: str, language: str, me
         raise ValueError(f'{language} submissions are not supported yet')
 
     test_results: List[SubmissionResult] = []
-    for test_case in sorted(glob.glob(f'{extract_path}/*')):
-        if '.a' in str(test_case):
-            continue
-
-        input_file = str(test_case)
-        output_file = input_file + '.a'
+    for input_file in sorted(glob.glob(f'{extract_path}/*.i.txt')):
+        output_file = input_file.replace('.i.txt', '.o.txt')
         print('Test files:', input_file, output_file)
 
         test_res = Process(f'cat {input_file} | {executable_path}',
@@ -127,7 +122,7 @@ def check_equality(problem: str, submission_download_url: str, language: str, me
         ))
 
     # Aggregate all the results across test cases
-    nb_test_cases = len(list(glob.glob(f'{extract_path}/*.a')))
+    nb_test_cases = len(list(glob.glob(f'{extract_path}/*.i.txt')))
     failed_test = next((i for i, x in enumerate(test_results) if x.status != Status.OK), None)
     nb_success = sum(x.status == Status.OK for x in test_results)
     max_memory = max(x.memory for x in test_results)
