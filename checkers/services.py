@@ -3,7 +3,7 @@ import zipfile
 from os.path import splitext, basename
 from pathlib import Path
 from typing import List
-from urllib.parse import urlparse
+from urllib.parse import urlparse, unquote
 
 import requests
 import boto3
@@ -37,7 +37,7 @@ def extract_s3_zip(bucket, bucket_path: str, save_path: Path, cached: bool = Tru
 def download_file(url: str, save_dir: Path) -> Path:
     print('Downloading file from:', url)
     r = requests.get(url, allow_redirects=True)
-    filename, file_ext = splitext(basename(urlparse(url).path))
+    filename, file_ext = splitext(basename(urlparse(unquote(url)).path))
     save_path = save_dir / (filename + file_ext)
     print('save path:', save_path)
 
