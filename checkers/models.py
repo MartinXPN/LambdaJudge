@@ -24,6 +24,9 @@ class SubmissionRequest:
     return_outputs: bool = False
     return_compile_outputs: bool = True
     stop_on_first_fail: bool = True
+    comparison_mode: str = 'whole'    # whole / token
+    float_precision: float = 1e-5     # Floating point precision
+    delimiter: Optional[str] = None
 
     def __post_init__(self):
         self.language = self.language.lower()
@@ -38,3 +41,13 @@ class SubmissionResult:
     score: float
     outputs: Optional[str] = None
     compile_outputs: Optional[str] = None
+
+
+@dataclass
+class Stats:
+    max_rss: float
+    max_vms: float
+    total_time: float
+    return_code: int
+    outputs: str
+    errors: str

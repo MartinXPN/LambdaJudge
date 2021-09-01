@@ -6,17 +6,7 @@ from typing import Union, Iterable
 
 import psutil
 
-from models import Status
-
-
-@dataclass
-class Stats:
-    max_rss: float
-    max_vms: float
-    total_time: float
-    return_code: int
-    outputs: str
-    errors: str
+from models import Status, Stats
 
 
 @dataclass

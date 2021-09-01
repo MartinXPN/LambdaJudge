@@ -1,83 +1,51 @@
 import glob
-import zipfile
-from os.path import splitext, basename
 from pathlib import Path
-from typing import List
-from urllib.parse import urlparse, unquote
+from typing import List, Optional
 
-import requests
 import boto3
 
+from checkers import WholeEquality, TokenEquality
+from compilers import CppCompiler, PythonCompiler
 from models import Status, SubmissionResult
 from process import Process
-
-
-def is_float(value: str):
-    try:
-        float(value)
-        return True
-    except ValueError:
-        return False
-
-
-def extract_s3_zip(bucket, bucket_path: str, save_path: Path, cached: bool = True) -> Path:
-    print(f'Saving `{bucket_path}` \tto\t `{save_path}`', end='...', flush=True)
-    bucket.download_file(f'{bucket_path}', str(save_path))
-    print('Done!')
-
-    extract_path = save_path.with_suffix('')
-    print(f'Extracting `{save_path}` to `{extract_path}`', end='...', flush=True)
-    with zipfile.ZipFile(save_path, 'r') as zip_ref:
-        zip_ref.extractall(extract_path)
-    print('Done!')
-
-    return extract_path
-
-
-def download_file(url: str, save_dir: Path) -> Path:
-    print('Downloading file from:', url)
-    r = requests.get(url, allow_redirects=True)
-    filename, file_ext = splitext(basename(urlparse(unquote(url)).path))
-    save_path = save_dir / (filename + file_ext)
-    print('save path:', save_path)
-
-    with open(save_path, 'wb') as f:
-        f.write(r.content)
-    return save_path
+from util import download_file, extract_s3_zip
 
 
 def check_equality(problem: str, submission_download_url: str, language: str, memory_limit: int, time_limit: int,
-                   return_outputs: bool, return_compile_outputs: bool, stop_on_first_fail: bool) -> SubmissionResult:
+                   return_outputs: bool, return_compile_outputs: bool, stop_on_first_fail: bool,
+                   comparison_mode: str, float_precision: float, delimiter: Optional[str]) -> SubmissionResult:
+    print('checking...:', locals())
     ROOT = Path('/tmp/')
     s3 = boto3.resource('s3')
     bucket = s3.Bucket('lambda-judge-bucket')
 
     save_path = ROOT / f'{problem}.zip'
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
-
     submission_path = download_file(submission_download_url, save_dir=ROOT)
     extract_path = extract_s3_zip(bucket, bucket_path=f'problems/{problem}.zip', save_path=save_path, cached=True)
 
-    compile_res = None
+    # Compile and prepare the executable
     if 'c++' in language:
-        executable_path = submission_path.with_suffix('.o')
-        print('Creating executable at:', executable_path)
-        compile_res = Process(f'g++ -std={language} {submission_path} -o {executable_path}',
-                              timeout=30,
-                              memory_limit_mb=512).run()
-        print('Compile res', compile_res)
-
-        # Compile error
-        if compile_res.errors:
-            return SubmissionResult(status=Status.COMPILATION_ERROR,
-                                    memory=compile_res.max_rss, time=0, score=0,
-                                    compile_outputs=compile_res.outputs + compile_res.errors)
-
+        compiler = CppCompiler(language_standard=language)
     elif 'python' in language:
-        executable_path = f'python {submission_path}'
-        print(f'Evaluating python submission with: `{executable_path}`')
+        compiler = PythonCompiler()
     else:
-        raise ValueError(f'{language} submissions are not supported yet')
+        raise ValueError(f'{language} does not have a compiler')
+
+    executable_path, compile_res = compiler.compile(submission_path=submission_path)
+    # Compile error
+    if compile_res.errors:
+        return SubmissionResult(status=Status.COMPILATION_ERROR,
+                                memory=compile_res.max_rss, time=0, score=0,
+                                compile_outputs=compile_res.outputs + compile_res.errors)
+
+    # Checker types
+    if comparison_mode == 'whole':
+        checker = WholeEquality()
+    elif comparison_mode == 'token':
+        checker = TokenEquality(float_precision=float_precision, delimiter=delimiter)
+    else:
+        raise ValueError(f'{comparison_mode} comparison mode is not implemented yet')
 
     test_results: List[SubmissionResult] = []
     for input_file in sorted(glob.glob(f'{extract_path}/*.i.txt')):
@@ -109,11 +77,8 @@ def check_equality(problem: str, submission_download_url: str, language: str, me
         with open(output_file, 'r') as f:
             target = f.read().strip()
 
-        if is_float(target) and is_float(output):
-            target, output = f'{float(target):.3f}', f'{float(output):.3f}'
-
         test_results.append(SubmissionResult(
-            status=Status.WA if target != output else Status.OK,
+            status=Status.OK if checker.is_same(output, target) else Status.WA,
             memory=test_res.max_rss,
             time=test_res.total_time,
             score=0 if target != output else 100,
