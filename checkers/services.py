@@ -4,34 +4,29 @@ from typing import List, Optional
 
 import boto3
 
-from checkers import WholeEquality, TokenEquality
-from compilers import CppCompiler, PythonCompiler
+from checkers import EqualityChecker
+from compilers import Compiler
 from models import Status, SubmissionResult
 from process import Process
 from util import download_file, extract_s3_zip
+
+ROOT = Path('/tmp/')
+s3 = boto3.resource('s3')
+bucket = s3.Bucket('lambda-judge-bucket')
 
 
 def check_equality(problem: str, submission_download_url: str, language: str, memory_limit: int, time_limit: int,
                    return_outputs: bool, return_compile_outputs: bool, stop_on_first_fail: bool,
                    comparison_mode: str, float_precision: float, delimiter: Optional[str]) -> SubmissionResult:
     print('checking...:', locals())
-    ROOT = Path('/tmp/')
-    s3 = boto3.resource('s3')
-    bucket = s3.Bucket('lambda-judge-bucket')
-
+    # Setup the environment
     save_path = ROOT / f'{problem}.zip'
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
     submission_path = download_file(submission_download_url, save_dir=ROOT)
     extract_path = extract_s3_zip(bucket, bucket_path=f'problems/{problem}.zip', save_path=save_path, cached=True)
 
     # Compile and prepare the executable
-    if 'c++' in language:
-        compiler = CppCompiler(language_standard=language)
-    elif 'python' in language:
-        compiler = PythonCompiler()
-    else:
-        raise ValueError(f'{language} does not have a compiler')
-
+    compiler = Compiler.from_language(language=language)
     executable_path, compile_res = compiler.compile(submission_path=submission_path)
     # Compile error
     if compile_res.errors:
@@ -39,14 +34,8 @@ def check_equality(problem: str, submission_download_url: str, language: str, me
                                 memory=compile_res.max_rss, time=0, score=0,
                                 compile_outputs=compile_res.outputs + compile_res.errors)
 
-    # Checker types
-    if comparison_mode == 'whole':
-        checker = WholeEquality()
-    elif comparison_mode == 'token':
-        checker = TokenEquality(float_precision=float_precision, delimiter=delimiter)
-    else:
-        raise ValueError(f'{comparison_mode} comparison mode is not implemented yet')
-
+    checker = EqualityChecker.from_mode(comparison_mode,
+                                        float_precision=float_precision, delimiter=delimiter)
     test_results: List[SubmissionResult] = []
     for input_file in sorted(glob.glob(f'{extract_path}/*.i.txt')):
         output_file = input_file.replace('.i.txt', '.o.txt')

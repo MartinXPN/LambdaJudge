@@ -10,6 +10,16 @@ class EqualityChecker(ABC):
     def is_same(self, output: str, target: str) -> bool:
         ...
 
+    @staticmethod
+    def from_mode(mode: str,
+                  float_precision: Optional[float] = None, delimiter: Optional[str] = None) -> 'EqualityChecker':
+        if mode == 'whole':
+            return WholeEquality()
+        if mode == 'token':
+            assert float_precision is not None
+            return TokenEquality(float_precision=float_precision, delimiter=delimiter)
+        raise ValueError(f'{mode} comparison mode is not implemented yet')
+
 
 class WholeEquality(EqualityChecker):
     def is_same(self, output: str, target: str) -> bool:

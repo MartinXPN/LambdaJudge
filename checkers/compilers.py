@@ -12,9 +12,17 @@ class Compiler(ABC):
     def compile(self, submission_path: Path) -> Tuple[Path, Stats]:
         ...
 
+    @staticmethod
+    def from_language(language: str) -> 'Compiler':
+        if 'c++' in language:
+            return CppCompiler(language_standard=language)
+        if 'python' in language:
+            return PythonCompiler()
+        raise ValueError(f'{language} does not have a compiler yet')
+
 
 @dataclass
-class CppCompiler:
+class CppCompiler(Compiler):
     language_standard: str
 
     def compile(self, submission_path: Path):
@@ -28,7 +36,7 @@ class CppCompiler:
 
 
 @dataclass
-class PythonCompiler:
+class PythonCompiler(Compiler):
     def compile(self, submission_path: Path):
         executable_path = f'python {submission_path}'
         print(f'Evaluating python submission with: `{executable_path}`')
