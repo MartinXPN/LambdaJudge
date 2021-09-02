@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+from typing import Optional, List
 
 from dataclasses_json import dataclass_json, LetterCase
 
@@ -15,12 +15,24 @@ class Status:
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
+class TestCase:
+    input: str
+    target: str
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL)
+@dataclass
 class SubmissionRequest:
-    problem: str
     submission_download_url: str
     language: str
     memory_limit: int = 512
     time_limit: int = 5
+
+    # Provide either problem (which is used to find the test cases in the s3 bucket)
+    # Or provide the test cases as a list of TestCases directly
+    problem: Optional[str] = None
+    test_cases: Optional[List[TestCase]] = None
+
     return_outputs: bool = False
     return_compile_outputs: bool = True
     stop_on_first_fail: bool = True
@@ -30,6 +42,8 @@ class SubmissionRequest:
 
     def __post_init__(self):
         self.language = self.language.lower()
+        assert self.problem is not None and self.test_cases is None or \
+               self.problem is None     and self.test_cases is not None
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)

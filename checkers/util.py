@@ -29,12 +29,12 @@ def extract_s3_zip(bucket, bucket_path: str, save_path: Path, cached: bool = Tru
 
 
 def download_file(url: str, save_dir: Path) -> Path:
-    print('Downloading file from:', url)
-    r = requests.get(url, allow_redirects=True)
     filename, file_ext = splitext(basename(urlparse(unquote(url)).path))
     save_path = save_dir / (filename + file_ext)
-    print('save path:', save_path)
+    print('Downloading file to:', save_path, 'from:', url)
 
+    r = requests.get(url, allow_redirects=True)
     with open(save_path, 'wb') as f:
         f.write(r.content)
+
     return save_path

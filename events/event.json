@@ -1,5 +1,5 @@
 {
-  "body": "{\"problem\": \"tiFTYtPFGVy7K0cjuXSm-public\", \"submissionDownloadUrl\": \"https://firebasestorage.googleapis.com/v0/b/profound-academy.appspot.com/o/submissions%2FuuW6dg09icdYh6CvZsVCBPBRYG32%2FtiFTYtPFGVy7K0cjuXSm%2F2021-08-26T17%3A58%3A50.430Z%2Fmain.cpp?alt=media&token=d49d48de-7020-4ae8-9963-5232172a72cf\", \"language\": \"C++11\", \"memoryLimit\": 20, \"timeLimit\": 5, \"returnOutputs\": true, \"stopOnFirstFail\": false, \"comparison_mode\": \"token\"}",
+  "body": "{\"test_cases\": [\"{\"input\": \"\", \"target\": \"Hi, I am starting to learn competitive programming!\"}\"], \"submissionDownloadUrl\": \"https://firebasestorage.googleapis.com/v0/b/profound-academy.appspot.com/o/submissions%2FuuW6dg09icdYh6CvZsVCBPBRYG32%2FtiFTYtPFGVy7K0cjuXSm%2F2021-08-26T17%3A58%3A50.430Z%2Fmain.cpp?alt=media&token=d49d48de-7020-4ae8-9963-5232172a72cf\", \"language\": \"C++11\", \"memoryLimit\": 20, \"timeLimit\": 5, \"returnOutputs\": true, \"stopOnFirstFail\": false, \"comparison_mode\": \"token\"}",
   "resource": "/{proxy+}",
   "path": "/path/to/resource",
   "httpMethod": "POST",

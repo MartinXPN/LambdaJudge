@@ -1,13 +1,14 @@
 import glob
 from pathlib import Path
-from typing import List, Optional
+from typing import Optional, List
 
 import boto3
 
 from checkers import EqualityChecker
 from compilers import Compiler
-from models import Status, SubmissionResult
+from models import Status, SubmissionResult, TestCase
 from process import Process
+from testrunners import TestRunner
 from util import download_file, extract_s3_zip
 
 ROOT = Path('/tmp/')
@@ -15,15 +16,14 @@ s3 = boto3.resource('s3')
 bucket = s3.Bucket('lambda-judge-bucket')
 
 
-def check_equality(problem: str, submission_download_url: str, language: str, memory_limit: int, time_limit: int,
+def check_equality(submission_download_url: str, language: str, memory_limit: int, time_limit: int,
+                   problem: Optional[str], test_cases: Optional[List[TestCase]],
                    return_outputs: bool, return_compile_outputs: bool, stop_on_first_fail: bool,
                    comparison_mode: str, float_precision: float, delimiter: Optional[str]) -> SubmissionResult:
     print('checking...:', locals())
     # Setup the environment
-    save_path = ROOT / f'{problem}.zip'
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
     submission_path = download_file(submission_download_url, save_dir=ROOT)
-    extract_path = extract_s3_zip(bucket, bucket_path=f'problems/{problem}.zip', save_path=save_path, cached=True)
 
     # Compile and prepare the executable
     compiler = Compiler.from_language(language=language)
@@ -36,47 +36,25 @@ def check_equality(problem: str, submission_download_url: str, language: str, me
 
     checker = EqualityChecker.from_mode(comparison_mode,
                                         float_precision=float_precision, delimiter=delimiter)
-    test_results: List[SubmissionResult] = []
-    for input_file in sorted(glob.glob(f'{extract_path}/*.i.txt')):
-        output_file = input_file.replace('.i.txt', '.o.txt')
-        print('Test files:', input_file, output_file)
+    test_runner = TestRunner(executable_path=executable_path,
+                             time_limit=time_limit, memory_limit_mb=memory_limit,
+                             checker=checker,
+                             stop_on_first_fail=stop_on_first_fail)
 
-        test_res = Process(f'cat {input_file} | {executable_path}',
-                           timeout=time_limit,
-                           memory_limit_mb=memory_limit).run()
-        if test_res.return_code != 0 or (not test_res.outputs and test_res.errors):
-            print('Errs:', test_res.errors)
-            print('Return code:', test_res.return_code)
-            test_results.append(SubmissionResult(
-                status=Status.MLE if test_res.max_rss > memory_limit or test_res.errors == Status.MLE
-                else Status.TLE if 1.1 * test_res.total_time > time_limit or test_res.errors == Status.TLE
-                else Status.RUNTIME_ERROR,
-                memory=test_res.max_rss,
-                time=test_res.total_time,
-                score=0,
-                outputs=test_res.outputs if return_outputs else None,
-                compile_outputs=None
-            ))
-            if stop_on_first_fail:
-                break
-            else:
-                continue
-
-        output = test_res.outputs.strip()
-        with open(output_file, 'r') as f:
-            target = f.read().strip()
-
-        test_results.append(SubmissionResult(
-            status=Status.OK if checker.is_same(output, target) else Status.WA,
-            memory=test_res.max_rss,
-            time=test_res.total_time,
-            score=0 if target != output else 100,
-            outputs=test_res.outputs if return_outputs else None,
-            compile_outputs=None
-        ))
+    if problem:
+        save_path = ROOT / f'{problem}.zip'
+        extract_path = extract_s3_zip(bucket, bucket_path=f'problems/{problem}.zip', save_path=save_path, cached=True)
+        test_results = test_runner.from_files(input_paths=sorted(glob.glob(f'{extract_path}/*.i.txt')),
+                                              target_paths=sorted(glob.glob(f'{extract_path}/*.o.txt')))
+        nb_test_cases = len(list(glob.glob(f'{extract_path}/*.i.txt')))
+    elif test_cases:
+        test_results = test_runner.from_tests(inputs=[t.input for t in test_cases],
+                                              targets=[t.target for t in test_cases])
+        nb_test_cases = len(test_cases)
+    else:
+        raise ValueError('Either `problem` or `test_cases` need to be provided!')
 
     # Aggregate all the results across test cases
-    nb_test_cases = len(list(glob.glob(f'{extract_path}/*.i.txt')))
     failed_test = next((i for i, x in enumerate(test_results) if x.status != Status.OK), None)
     nb_success = sum(x.status == Status.OK for x in test_results)
     max_memory = max(x.memory for x in test_results)
