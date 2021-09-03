@@ -4,7 +4,7 @@ from typing import Optional, List
 
 import boto3
 
-from checkers import EqualityChecker
+from checkers import Checker
 from compilers import Compiler
 from models import Status, SubmissionResult, TestCase
 from process import Process
@@ -34,8 +34,8 @@ def check_equality(submission_download_url: str, language: str, memory_limit: in
                                 memory=compile_res.max_rss, time=0, score=0,
                                 compile_outputs=compile_res.outputs + compile_res.errors)
 
-    checker = EqualityChecker.from_mode(comparison_mode,
-                                        float_precision=float_precision, delimiter=delimiter)
+    checker = Checker.from_mode(comparison_mode,
+                                float_precision=float_precision, delimiter=delimiter)
     test_runner = TestRunner(executable_path=executable_path,
                              time_limit=time_limit, memory_limit_mb=memory_limit,
                              checker=checker,

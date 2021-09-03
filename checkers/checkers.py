@@ -5,14 +5,14 @@ from typing import Optional
 from util import is_float
 
 
-class EqualityChecker(ABC):
+class Checker(ABC):
     @abstractmethod
-    def is_same(self, output: str, target: str) -> bool:
+    def is_correct(self, inputs: str, output: str, target: str) -> bool:
         ...
 
     @staticmethod
     def from_mode(mode: str,
-                  float_precision: Optional[float] = None, delimiter: Optional[str] = None) -> 'EqualityChecker':
+                  float_precision: Optional[float] = None, delimiter: Optional[str] = None) -> 'Checker':
         if mode == 'whole':
             return WholeEquality()
         if mode == 'token':
@@ -21,17 +21,17 @@ class EqualityChecker(ABC):
         raise ValueError(f'{mode} comparison mode is not implemented yet')
 
 
-class WholeEquality(EqualityChecker):
-    def is_same(self, output: str, target: str) -> bool:
+class WholeEquality(Checker):
+    def is_correct(self, inputs: str, output: str, target: str) -> bool:
         return output.strip() == target.strip()
 
 
 @dataclass
-class TokenEquality(EqualityChecker):
+class TokenEquality(Checker):
     float_precision: float = 1e-5
     delimiter: Optional[str] = None
 
-    def is_same(self, output: str, target: str) -> bool:
+    def is_correct(self, inputs: str, output: str, target: str) -> bool:
         for o, t in zip(output.split(self.delimiter), target.split(self.delimiter)):
             if is_float(o) and is_float(t):
                 if abs(float(o) - float(t)) > self.float_precision:

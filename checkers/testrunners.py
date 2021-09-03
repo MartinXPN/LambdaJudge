@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import List
 
-from checkers import EqualityChecker
+from checkers import Checker
 from models import SubmissionResult, Status
 from process import Process
 
@@ -12,7 +12,7 @@ class TestRunner:
     executable_path: Path
     time_limit: float
     memory_limit_mb: int
-    checker: EqualityChecker
+    checker: Checker
     stop_on_first_fail: bool
 
     def from_files(self, input_paths: List[Path], target_paths: List[Path]) -> List[SubmissionResult]:
@@ -54,7 +54,7 @@ class TestRunner:
             )
 
         output = test_res.outputs.strip()
-        is_same = self.checker.is_same(output, test_target)
+        is_same = self.checker.is_correct(test_input, output, test_target)
         return SubmissionResult(
             status=Status.OK if is_same else Status.WA,
             memory=test_res.max_rss,
