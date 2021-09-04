@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List
+from typing import Optional, List, Union
 
 from dataclasses_json import dataclass_json, LetterCase
 
@@ -53,7 +53,7 @@ class SubmissionResult:
     memory: float
     time: float
     score: float
-    outputs: Optional[str] = None
+    outputs: Union[str, List[str], None] = None
     compile_outputs: Optional[str] = None
 
 

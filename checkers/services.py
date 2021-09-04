@@ -64,5 +64,5 @@ def check_equality(submission_download_url: str, language: str, memory_limit: in
         memory=max_memory,
         time=max_time,
         score=100 * nb_success / nb_test_cases,
-        outputs='\n-------------\n'.join([x.outputs for x in test_results]) if return_outputs else None,
+        outputs=[x.outputs for x in test_results] if return_outputs else None,
         compile_outputs=compile_res.outputs if compile_res and return_compile_outputs else None)
