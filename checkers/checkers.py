@@ -32,7 +32,12 @@ class TokenEquality(Checker):
     delimiter: Optional[str] = None
 
     def is_correct(self, inputs: str, output: str, target: str) -> bool:
-        for o, t in zip(output.split(self.delimiter), target.split(self.delimiter)):
+        output = output.strip().split(self.delimiter)
+        target = target.strip().split(self.delimiter)
+        if len(output) != len(target):
+            return False
+
+        for o, t in zip(output, target):
             if is_float(o) and is_float(t):
                 if abs(float(o) - float(t)) > self.float_precision:
                     return False

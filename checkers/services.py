@@ -47,6 +47,8 @@ def check_equality(submission_download_url: str, language: str, memory_limit: in
         test_results = test_runner.from_files(input_paths=sorted(glob.glob(f'{extract_path}/*.i.txt')),
                                               target_paths=sorted(glob.glob(f'{extract_path}/*.o.txt')))
         nb_test_cases = len(list(glob.glob(f'{extract_path}/*.i.txt')))
+        print(f'There are {nb_test_cases} test cases')
+        print(list(glob.glob(f'{extract_path}/*')))
     elif test_cases:
         test_results = test_runner.from_tests(inputs=[t.input for t in test_cases],
                                               targets=[t.target for t in test_cases])
