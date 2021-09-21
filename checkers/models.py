@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional, List, Union
+from typing import Optional, List, Union, Dict
 
 from dataclasses_json import dataclass_json, LetterCase
 
@@ -23,7 +23,8 @@ class TestCase:
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
 class SubmissionRequest:
-    submission_download_url: str
+    # Code is a mapping from filename.extension -> content (Http requests have 2MB limit)
+    code: Dict[str, str]
     language: str
     memory_limit: int = 512
     time_limit: int = 5

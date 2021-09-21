@@ -1,6 +1,7 @@
 import zipfile
 from os.path import splitext, basename
 from pathlib import Path
+from typing import Dict, List
 from urllib.parse import urlparse, unquote
 
 import requests
@@ -38,3 +39,14 @@ def download_file(url: str, save_dir: Path) -> Path:
         f.write(r.content)
 
     return save_path
+
+
+def save_code(save_dir: Path, code: Dict[str, str]) -> List[Path]:
+    saved_paths: List[Path] = []
+    for filename, content in code.items():
+        path = save_dir / filename
+        saved_paths.append(path)
+        with open(path, 'w') as f:
+            f.write(content)
+
+    return saved_paths

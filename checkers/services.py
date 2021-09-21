@@ -1,6 +1,6 @@
 import glob
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict
 
 import boto3
 
@@ -9,21 +9,21 @@ from compilers import Compiler
 from models import Status, SubmissionResult, TestCase
 from process import Process
 from testrunners import TestRunner
-from util import download_file, extract_s3_zip
+from util import extract_s3_zip, save_code
 
 ROOT = Path('/tmp/')
 s3 = boto3.resource('s3')
 bucket = s3.Bucket('lambda-judge-bucket')
 
 
-def check_equality(submission_download_url: str, language: str, memory_limit: int, time_limit: int,
+def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_limit: int,
                    problem: Optional[str], test_cases: Optional[List[TestCase]],
                    return_outputs: bool, return_compile_outputs: bool, stop_on_first_fail: bool,
                    comparison_mode: str, float_precision: float, delimiter: Optional[str]) -> SubmissionResult:
     print('checking...:', locals())
     # Setup the environment
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
-    submission_path = download_file(submission_download_url, save_dir=ROOT)
+    submission_path = save_code(save_dir=ROOT, code=code)[0]        # Currently we only support single-file submissions
 
     # Compile and prepare the executable
     compiler = Compiler.from_language(language=language)

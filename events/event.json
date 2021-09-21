@@ -1,5 +1,5 @@
 {
-  "body": "{\"testCases\":[{\"input\":\"\",\"target\":\"Hi, I am starting to learn Machine Learning!\"}],\"submissionDownloadUrl\":\"https://firebasestorage.googleapis.com/v0/b/profound-academy.appspot.com/o/submissions%2F7ydgMuewFuZqH69vJH4BuMK2HQL2%2FPM37S3fuGqEYV2q7szu8%2F2021-09-05T18%3A16%3A13.637Z%2Fmain.py?alt=media&token=f14301eb-a11e-477f-8605-55c2fa3d4705\",\"language\":\"python\",\"memoryLimit\":512,\"timeLimit\":2,\"returnOutputs\":true,\"return_compile_outputs\":true,\"stopOnFirstFail\":false,\"comparisonMode\":\"token\"}",
+  "body": "{\"testCases\":[{\"input\":\"\",\"target\":\"Hi, I am starting to learn Machine Learning!\"}],\"code\": { \"main.py\": \"print('Hi, I am starting to learn Machine Learning!')\" },\"language\":\"python\",\"memoryLimit\":512,\"timeLimit\":2,\"returnOutputs\":true,\"return_compile_outputs\":true,\"stopOnFirstFail\":false,\"comparisonMode\":\"token\"}",
   "resource": "/{proxy+}",
   "path": "/path/to/resource",
   "httpMethod": "POST",
