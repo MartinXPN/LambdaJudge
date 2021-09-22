@@ -20,7 +20,7 @@ Resources:
       Role: arn:aws:iam::370358067229:role/service-role/lambdaJudgeExperiment-role-yx85ty3x
       Layers:
         - !Ref GCCLayer
-      Runtime: python3.8
+      Runtime: python3.9
       Events:
         Check:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -37,6 +37,16 @@ Resources:
         CompatibleRuntimes:
         RetentionPolicy: Retain
 
+  CodeRunner:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      CodeUri: coderunners/
+      Handler: app.run_code_lambda
+      Role: arn:aws:iam::370358067229:role/contestant-role
+      Layers:
+        - !Ref GCCLayer
+      Runtime: python3.9
+
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
@@ -47,3 +57,6 @@ Outputs:
   EqualityChecker:
     Description: "AWS Lambda checker for determining if the output of a code is exactly the same es the target"
     Value: !GetAtt EqualityChecker.Arn
+  CodeRunner:
+    Description: "AWS Lambda for executing the submitted code and getting the outputs"
+    Value: !GetAtt CodeRunner.Arn
