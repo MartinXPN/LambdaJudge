@@ -1,4 +1,6 @@
+import glob
 import json
+import shutil
 from pathlib import Path
 from typing import Optional, List, Dict
 
@@ -6,6 +8,7 @@ import boto3
 
 from checkers import Checker
 from models import Status, SubmissionResult, TestCase, CodeRunRequest, TestResult
+from util import extract_s3_zip
 
 ROOT = Path('/tmp/')
 s3 = boto3.resource('s3')
@@ -18,23 +21,20 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
                    return_outputs: bool, return_compile_outputs: bool, stop_on_first_fail: bool,
                    comparison_mode: str, float_precision: float, delimiter: Optional[str]) -> SubmissionResult:
     print('checking...:', locals())
-    # TODO: support s3 tests
-    test_inputs = [t.input for t in test_cases]
-    test_targets = [t.target for t in test_cases]
-    # if problem:
-    #     save_path = ROOT / f'{problem}.zip'
-    #     extract_path = extract_s3_zip(bucket, bucket_path=f'problems/{problem}.zip', save_path=save_path, cached=True)
-    #     test_results = test_runner.from_files(input_paths=sorted(glob.glob(f'{extract_path}/*.i.txt')),
-    #                                           target_paths=sorted(glob.glob(f'{extract_path}/*.o.txt')))
-    #     nb_test_cases = len(list(glob.glob(f'{extract_path}/*.i.txt')))
-    #     print(f'There are {nb_test_cases} test cases')
-    #     print(list(glob.glob(f'{extract_path}/*')))
-    # elif test_cases:
-    #     test_results = test_runner.from_tests(inputs=[t.input for t in test_cases],
-    #                                           targets=[t.target for t in test_cases])
-    #     nb_test_cases = len(test_cases)
-    # else:
-    #     raise ValueError('Either `problem` or `test_cases` need to be provided!')
+    if problem:
+        save_path = ROOT / f'{problem}.zip'
+        extract_path = extract_s3_zip(bucket, bucket_path=f'problems/{problem}.zip', save_path=save_path, cached=True)
+        test_inputs = [Path(p).read_text() for p in sorted(glob.glob(f'{extract_path}/*.i.txt'))]
+        test_targets = [Path(p).read_text() for p in sorted(glob.glob(f'{extract_path}/*.o.txt'))]
+        # Cleanup
+        shutil.rmtree(save_path, ignore_errors=True)
+        shutil.rmtree(extract_path, ignore_errors=True)
+
+    elif test_cases:
+        test_inputs = [t.input for t in test_cases]
+        test_targets = [t.target for t in test_cases]
+    else:
+        raise ValueError('Either `problem` or `test_cases` need to be provided!')
 
     # TODO: is there a better way to name the function?
     res = aws_lambda.invoke(FunctionName='lambdaJudge-CodeRunner-tJGzU2gt8KXd', Payload=CodeRunRequest(
