@@ -1,9 +1,9 @@
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict, List, Tuple, Optional
 
 from coderunners import CodeRunner
 from compilers import Compiler
-from models import CodeRunResult
+from models import Status, TestResult
 from process import Process
 
 ROOT = Path('/tmp/')
@@ -21,7 +21,7 @@ def save_code(save_dir: Path, code: Dict[str, str]) -> List[Path]:
 
 
 def run_code(code: Dict[str, str], language: str, memory_limit: int, time_limit: int,
-             test_inputs: List[str]) -> CodeRunResult:
+             test_inputs: List[str]) -> Tuple[TestResult, Optional[List[TestResult]]]:
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
     submission_path = save_code(save_dir=ROOT, code=code)[0]        # Currently we only support single-file submissions
 
@@ -30,14 +30,13 @@ def run_code(code: Dict[str, str], language: str, memory_limit: int, time_limit:
     executable_path, compile_res = compiler.compile(submission_path=submission_path)
     # Compile error
     if compile_res.errors:
-        return CodeRunResult(memory=[compile_res.max_rss], time=[0],
-                             compile_outputs=compile_res.outputs + compile_res.errors)
+        return TestResult(status=Status.COMPILATION_ERROR, memory=compile_res.max_rss, time=0,
+                          outputs=compile_res.outputs + compile_res.errors), None
 
+    compile_res = TestResult(status=Status.OK, memory=compile_res.max_rss, time=compile_res.total_time,
+                             outputs=compile_res.outputs)
     code_runner = CodeRunner(executable_path=executable_path, time_limit=time_limit, memory_limit_mb=memory_limit)
     test_results = [code_runner.run(test_input) for test_input in test_inputs]
     print('Test results:', test_results)
 
-    return CodeRunResult(memory=[t.memory for t in test_results],
-                         time=[t.time for t in test_results],
-                         outputs=[t.outputs for t in test_results],
-                         compile_outputs=compile_res.outputs)
+    return compile_res, test_results

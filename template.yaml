@@ -43,8 +43,8 @@ Resources:
       CodeUri: coderunners/
       Handler: app.run_code_lambda
       Role: arn:aws:iam::370358067229:role/contestant-role
-      Layers:
-        - !Ref GCCLayer
+#      Layers:
+#        - !Ref GCCLayer
       Runtime: python3.9
 
 Outputs:
