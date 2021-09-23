@@ -18,8 +18,8 @@ Resources:
       CodeUri: checkers/
       Handler: app.equality_checker_lambda
       Role: arn:aws:iam::370358067229:role/service-role/lambdaJudgeExperiment-role-yx85ty3x
-      Layers:
-        - !Ref GCCLayer
+#      Layers:
+#        - !Ref GCCLayer
       Runtime: python3.9
       Events:
         Check:

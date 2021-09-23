@@ -19,5 +19,5 @@ def run_code_lambda(event, context):
     print('json:', TestResult.schema().dumps(test_results, many=True))
     return {
         'compilation': compile_res.to_json(),
-        'results:': TestResult.schema().dumps(test_results, many=True),
+        'results': TestResult.schema().dumps(test_results, many=True),
     }
