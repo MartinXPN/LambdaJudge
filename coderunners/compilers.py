@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple
 
-from models import Stats
+from models import Stats, Status
 from process import Process
 
 
@@ -45,4 +45,5 @@ class PythonCompiler(Compiler):
     def compile(self, submission_path: Path):
         executable_path = f'{self.language_standard} {submission_path}'
         print(f'Evaluating python submission with: `{executable_path}`')
-        return executable_path, Stats(max_rss=0, max_vms=0, total_time=0, return_code=0, outputs='', errors='')
+        return executable_path, Stats(max_rss=0, max_vms=0, total_time=0, return_code=0,
+                                      outputs='', errors='', status=Status.OK)

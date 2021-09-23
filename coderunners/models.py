@@ -1,6 +1,6 @@
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Optional, List, Union, Dict
+from typing import Optional, List, Dict
 
 from dataclasses_json import dataclass_json, LetterCase
 
@@ -13,10 +13,7 @@ class CodeRunRequest:
     language: str
     memory_limit: int = 512
     time_limit: int = 5
-
     test_inputs: List[str] = field(default_factory=list)
-    return_outputs: bool = False
-    return_compile_outputs: bool = True
 
     def __post_init__(self):
         self.language = self.language.lower()
@@ -27,14 +24,24 @@ class CodeRunRequest:
 class CodeRunResult:
     memory: List[float]
     time: List[float]
-    outputs: Union[List[str], None] = None
-    compile_outputs: Optional[str] = None
+    outputs: Optional[List[str]] = None
+    compile_outputs: str = None
 
 
 class Status(Enum):
     OK = 'OK'
     MLE = 'Memory Limit Exceeded'
     TLE = 'Time Limit Exceeded'
+    RE = 'Runtime Error'
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL)
+@dataclass
+class TestResult:
+    status: Status
+    memory: float
+    time: float
+    outputs: Optional[str] = None
 
 
 @dataclass
