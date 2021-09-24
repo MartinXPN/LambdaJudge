@@ -1,10 +1,11 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from enum import Enum
 from typing import Optional, List, Union, Dict
 
 from dataclasses_json import dataclass_json, LetterCase
 
 
-class Status:
+class Status(Enum):
     OK = 'Solved'
     WA = 'Wrong answer'
     TLE = 'Time limit exceeded'
@@ -36,7 +37,6 @@ class SubmissionRequest:
 
     return_outputs: bool = False
     return_compile_outputs: bool = True
-    stop_on_first_fail: bool = True
     comparison_mode: str = 'whole'    # whole / token
     float_precision: float = 1e-5     # Floating point precision
     delimiter: Optional[str] = None
@@ -50,7 +50,7 @@ class SubmissionRequest:
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
 class SubmissionResult:
-    status: str
+    status: Status
     memory: float
     time: float
     score: float
@@ -58,11 +58,21 @@ class SubmissionResult:
     compile_outputs: Optional[str] = None
 
 
+@dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
-class Stats:
-    max_rss: float
-    max_vms: float
-    total_time: float
-    return_code: int
-    outputs: str
-    errors: str
+class CodeRunRequest:
+    # Code is a mapping from filename.extension -> content (Http requests have 2MB limit)
+    code: Dict[str, str]
+    language: str
+    memory_limit: int = 512
+    time_limit: int = 5
+    test_inputs: List[str] = field(default_factory=list)
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL)
+@dataclass
+class TestResult:
+    status: Status
+    memory: float
+    time: float
+    outputs: Optional[str] = None

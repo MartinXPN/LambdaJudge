@@ -1,2 +1,2 @@
-boto3>=1.18.33
 dataclasses-json>=0.5.6
+psutil>=5.8.0

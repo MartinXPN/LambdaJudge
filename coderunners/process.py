@@ -6,7 +6,7 @@ from typing import Union, Iterable
 
 import psutil
 
-from models import Status, Stats
+from models import Stats, Status
 
 
 @dataclass
@@ -34,6 +34,7 @@ class Process:
         self.execution_state = True
 
     def run(self) -> Stats:
+        outs, errs, status = None, None, Status.OK
         try:
             self.execute()
             # poll as often as possible; otherwise the subprocess might
@@ -46,19 +47,25 @@ class Process:
             if errs is not None: errs = errs.decode('utf-8')
 
         except subprocess.TimeoutExpired:
-            outs, errs = None, Status.TLE
+            status = Status.TLE
         except MemoryError:
-            outs, errs = None, Status.MLE
+            status = Status.MLE
+        except Exception as e:
+            print(e)
+            status = Status.RE
         finally:
             # make sure that we don't leave the process dangling?
             self.close(kill=True)
+
+        # Nonzero return code is considered a runtime error
+        if self.p.returncode != 0:
+            status = Status.RE
 
         return Stats(max_rss=self.max_rss_memory / 1024 / 1024,
                      max_vms=self.max_vms_memory / 1024 / 1024,
                      total_time=self.finish_time - self.start_time,
                      return_code=self.p.returncode,
-                     outputs=outs,
-                     errors=errs)
+                     outputs=outs, errors=errs, status=status)
 
     def poll(self):
         if not self.check_execution_state():
