@@ -37,7 +37,6 @@ class SubmissionRequest:
 
     return_outputs: bool = False
     return_compile_outputs: bool = True
-    stop_on_first_fail: bool = True
     comparison_mode: str = 'whole'    # whole / token
     float_precision: float = 1e-5     # Floating point precision
     delimiter: Optional[str] = None

@@ -1,6 +1,5 @@
-import glob
+import gzip
 import json
-import shutil
 from pathlib import Path
 from typing import Optional, List, Dict
 
@@ -8,33 +7,25 @@ import boto3
 
 from checkers import Checker
 from models import Status, SubmissionResult, TestCase, CodeRunRequest, TestResult
-from util import extract_s3_zip
 
 ROOT = Path('/tmp/')
 s3 = boto3.resource('s3')
-bucket = s3.Bucket('lambda-judge-bucket')
 aws_lambda = boto3.client('lambda')
 
 
 def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_limit: int,
                    problem: Optional[str], test_cases: Optional[List[TestCase]],
-                   return_outputs: bool, return_compile_outputs: bool, stop_on_first_fail: bool,
+                   return_outputs: bool, return_compile_outputs: bool,
                    comparison_mode: str, float_precision: float, delimiter: Optional[str]) -> SubmissionResult:
     print('checking...:', locals())
     if problem:
-        save_path = ROOT / f'{problem}.zip'
-        extract_path = extract_s3_zip(bucket, bucket_path=f'problems/{problem}.zip', save_path=save_path, cached=True)
-        test_inputs = [Path(p).read_text() for p in sorted(glob.glob(f'{extract_path}/*.i.txt'))]
-        test_targets = [Path(p).read_text() for p in sorted(glob.glob(f'{extract_path}/*.o.txt'))]
-        # Cleanup
-        shutil.rmtree(save_path, ignore_errors=True)
-        shutil.rmtree(extract_path, ignore_errors=True)
+        save_path = ROOT / f'{problem}.gz'
+        gzipped_tests = s3.Object('lambda-judge-bucket', f'problems/{problem}.gz').get()['Body'].read()
+        json_tests = gzip.decompress(gzipped_tests).decode('utf-8')
+        test_cases = TestCase.schema().loads(json_tests, many=True)
 
-    elif test_cases:
-        test_inputs = [t.input for t in test_cases]
-        test_targets = [t.target for t in test_cases]
-    else:
-        raise ValueError('Either `problem` or `test_cases` need to be provided!')
+    test_inputs = [t.input for t in test_cases]
+    test_targets = [t.target for t in test_cases]
 
     # TODO: is there a better way to name the function?
     res = aws_lambda.invoke(FunctionName='lambdaJudge-CodeRunner-tJGzU2gt8KXd', Payload=CodeRunRequest(
