@@ -30,6 +30,7 @@ def run_code(code: Dict[str, str], language: str, memory_limit: int, time_limit:
     executable_path, compile_res = compiler.compile(submission_path=submission_path)
     # Compile error
     if compile_res.errors:
+        print('Compile error:', compile_res)
         return TestResult(status=Status.COMPILATION_ERROR, memory=compile_res.max_rss, time=0,
                           outputs=compile_res.outputs + compile_res.errors), None
 

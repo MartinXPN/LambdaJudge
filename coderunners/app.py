@@ -14,9 +14,6 @@ def run_code_lambda(event, context):
     print('ALl the params:', request)
 
     compile_res, test_results = run_code(**request.__dict__)
-    print('compile_res:', compile_res)
-    print('test_results:', test_results)
-    print('json:', TestResult.schema().dumps(test_results, many=True))
     return {
         'compilation': compile_res.to_json(),
         'results': TestResult.schema().dumps(test_results, many=True),
