@@ -39,8 +39,8 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
     print('Compilation:', compilation)
     if compilation.status == Status.COMPILATION_ERROR:
         return SubmissionResult(status=Status.COMPILATION_ERROR,
-                                memory=res.memory[0], time=res.time[0], score=0,
-                                compile_outputs=res.compile_outputs)
+                                memory=compilation.memory, time=compilation.time, score=0,
+                                compile_outputs=compilation.outputs)
 
     test_results: List[TestResult] = TestResult.schema().loads(res['results'], many=True)
     print('test_results:', test_results)
