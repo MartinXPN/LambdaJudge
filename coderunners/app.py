@@ -15,6 +15,6 @@ def run_code_lambda(event, context):
 
     compile_res, test_results = run_code(**request.__dict__)
     return {
-        'compilation': compile_res.to_json(),
-        'results': TestResult.schema().dumps(test_results, many=True),
+        'compilation': compile_res.to_json() if compile_res else None,
+        'results': TestResult.schema().dumps(test_results, many=True) if test_results else None,
     }

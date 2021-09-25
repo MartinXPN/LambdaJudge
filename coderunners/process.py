@@ -52,14 +52,14 @@ class Process:
             status = Status.MLE
         except Exception as e:
             print(e)
-            status = Status.RE
+            status = Status.RUNTIME_ERROR
         finally:
             # make sure that we don't leave the process dangling?
             self.close(kill=True)
 
         # Nonzero return code is considered a runtime error
         if self.p.returncode != 0:
-            status = Status.RE
+            status = Status.RUNTIME_ERROR
 
         return Stats(max_rss=self.max_rss_memory / 1024 / 1024,
                      max_vms=self.max_vms_memory / 1024 / 1024,
