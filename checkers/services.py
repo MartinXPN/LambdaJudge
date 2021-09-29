@@ -16,7 +16,7 @@ aws_lambda = boto3.client('lambda')
 
 def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_limit: int,
                    problem: Optional[str], test_cases: Optional[List[TestCase]],
-                   return_outputs: bool, return_compile_outputs: bool,
+                   aggregate_results: bool, return_outputs: bool, return_compile_outputs: bool,
                    comparison_mode: str, float_precision: float, delimiter: Optional[str]) -> SubmissionResult:
     print('checking...:', locals())
     if problem:
@@ -53,13 +53,14 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
 
     # Aggregate all the results across test cases
     failed_test = next((i for i, x in enumerate(test_results) if x.status != Status.OK), None)
-    nb_success = sum(x.status == Status.OK for x in test_results)
-    max_memory = max(x.memory for x in test_results)
-    max_time = max(x.time for x in test_results)
+    status = Status.OK if failed_test is None else test_results[failed_test].status
+    nb_success = sum(t.status == Status.OK for t in test_results)
+    max_memory = max(t.memory for t in test_results)
+    max_time = max(t.time for t in test_results)
     return SubmissionResult(
-        status=Status.OK if failed_test is None else test_results[failed_test].status,
-        memory=max_memory,
-        time=max_time,
+        status=status if aggregate_results else [t.status for t in test_results] ,
+        memory=max_memory if aggregate_results else [t.memory for t in test_results],
+        time=max_time if aggregate_results else [t.time for t in test_results],
         score=100 * nb_success / len(test_inputs),
-        outputs=[x.outputs for x in test_results] if return_outputs else None,
+        outputs=[t.outputs for t in test_results] if return_outputs else None,
         compile_outputs=compilation.outputs if return_compile_outputs else None)

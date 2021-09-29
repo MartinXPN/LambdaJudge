@@ -35,6 +35,7 @@ class SubmissionRequest:
     problem: Optional[str] = None
     test_cases: Optional[List[TestCase]] = None
 
+    aggregate_results: bool = True
     return_outputs: bool = False
     return_compile_outputs: bool = True
     comparison_mode: str = 'whole'    # whole / token
@@ -50,9 +51,9 @@ class SubmissionRequest:
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
 class SubmissionResult:
-    status: Status
-    memory: float
-    time: float
+    status: Union[Status, List[Status]]
+    memory: Union[float, List[float]]
+    time: Union[float, List[float]]
     score: float
     outputs: Union[str, List[str], None] = None
     compile_outputs: Optional[str] = None
