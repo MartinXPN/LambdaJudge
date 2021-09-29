@@ -6,6 +6,7 @@ from typing import Optional, List, Dict
 import boto3
 
 from checkers import Checker
+from coderunners import CodeRunner
 from models import Status, SubmissionResult, TestCase, CodeRunRequest, TestResult
 
 ROOT = Path('/tmp/')
@@ -27,8 +28,8 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
     test_inputs = [t.input for t in test_cases]
     test_targets = [t.target for t in test_cases]
 
-    # TODO: is there a better way to name the function?
-    res = aws_lambda.invoke(FunctionName='lambdaJudge-CodeRunner-tJGzU2gt8KXd', Payload=CodeRunRequest(
+    coderunner = CodeRunner.from_language(language=language)
+    res = aws_lambda.invoke(FunctionName=coderunner.name, Payload=CodeRunRequest(
         code=code, language=language, memory_limit=memory_limit, time_limit=time_limit,
         test_inputs=test_inputs
     ).to_json())['Payload'].read().decode('utf-8')
