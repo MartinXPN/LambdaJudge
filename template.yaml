@@ -10,16 +10,72 @@ Globals:
   Function:
     Timeout: 300
     MemorySize: 600
+    Runtime: python3.9
+
 
 Resources:
+  EqualityCheckerRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: EqualityCheckerPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:*'
+                  - 's3-object-lambda:*'
+                  - 'cloudformation:Get*'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                  - 'logs:DescribeLogGroups'
+                  - 'lambda:*'
+                  - 'cloudwatch:ListMetrics'
+                  - 'cloudwatch:GetMetricData'
+                Resource: '*'
+  ContestantRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: ContestantLogPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+
+
   EqualityChecker:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       FunctionName: EqualityChecker
       CodeUri: checkers/
       Handler: app.equality_checker_lambda
-      Role: arn:aws:iam::370358067229:role/service-role/lambdaJudgeExperiment-role-yx85ty3x
-      Runtime: python3.9
+      Role: !GetAtt EqualityCheckerRole.Arn
       Events:
         Check:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -42,8 +98,7 @@ Resources:
       FunctionName: CodeRunnerPython
       CodeUri: coderunners/
       Handler: app.run_code_lambda
-      Role: arn:aws:iam::370358067229:role/contestant-role
-      Runtime: python3.9
+      Role: !GetAtt ContestantRole.Arn
 
   CodeRunnerCpp:
     Type: AWS::Serverless::Function
@@ -51,8 +106,7 @@ Resources:
       FunctionName: CodeRunnerCpp
       CodeUri: coderunners/
       Handler: app.run_code_lambda
-      Role: arn:aws:iam::370358067229:role/contestant-role
-      Runtime: python3.9
+      Role: !GetAtt ContestantRole.Arn
       Layers:
         - !Ref GCCLayer
 
