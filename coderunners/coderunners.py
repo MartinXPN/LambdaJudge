@@ -1,5 +1,6 @@
 from dataclasses import dataclass
 from pathlib import Path
+from tempfile import NamedTemporaryFile
 
 from models import Status, TestResult
 from process import Process
@@ -12,9 +13,13 @@ class CodeRunner:
     memory_limit_mb: int
 
     def run(self, test_input) -> TestResult:
-        res = Process(f'echo "{test_input}" | {self.executable_path}',
-                      timeout=self.time_limit,
-                      memory_limit_mb=self.memory_limit_mb).run()
+        with NamedTemporaryFile('w') as tmp:
+            print(f'Saving the input to {tmp.name}')
+            tmp.write(test_input)
+
+            res = Process(f'cat {tmp.name} | {self.executable_path}',
+                          timeout=self.time_limit,
+                          memory_limit_mb=self.memory_limit_mb).run()
 
         if (not res.outputs and res.errors) or res.status != Status.OK:
             print('Errs:', res.errors)
