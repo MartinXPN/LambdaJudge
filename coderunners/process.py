@@ -58,7 +58,7 @@ class Process:
             self.close(kill=True)
 
         # Nonzero return code is considered a runtime error
-        if self.p.returncode != 0:
+        if self.p.returncode != 0 and status == Status.OK:
             status = Status.RUNTIME_ERROR
 
         return Stats(max_rss=self.max_rss_memory / 1024 / 1024,
