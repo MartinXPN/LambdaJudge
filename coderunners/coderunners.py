@@ -13,9 +13,10 @@ class CodeRunner:
     memory_limit_mb: int
 
     def run(self, test_input) -> TestResult:
-        with NamedTemporaryFile('w') as tmp:
+        with NamedTemporaryFile('w+') as tmp:
             print(f'Saving the input to {tmp.name}')
             tmp.write(test_input)
+            tmp.seek(0)
 
             res = Process(f'cat {tmp.name} | {self.executable_path}',
                           timeout=self.time_limit,
