@@ -56,6 +56,11 @@ class Process:
         finally:
             # make sure that we don't leave the process dangling?
             self.close(kill=True)
+            if errs and errs.strip().endswith('MemoryError'):
+                print('memory error:', self.max_rss_memory, self.max_vms_memory)
+                status = Status.MLE
+                self.max_rss_memory = self.memory_limit_mb * 1024 * 1024
+                self.max_vms_memory = self.memory_limit_mb * 1024 * 1024
 
         # Nonzero return code is considered a runtime error
         if self.p.returncode != 0 and status == Status.OK:
