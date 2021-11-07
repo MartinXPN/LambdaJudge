@@ -1,13 +1,12 @@
 import gzip
-import json
 from pathlib import Path
 from typing import Optional, List, Dict
 
 import boto3
 
 from checkers import Checker
-from coderunners import CodeRunner
-from models import Status, SubmissionResult, TestCase, CodeRunRequest, TestResult
+from coderunners import CodeRunner, CodeRunRequest
+from models import Status, SubmissionResult, TestCase, RunResult
 
 ROOT = Path('/tmp/')
 s3 = boto3.resource('s3')
@@ -30,21 +29,20 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
     assert len(test_inputs) == len(test_targets)
 
     coderunner = CodeRunner.from_language(language=language)
-    res = aws_lambda.invoke(FunctionName=coderunner.name, Payload=CodeRunRequest(
-        code=code, language=language, memory_limit=memory_limit, time_limit=time_limit,
-        test_inputs=test_inputs
-    ).to_json())['Payload'].read().decode('utf-8')
-    print('res:', res)
-    res = json.loads(res)
+    res = coderunner.invoke(aws_lambda, request=CodeRunRequest(
+        code=code, language=language,
+        memory_limit=memory_limit, time_limit=time_limit,
+        program_inputs=test_inputs
+    ))
 
-    compilation: TestResult = TestResult.from_json(res['compilation'])
+    compilation: RunResult = RunResult.from_json(res['compilation'])
     print('Compilation:', compilation)
     if compilation.status != Status.OK:
         return SubmissionResult(status=compilation.status,
                                 memory=compilation.memory, time=compilation.time, score=0,
                                 compile_outputs=compilation.outputs)
 
-    test_results: List[TestResult] = TestResult.schema().loads(res['results'], many=True)
+    test_results: List[RunResult] = RunResult.schema().loads(res['results'], many=True)
     print('test_results:', test_results)
     checker = Checker.from_mode(comparison_mode, float_precision=float_precision, delimiter=delimiter)
 

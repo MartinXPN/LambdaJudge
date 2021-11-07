@@ -35,7 +35,7 @@ class CodeRunRequest:
     language: str
     memory_limit: int = 512
     time_limit: int = 5
-    test_inputs: List[str] = field(default_factory=list)
+    program_inputs: List[str] = field(default_factory=list)
 
     def __post_init__(self):
         self.language = self.language.lower()
@@ -43,7 +43,7 @@ class CodeRunRequest:
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
-class TestResult:
+class RunResult:
     status: Status
     memory: float
     time: float

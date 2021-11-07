@@ -1,4 +1,4 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
 from typing import Optional, List, Union, Dict
 
@@ -63,18 +63,7 @@ class SubmissionResult:
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
-class CodeRunRequest:
-    # Code is a mapping from filename.extension -> content (Http requests have 2MB limit)
-    code: Dict[str, str]
-    language: str
-    memory_limit: int = 512
-    time_limit: int = 5
-    test_inputs: List[str] = field(default_factory=list)
-
-
-@dataclass_json(letter_case=LetterCase.CAMEL)
-@dataclass
-class TestResult:
+class RunResult:
     status: Status
     memory: float
     time: float

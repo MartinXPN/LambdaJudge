@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 
-from models import Status, TestResult
+from models import Status, RunResult
 from process import Process
 
 
@@ -12,10 +12,10 @@ class CodeRunner:
     time_limit: float
     memory_limit_mb: int
 
-    def run(self, test_input) -> TestResult:
+    def run(self, program_input) -> RunResult:
         with NamedTemporaryFile('w+') as tmp:
             print(f'Saving the input to {tmp.name}')
-            tmp.write(test_input)
+            tmp.write(program_input)
             tmp.seek(0)
 
             res = Process(f'cat {tmp.name} | {self.executable_path}',
@@ -26,4 +26,4 @@ class CodeRunner:
             print('Errs:', res.errors)
             print('Return code:', res.return_code)
 
-        return TestResult(status=res.status, memory=res.max_rss, time=res.total_time, outputs=res.outputs)
+        return RunResult(status=res.status, memory=res.max_rss, time=res.total_time, outputs=res.outputs)

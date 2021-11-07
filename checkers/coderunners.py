@@ -1,4 +1,19 @@
-from dataclasses import dataclass
+import json
+from dataclasses import dataclass, field
+from typing import List, Dict
+
+from dataclasses_json import dataclass_json, LetterCase
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL)
+@dataclass
+class CodeRunRequest:
+    # Code is a mapping from filename.extension -> content (Http requests have 2MB limit)
+    code: Dict[str, str]
+    language: str
+    memory_limit: int = 512
+    time_limit: int = 5
+    program_inputs: List[str] = field(default_factory=list)
 
 
 class CodeRunner:
@@ -15,6 +30,13 @@ class CodeRunner:
         if language in PythonRunner.supported_standards:
             return PythonRunner()
         raise ValueError(f'{language} does not have a compiler yet')
+
+    def invoke(self, aws_lambda_client, request: CodeRunRequest):
+        res = aws_lambda_client.invoke(FunctionName=self.name, Payload=request.to_json())['Payload']
+        res = res.read().decode('utf-8')
+        print('invocation result:', res)
+        res = json.loads(res)
+        return res
 
 
 @dataclass

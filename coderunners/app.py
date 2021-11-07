@@ -1,6 +1,6 @@
 import pickle
 
-from models import CodeRunRequest, TestResult
+from models import CodeRunRequest, RunResult
 from services import run_code
 
 
@@ -13,8 +13,8 @@ def run_code_lambda(event, context):
     request = CodeRunRequest.from_dict(event)
     print('ALl the params:', request)
 
-    compile_res, test_results = run_code(**request.__dict__)
+    compile_res, run_results = run_code(**request.__dict__)
     return {
         'compilation': compile_res.to_json() if compile_res else None,
-        'results': TestResult.schema().dumps(test_results, many=True) if test_results else None,
+        'results': RunResult.schema().dumps(run_results, many=True) if run_results else None,
     }
