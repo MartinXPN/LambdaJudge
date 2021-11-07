@@ -37,7 +37,12 @@ def run_code(code: Dict[str, str], language: str, memory_limit: int, time_limit:
     compile_res = TestResult(status=Status.OK, memory=compile_res.max_rss, time=compile_res.total_time,
                              outputs=compile_res.outputs)
     code_runner = CodeRunner(executable_path=executable_path, time_limit=time_limit, memory_limit_mb=memory_limit)
-    test_results = [code_runner.run(test_input) for test_input in test_inputs]
+    test_results = []
+    for test_input in test_inputs:
+        res = code_runner.run(test_input)
+        test_results.append(res)
+        if res.status != Status.OK:
+            break
     print('Test results:', test_results)
 
     return compile_res, test_results

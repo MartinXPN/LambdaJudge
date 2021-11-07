@@ -27,6 +27,7 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
 
     test_inputs = [t.input for t in test_cases]
     test_targets = [t.target for t in test_cases]
+    assert len(test_inputs) == len(test_targets)
 
     coderunner = CodeRunner.from_language(language=language)
     res = aws_lambda.invoke(FunctionName=coderunner.name, Payload=CodeRunRequest(
@@ -46,7 +47,7 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
     test_results: List[TestResult] = TestResult.schema().loads(res['results'], many=True)
     print('test_results:', test_results)
     checker = Checker.from_mode(comparison_mode, float_precision=float_precision, delimiter=delimiter)
-    assert len(test_inputs) == len(test_targets) == len(test_results)
+
     for i, t, r in zip(test_inputs, test_targets, test_results):
         if r.status == Status.OK and not checker.is_correct(inputs=t, output=r.outputs, target=t):
             r.status = Status.WA
@@ -58,7 +59,7 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
     max_memory = max(t.memory for t in test_results)
     max_time = max(t.time for t in test_results)
     return SubmissionResult(
-        status=status if aggregate_results else [t.status for t in test_results] ,
+        status=status if aggregate_results else [t.status for t in test_results],
         memory=max_memory if aggregate_results else [t.memory for t in test_results],
         time=max_time if aggregate_results else [t.time for t in test_results],
         score=100 * nb_success / len(test_inputs),
