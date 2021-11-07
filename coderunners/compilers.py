@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple
 
-from models import Stats, Status
+from models import Stats
 from process import Process
 
 
@@ -43,7 +43,12 @@ class PythonCompiler(Compiler):
     supported_standards = {'python', 'python3'}
 
     def compile(self, submission_path: Path):
+        binary_path = submission_path.with_suffix('.pyc')
+        print('Creating python binary at:', binary_path)
+        compile_res = Process(f'{self.language_standard} -m py_compile {submission_path}',
+                              timeout=30,
+                              memory_limit_mb=512).run()
+
+        binary_path.unlink(missing_ok=True)
         executable_path = f'{self.language_standard} {submission_path}'
-        print(f'Evaluating python submission with: `{executable_path}`')
-        return executable_path, Stats(max_rss=0, max_vms=0, total_time=0, return_code=0,
-                                      outputs='', errors='', status=Status.OK)
+        return executable_path, compile_res
