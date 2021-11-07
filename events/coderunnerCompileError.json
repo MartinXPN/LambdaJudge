@@ -1,0 +1,9 @@
+{
+  "code": {
+    "main.py": " print('Hi, I am starting to learn Machine Learning!')"
+  },
+  "testInputs": ["arbabik"],
+  "language": "python",
+  "timeLimit": 5,
+  "memory_limit": 64
+}
