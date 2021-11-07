@@ -38,8 +38,8 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
 
     compilation: TestResult = TestResult.from_json(res['compilation'])
     print('Compilation:', compilation)
-    if compilation.status == Status.COMPILATION_ERROR:
-        return SubmissionResult(status=Status.COMPILATION_ERROR,
+    if compilation.status != Status.OK:
+        return SubmissionResult(status=compilation.status,
                                 memory=compilation.memory, time=compilation.time, score=0,
                                 compile_outputs=compilation.outputs)
 
