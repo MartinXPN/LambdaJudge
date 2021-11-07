@@ -12,6 +12,8 @@ class Status(Enum):
     MLE = 'Memory limit exceeded'
     RUNTIME_ERROR = 'Runtime error'
     COMPILATION_ERROR = 'Compilation error'
+    COMPILATION_TLE = 'Compilation time limit exceeded'
+    COMPILATION_MLE = 'Compilation memory limit exceeded'
 
 
 @dataclass
