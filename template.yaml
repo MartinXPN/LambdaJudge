@@ -99,6 +99,9 @@ Resources:
       CodeUri: coderunners/
       Handler: app.run_code_lambda
       Role: !GetAtt ContestantRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - subnet-06c3260a22cb3f755
 
   CodeRunnerCpp:
     Type: AWS::Serverless::Function
@@ -107,6 +110,9 @@ Resources:
       CodeUri: coderunners/
       Handler: app.run_code_lambda
       Role: !GetAtt ContestantRole.Arn
+      VpcConfig:
+        SubnetIds:
+          - subnet-02ad586fd2ffa8dfb
       Layers:
         - !Ref GCCLayer
 
