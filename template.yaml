@@ -67,6 +67,17 @@ Resources:
                   - 'logs:CreateLogStream'
                   - 'logs:PutLogEvents'
                 Resource: '*'
+        - PolicyName: ContestantNetworkPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ec2:CreateNetworkInterface'
+                  - 'ec2:DeleteNetworkInterface'
+                  - 'ec2:DescribeNetworkInterfaces'
+                  - 'ec2:DetachNetworkInterface'
+                Resource: '*'
 
 
   EqualityChecker:
@@ -99,6 +110,11 @@ Resources:
       CodeUri: coderunners/
       Handler: app.run_code_lambda
       Role: !GetAtt ContestantRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - sg-0cad05170fc6eaf5a
+        SubnetIds:
+          - subnet-06c3260a22cb3f755
 
   CodeRunnerCpp:
     Type: AWS::Serverless::Function
@@ -107,6 +123,11 @@ Resources:
       CodeUri: coderunners/
       Handler: app.run_code_lambda
       Role: !GetAtt ContestantRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - sg-0cad05170fc6eaf5a
+        SubnetIds:
+          - subnet-06c3260a22cb3f755
       Layers:
         - !Ref GCCLayer
 
