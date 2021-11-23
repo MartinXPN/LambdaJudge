@@ -1,5 +1,4 @@
 import gzip
-from pathlib import Path
 from typing import Optional, List, Dict
 
 import boto3
@@ -8,7 +7,6 @@ from checkers import Checker
 from coderunners import CodeRunner, CodeRunRequest
 from models import Status, SubmissionResult, TestCase, RunResult
 
-ROOT = Path('/tmp/')
 s3 = boto3.resource('s3')
 aws_lambda = boto3.client('lambda')
 
@@ -19,7 +17,6 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
                    comparison_mode: str, float_precision: float, delimiter: Optional[str]) -> SubmissionResult:
     print('checking...:', locals())
     if problem:
-        save_path = ROOT / f'{problem}.gz'
         gzipped_tests = s3.Object('lambda-judge-bucket', f'problems/{problem}.gz').get()['Body'].read()
         json_tests = gzip.decompress(gzipped_tests).decode('utf-8')
         test_cases = TestCase.schema().loads(json_tests, many=True)
