@@ -37,7 +37,7 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
     if compilation.status != Status.OK:
         return SubmissionResult(status=compilation.status,
                                 memory=compilation.memory, time=compilation.time, score=0,
-                                compile_outputs=compilation.outputs)
+                                compile_outputs=(compilation.outputs or '') + '\n' + (compilation.errors or ''))
 
     test_results: List[RunResult] = RunResult.schema().loads(res['results'], many=True)
     print('test_results:', test_results)
@@ -58,5 +58,5 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
         memory=max_memory if aggregate_results else [t.memory for t in test_results],
         time=max_time if aggregate_results else [t.time for t in test_results],
         score=100 * nb_success / len(test_inputs),
-        outputs=[t.outputs for t in test_results] if return_outputs else None,
+        outputs=[(t.outputs or '') + '\n' + (t.errors or '') for t in test_results] if return_outputs else None,
         compile_outputs=compilation.outputs if return_compile_outputs else None)
