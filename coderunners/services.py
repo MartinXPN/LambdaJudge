@@ -32,7 +32,7 @@ def run_code(code: Dict[str, str], language: str, memory_limit: int, time_limit:
     if compile_res.errors:
         print('Compile error:', compile_res)
         return RunResult(status=Status.COMPILATION_ERROR, memory=compile_res.max_rss, time=0,
-                         outputs=compile_res.outputs + compile_res.errors), None
+                         outputs=compile_res.outputs, errors=compile_res.errors), None
 
     compile_res = RunResult(status=Status.OK, memory=compile_res.max_rss, time=compile_res.total_time,
                             outputs=compile_res.outputs)
