@@ -43,8 +43,6 @@ class Process:
                 time.sleep(self.timeout / 100)
 
             outs, errs = self.p.communicate(timeout=self.timeout / 100)
-            if outs is not None: outs = outs.decode('utf-8')
-            if errs is not None: errs = errs.decode('utf-8')
 
         except subprocess.TimeoutExpired:
             status = Status.TLE
@@ -54,6 +52,13 @@ class Process:
             print(e)
             status = Status.RUNTIME_ERROR
         finally:
+            # Collect the outputs in case an exception occurred
+            if outs is None and errs is None:
+                outs, errs = self.p.stdout, self.p.stderr
+
+            if outs is not None: outs = outs.decode('utf-8')
+            if errs is not None: errs = errs.decode('utf-8')
+
             # make sure that we don't leave the process dangling?
             self.close(kill=True)
             if errs and errs.strip().endswith('MemoryError'):

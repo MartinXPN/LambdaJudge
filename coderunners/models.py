@@ -48,3 +48,4 @@ class RunResult:
     memory: float
     time: float
     outputs: Optional[str] = None
+    errors: Optional[str] = None

@@ -26,4 +26,5 @@ class CodeRunner:
             print('Errs:', res.errors)
             print('Return code:', res.return_code)
 
-        return RunResult(status=res.status, memory=res.max_rss, time=res.total_time, outputs=res.outputs)
+        return RunResult(status=res.status, memory=res.max_rss, time=res.total_time,
+                         outputs=res.outputs, errors=res.errors)
