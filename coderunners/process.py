@@ -54,7 +54,7 @@ class Process:
         finally:
             # Collect the outputs in case an exception occurred
             if outs is None and errs is None:
-                outs, errs = self.p.stdout, self.p.stderr
+                outs, errs = self.p.stdout.read(), self.p.stderr.read()
 
             if outs is not None: outs = outs.decode('utf-8')
             if errs is not None: errs = errs.decode('utf-8')
