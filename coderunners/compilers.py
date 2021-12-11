@@ -30,7 +30,9 @@ class CppCompiler(Compiler):
     def compile(self, submission_path: Path):
         executable_path = submission_path.with_suffix('.o')
         print('Creating executable at:', executable_path)
-        compile_res = Process(f'g++ -std={self.language_standard} {submission_path} -o {executable_path}',
+        compile_res = Process(f'g++ -O3 -Wno-write-strings '
+                              f'-std={self.language_standard} {submission_path} '
+                              f'-o {executable_path}',
                               timeout=30,
                               memory_limit_mb=512).run()
 
