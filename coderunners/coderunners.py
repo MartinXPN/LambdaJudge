@@ -12,9 +12,7 @@ class CodeRunner:
     memory_limit_mb: int
 
     def run(self, program_input: str) -> RunResult:
-        # For some weird reason the memory limit is only properly handled with echo "" | .
-        # Otherwise the program returns a negative status code
-        proc = Process(f'echo ""|{self.executable_path}', timeout=self.time_limit, memory_limit_mb=self.memory_limit_mb)
+        proc = Process(f'{self.executable_path}', timeout=self.time_limit, memory_limit_mb=self.memory_limit_mb)
         res = proc.run(program_input)
 
         if (not res.outputs and res.errors) or res.status != Status.OK:

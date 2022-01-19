@@ -44,7 +44,7 @@ class Process:
 
         self.p = subprocess.Popen(
             self.command, shell=True,
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, universal_newlines=True,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
             preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit),
         )
         self.execution_state = True
@@ -55,6 +55,7 @@ class Process:
             self.execute()
             if program_input:
                 self.p.stdin.write(program_input)
+                self.p.stdin.flush()
 
             # poll as often as possible; otherwise the subprocess might
             # "sneak" in some extra memory usage while you aren't looking

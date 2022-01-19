@@ -4,6 +4,6 @@
   },
   "programInputs": ["nothing"],
   "language": "python",
-  "timeLimit": 5,
+  "timeLimit": 15,
   "memory_limit": 64
 }
