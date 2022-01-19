@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple
 
-from models import Stats, Status
+from models import Stats
 from process import Process
 
 
@@ -33,11 +33,9 @@ class CppCompiler(Compiler):
         compile_res = Process(f'g++ -O3 -Wno-write-strings '
                               f'-std={self.language_standard} {submission_path} '
                               f'-o {executable_path}',
-                              timeout=30,
+                              timeout=10,
                               memory_limit_mb=512).run()
 
-        if compile_res.status == Status.TLE:    compile_res.status = Status.COMPILATION_TLE
-        if compile_res.status == Status.MLE:    compile_res.status = Status.COMPILATION_MLE
         print('Compile res', compile_res)
         return executable_path, compile_res
 
@@ -51,11 +49,9 @@ class PythonCompiler(Compiler):
         binary_path = submission_path.with_suffix('.pyc')
         print('Creating python binary at:', binary_path)
         compile_res = Process(f'{self.language_standard} -m py_compile {submission_path}',
-                              timeout=30,
+                              timeout=10,
                               memory_limit_mb=512).run()
 
-        if compile_res.status == Status.TLE:    compile_res.status = Status.COMPILATION_TLE
-        if compile_res.status == Status.MLE:    compile_res.status = Status.COMPILATION_MLE
         print('Compilation res', compile_res)
         binary_path.unlink(missing_ok=True)
         executable_path = f'{self.language_standard} {submission_path}'

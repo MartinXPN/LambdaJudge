@@ -12,8 +12,6 @@ class Status(Enum):
     MLE = 'Memory limit exceeded'
     RUNTIME_ERROR = 'Runtime error'
     COMPILATION_ERROR = 'Compilation error'
-    COMPILATION_TLE = 'Compilation time limit exceeded'
-    COMPILATION_MLE = 'Compilation memory limit exceeded'
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
@@ -57,7 +55,9 @@ class SubmissionResult:
     memory: Union[float, List[float]]
     time: Union[float, List[float]]
     score: float
+    message: Optional[str] = None
     outputs: Union[str, List[str], None] = None
+    errors: Union[str, List[str], None] = None
     compile_outputs: Optional[str] = None
 
 

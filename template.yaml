@@ -9,7 +9,6 @@ Description: >
 Globals:
   Function:
     Timeout: 300
-    MemorySize: 600
     Runtime: python3.9
 
 
@@ -84,6 +83,7 @@ Resources:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
       FunctionName: EqualityChecker
+      MemorySize: 256
       CodeUri: checkers/
       Handler: app.equality_checker_lambda
       Role: !GetAtt EqualityCheckerRole.Arn
@@ -107,6 +107,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: CodeRunnerPython
+      MemorySize: 1769
       CodeUri: coderunners/
       Handler: app.run_code_lambda
       Role: !GetAtt ContestantRole.Arn
@@ -120,6 +121,7 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: CodeRunnerCpp
+      MemorySize: 1769
       CodeUri: coderunners/
       Handler: app.run_code_lambda
       Role: !GetAtt ContestantRole.Arn

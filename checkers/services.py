@@ -35,8 +35,13 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
     compilation: RunResult = RunResult.from_json(res['compilation'])
     print('Compilation:', compilation)
     if compilation.status != Status.OK:
-        return SubmissionResult(status=compilation.status,
+        message = None
+        if compilation.status == Status.TLE:    message = 'Compilation time limit exceeded'
+        if compilation.status == Status.MLE:    message = 'Compilation memory limit exceeded'
+
+        return SubmissionResult(status=Status.COMPILATION_ERROR,
                                 memory=compilation.memory, time=compilation.time, score=0,
+                                message=message,
                                 compile_outputs=(compilation.outputs or '') + '\n' + (compilation.errors or ''))
 
     test_results: List[RunResult] = RunResult.schema().loads(res['results'], many=True)
@@ -58,5 +63,6 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
         memory=max_memory if aggregate_results else [t.memory for t in test_results],
         time=max_time if aggregate_results else [t.time for t in test_results],
         score=100 * nb_success / len(test_inputs),
-        outputs=[(t.outputs or '') + '\n' + (t.errors or '') for t in test_results] if return_outputs else None,
+        outputs=[t.outputs or '' for t in test_results] if return_outputs else None,
+        errors=[t.errors or '' for t in test_results] if return_outputs else None,
         compile_outputs=compilation.outputs if return_compile_outputs else None)
