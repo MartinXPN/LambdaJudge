@@ -1,3 +1,4 @@
+import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
@@ -39,7 +40,8 @@ class TokenEquality(Checker):
 
         for o, t in zip(output, target):
             if is_float(o) and is_float(t):
-                if abs(float(o) - float(t)) > self.float_precision:
+                diff = abs(float(o) - float(t))
+                if math.isnan(diff) or diff > self.float_precision:
                     return False
             elif o.strip() != t.strip():
                 return False
