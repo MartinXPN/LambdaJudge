@@ -69,7 +69,7 @@ class Process:
                     status = Status.MLE
                     break
 
-            outs, errs = self.p.communicate(timeout=self.timeout / 100)
+            outs, errs = self.p.communicate(timeout=self.timeout / 10)
 
         except subprocess.TimeoutExpired:
             if self.finish_time - self.start_time > self.timeout:
