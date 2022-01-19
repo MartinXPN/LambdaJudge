@@ -97,10 +97,10 @@ class Process:
 
         if sys.getsizeof(outs) > self.output_limit:
             status = Status.OLE
-            outs = outs[:self.output_limit_mb // 2]
+            outs = outs[:self.output_limit // 2]
         if sys.getsizeof(errs) > self.output_limit:
             status = Status.OLE
-            errs = errs[:self.output_limit_mb // 2]
+            errs = errs[:self.output_limit // 2]
 
         return Stats(max_rss=self.max_rss_memory / 1024 / 1024,
                      max_vms=self.max_vms_memory / 1024 / 1024,
