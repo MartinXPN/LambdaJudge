@@ -69,7 +69,7 @@ class Process:
                     status = Status.MLE
                     break
 
-            outs, errs = self.p.communicate(timeout=self.timeout / 10)
+            outs, errs = self.p.communicate(timeout=self.timeout / 100)
 
         except subprocess.TimeoutExpired:
             if self.finish_time - self.start_time > self.timeout:
@@ -81,9 +81,12 @@ class Process:
             status = Status.RUNTIME_ERROR
 
         finally:
+            # make sure that we don't leave the process dangling?
+            self.close(kill=True)
+
             # Collect the outputs in case an exception occurred
             if outs is None and errs is None:
-                outs, errs = self.p.stdout.read(), self.p.stderr.read()
+                outs, errs = self.p.stdout.read(self.output_limit + 1), self.p.stderr.read(self.output_limit + 1)
 
             if self.p.returncode in {errno.ENOMEM, 137}:            # SIGKILL
                 status = Status.MLE
@@ -91,9 +94,6 @@ class Process:
                 status = Status.RUNTIME_ERROR
             elif self.p.returncode != 0 and status == Status.OK:    # Nonzero return code is considered a runtime error
                 status = Status.RUNTIME_ERROR
-
-            # make sure that we don't leave the process dangling?
-            self.close(kill=True)
 
         if sys.getsizeof(outs) > self.output_limit:
             status = Status.OLE
