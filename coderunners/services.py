@@ -32,11 +32,11 @@ def run_code(code: Dict[str, str], language: str, memory_limit: int, time_limit:
     if compile_res.status != Status.OK or compile_res.errors:
         print('Compile error:', compile_res)
         return RunResult(status=Status.COMPILATION_ERROR if compile_res.status == Status.OK else compile_res.status,
-                         memory=compile_res.max_rss, time=0,
+                         memory=compile_res.max_rss, time=0, return_code=compile_res.return_code,
                          outputs=compile_res.outputs, errors=compile_res.errors), None
 
     compile_res = RunResult(status=Status.OK, memory=compile_res.max_rss, time=compile_res.total_time,
-                            outputs=compile_res.outputs)
+                            return_code=compile_res.return_code, outputs=compile_res.outputs)
     code_runner = CodeRunner(executable_path=executable_path, time_limit=time_limit, memory_limit_mb=memory_limit)
     run_results = []
     for program_input in program_inputs:

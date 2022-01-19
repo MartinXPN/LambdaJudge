@@ -1,3 +1,4 @@
+import errno
 import resource
 import subprocess
 import time
@@ -7,6 +8,17 @@ from typing import Union, Iterable
 import psutil
 
 from models import Stats, Status
+
+
+def limit_resources(max_bytes: int):
+    max_vm_bytes = 1500 * 1024 * 1024
+    hard_limit = min(2 * max_vm_bytes, max_vm_bytes)
+
+    resource.setrlimit(resource.RLIMIT_RSS, (max_bytes, hard_limit))
+    # The rest are commented as they kill the process with exit code 1
+    #   and do not allow to properly handle the memory limit error
+    # resource.setrlimit(resource.RLIMIT_DATA, (max_bytes, max_bytes))
+    # resource.setrlimit(resource.RLIMIT_AS, (hard_limit, hard_limit))
 
 
 @dataclass
@@ -26,10 +38,9 @@ class Process:
         self.max_rss_memory = 0
         self.start_time = time.time()
 
-        memory_bytes = self.memory_limit_mb * 1024 * 1024
         self.p = subprocess.Popen(
-            self.command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
-            preexec_fn=lambda: resource.setrlimit(resource.RLIMIT_AS, (memory_bytes, memory_bytes))
+            self.command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+            preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit_mb * 1024 * 1024),
         )
         self.execution_state = True
 
@@ -51,25 +62,21 @@ class Process:
         except Exception as e:
             print(e)
             status = Status.RUNTIME_ERROR
+
         finally:
             # Collect the outputs in case an exception occurred
             if outs is None and errs is None:
                 outs, errs = self.p.stdout.read(), self.p.stderr.read()
 
-            if outs is not None: outs = outs.decode('utf-8')
-            if errs is not None: errs = errs.decode('utf-8')
+            if self.p.returncode in {errno.ENOMEM, 137}:            # SIGKILL
+                status = Status.MLE
+            elif self.p.returncode in {139, 143}:                   # SIGSEGV, SIGTERM
+                status = Status.RUNTIME_ERROR
+            elif self.p.returncode != 0 and status == Status.OK:    # Nonzero return code is considered a runtime error
+                status = Status.RUNTIME_ERROR
 
             # make sure that we don't leave the process dangling?
             self.close(kill=True)
-            if errs and errs.strip().endswith('MemoryError'):
-                print('memory error:', self.max_rss_memory, self.max_vms_memory)
-                status = Status.MLE
-                self.max_rss_memory = self.memory_limit_mb * 1024 * 1024
-                self.max_vms_memory = self.memory_limit_mb * 1024 * 1024
-
-        # Nonzero return code is considered a runtime error
-        if self.p.returncode != 0 and status == Status.OK:
-            status = Status.RUNTIME_ERROR
 
         return Stats(max_rss=self.max_rss_memory / 1024 / 1024,
                      max_vms=self.max_vms_memory / 1024 / 1024,
@@ -136,6 +143,5 @@ class Process:
 
 
 if __name__ == '__main__':
-    proc = Process(['sleep 7'], timeout=5, memory_limit_mb=512)
-    res = proc.run()
+    res = Process('sleep 7', timeout=5, memory_limit_mb=512).run()
     print(res)

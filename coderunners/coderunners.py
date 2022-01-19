@@ -23,8 +23,9 @@ class CodeRunner:
                           memory_limit_mb=self.memory_limit_mb).run()
 
         if (not res.outputs and res.errors) or res.status != Status.OK:
-            print('Errs:', res.errors)
-            print('Return code:', res.return_code)
+            print(f'Errs: {res.errors}')
+            print(f'Return code: {res.return_code}, status: {res.status}')
 
         return RunResult(status=res.status, memory=res.max_rss, time=res.total_time,
+                         return_code=res.return_code,
                          outputs=res.outputs, errors=res.errors)

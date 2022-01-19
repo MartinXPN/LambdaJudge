@@ -67,5 +67,6 @@ class RunResult:
     status: Status
     memory: float
     time: float
+    return_code: int
     outputs: Optional[str] = None
     errors: Optional[str] = None
