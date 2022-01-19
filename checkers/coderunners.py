@@ -13,6 +13,7 @@ class CodeRunRequest:
     language: str
     memory_limit: int = 512
     time_limit: int = 5
+    output_limit: float = 1
     program_inputs: List[str] = field(default_factory=list)
 
 

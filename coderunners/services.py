@@ -20,7 +20,7 @@ def save_code(save_dir: Path, code: Dict[str, str]) -> List[Path]:
     return saved_paths
 
 
-def run_code(code: Dict[str, str], language: str, memory_limit: int, time_limit: int,
+def run_code(code: Dict[str, str], language: str, memory_limit: int, time_limit: int, output_limit: float,
              program_inputs: List[str]) -> Tuple[RunResult, Optional[List[RunResult]]]:
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
     submission_path = save_code(save_dir=ROOT, code=code)[0]        # Currently we only support single-file submissions
@@ -37,7 +37,8 @@ def run_code(code: Dict[str, str], language: str, memory_limit: int, time_limit:
 
     compile_res = RunResult(status=Status.OK, memory=compile_res.max_rss, time=compile_res.total_time,
                             return_code=compile_res.return_code, outputs=compile_res.outputs)
-    code_runner = CodeRunner(executable_path=executable_path, time_limit=time_limit, memory_limit_mb=memory_limit)
+    code_runner = CodeRunner(executable_path=executable_path,
+                             time_limit=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit)
     run_results = []
     for program_input in program_inputs:
         res = code_runner.run(program_input)

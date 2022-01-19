@@ -10,10 +10,13 @@ class CodeRunner:
     executable_path: Path
     time_limit: float
     memory_limit_mb: int
+    output_limit_mb: float
 
     def run(self, program_input: str) -> RunResult:
-        proc = Process(f'{self.executable_path}', timeout=self.time_limit, memory_limit_mb=self.memory_limit_mb)
-        res = proc.run(program_input)
+        res = Process(
+            f'{self.executable_path}',
+            timeout=self.time_limit, memory_limit_mb=self.memory_limit_mb, output_limit_mb=self.output_limit_mb
+        ).run(program_input)
 
         if (not res.outputs and res.errors) or res.status != Status.OK:
             print(f'Errs: {res.errors}')

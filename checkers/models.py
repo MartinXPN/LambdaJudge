@@ -10,6 +10,7 @@ class Status(Enum):
     WA = 'Wrong answer'
     TLE = 'Time limit exceeded'
     MLE = 'Memory limit exceeded'
+    OLE = 'Output limit exceeded'
     RUNTIME_ERROR = 'Runtime error'
     COMPILATION_ERROR = 'Compilation error'
 
@@ -27,8 +28,9 @@ class SubmissionRequest:
     # Code is a mapping from filename.extension -> content (Http requests have 2MB limit)
     code: Dict[str, str]
     language: str
-    memory_limit: int = 512
-    time_limit: int = 5
+    memory_limit: int = 512     # MB
+    time_limit: int = 5         # seconds
+    output_limit: float = 1     # MB
 
     # Provide either problem (which is used to find the test cases in the s3 bucket)
     # Or provide the test cases as a list of TestCases directly

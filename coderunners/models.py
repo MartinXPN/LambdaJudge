@@ -10,6 +10,7 @@ class Status(Enum):
     WA = 'Wrong answer'
     TLE = 'Time limit exceeded'
     MLE = 'Memory limit exceeded'
+    OLE = 'Output limit exceeded'
     RUNTIME_ERROR = 'Runtime error'
     COMPILATION_ERROR = 'Compilation error'
 
@@ -33,6 +34,7 @@ class CodeRunRequest:
     language: str
     memory_limit: int = 512
     time_limit: int = 5
+    output_limit: float = 1
     program_inputs: List[str] = field(default_factory=list)
 
     def __post_init__(self):

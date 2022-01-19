@@ -1,6 +1,7 @@
 import errno
 import resource
 import subprocess
+import sys
 import time
 from dataclasses import dataclass, field
 from typing import Union, Iterable, Optional
@@ -11,7 +12,7 @@ from models import Stats, Status
 
 
 def limit_resources(max_bytes: int):
-    max_vm_bytes = 1500 * 1024 * 1024
+    max_vm_bytes = 1500 * 1024 * 1024  # 1500 MB
     hard_limit = min(2 * max_vm_bytes, max_vm_bytes)
 
     resource.setrlimit(resource.RLIMIT_RSS, (max_bytes, hard_limit))
@@ -26,6 +27,7 @@ class Process:
     command: Union[str, Iterable[str]]
     timeout: float
     memory_limit_mb: int
+    output_limit_mb: float = 1
     p: subprocess.Popen = None
     execution_state: bool = False
     max_vms_memory: float = 0
@@ -33,9 +35,11 @@ class Process:
     start_time: float = time.time()
     finish_time: float = time.time()
     memory_limit: int = field(init=False)
+    output_limit: int = field(init=False)
 
     def __post_init__(self):
         self.memory_limit = self.memory_limit_mb * 1024 * 1024
+        self.output_limit = int(self.output_limit_mb * 1024 * 1024)
 
     def execute(self):
         self.max_vms_memory = 0
@@ -90,6 +94,13 @@ class Process:
 
             # make sure that we don't leave the process dangling?
             self.close(kill=True)
+
+        if sys.getsizeof(outs) > self.output_limit:
+            status = Status.OLE
+            outs = outs[:self.output_limit_mb // 2]
+        if sys.getsizeof(errs) > self.output_limit:
+            status = Status.OLE
+            errs = errs[:self.output_limit_mb // 2]
 
         return Stats(max_rss=self.max_rss_memory / 1024 / 1024,
                      max_vms=self.max_vms_memory / 1024 / 1024,

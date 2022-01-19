@@ -11,7 +11,7 @@ s3 = boto3.resource('s3')
 aws_lambda = boto3.client('lambda')
 
 
-def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_limit: int,
+def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_limit: int, output_limit: float,
                    problem: Optional[str], test_cases: Optional[List[TestCase]],
                    aggregate_results: bool, return_outputs: bool, return_compile_outputs: bool,
                    comparison_mode: str, float_precision: float, delimiter: Optional[str]) -> SubmissionResult:
@@ -28,7 +28,7 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
     coderunner = CodeRunner.from_language(language=language)
     res = coderunner.invoke(aws_lambda, request=CodeRunRequest(
         code=code, language=language,
-        memory_limit=memory_limit, time_limit=time_limit,
+        memory_limit=memory_limit, time_limit=time_limit, output_limit=output_limit,
         program_inputs=test_inputs
     ))
 
