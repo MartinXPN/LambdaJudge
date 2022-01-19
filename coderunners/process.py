@@ -2,7 +2,7 @@ import errno
 import resource
 import subprocess
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Union, Iterable, Optional
 
 import psutil
@@ -32,6 +32,10 @@ class Process:
     max_rss_memory: float = 0
     start_time: float = time.time()
     finish_time: float = time.time()
+    memory_limit: int = field(init=False)
+
+    def __post_init__(self):
+        self.memory_limit = self.memory_limit_mb * 1024 * 1024
 
     def execute(self):
         self.max_vms_memory = 0
@@ -41,7 +45,7 @@ class Process:
         self.p = subprocess.Popen(
             self.command, shell=True,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, universal_newlines=True,
-            preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit_mb * 1024 * 1024),
+            preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit),
         )
         self.execution_state = True
 
@@ -55,12 +59,16 @@ class Process:
             # poll as often as possible; otherwise the subprocess might
             # "sneak" in some extra memory usage while you aren't looking
             while self.finish_time - self.start_time < self.timeout and self.poll():
-                time.sleep(self.timeout / 100)
+                time.sleep(self.timeout / 500)
+                if self.max_rss_memory > self.memory_limit:
+                    status = Status.MLE
+                    break
 
             outs, errs = self.p.communicate(timeout=self.timeout / 100)
 
         except subprocess.TimeoutExpired:
-            status = Status.TLE
+            if self.finish_time - self.start_time > self.timeout:
+                status = Status.TLE
         except MemoryError:
             status = Status.MLE
         except Exception as e:
@@ -85,7 +93,7 @@ class Process:
         return Stats(max_rss=self.max_rss_memory / 1024 / 1024,
                      max_vms=self.max_vms_memory / 1024 / 1024,
                      total_time=self.finish_time - self.start_time,
-                     return_code=self.p.returncode,
+                     return_code=self.p.returncode or 0,
                      outputs=outs, errors=errs, status=status)
 
     def poll(self):
