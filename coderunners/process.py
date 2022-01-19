@@ -3,7 +3,7 @@ import resource
 import subprocess
 import time
 from dataclasses import dataclass
-from typing import Union, Iterable
+from typing import Union, Iterable, Optional
 
 import psutil
 
@@ -39,15 +39,19 @@ class Process:
         self.start_time = time.time()
 
         self.p = subprocess.Popen(
-            self.command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+            self.command, shell=True,
+            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, universal_newlines=True,
             preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit_mb * 1024 * 1024),
         )
         self.execution_state = True
 
-    def run(self) -> Stats:
+    def run(self, program_input: Optional[str] = None) -> Stats:
         outs, errs, status = None, None, Status.OK
         try:
             self.execute()
+            if program_input:
+                self.p.stdin.write(program_input)
+
             # poll as often as possible; otherwise the subprocess might
             # "sneak" in some extra memory usage while you aren't looking
             while self.finish_time - self.start_time < self.timeout and self.poll():
