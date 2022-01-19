@@ -72,6 +72,8 @@ class Process:
             outs, errs = self.p.communicate(timeout=self.timeout / 100)
 
         except subprocess.TimeoutExpired:
+            self.p.kill()
+            outs, errs = self.p.communicate()
             if self.finish_time - self.start_time > self.timeout:
                 status = Status.TLE
         except MemoryError:
