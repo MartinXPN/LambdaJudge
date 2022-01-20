@@ -44,6 +44,8 @@ class SubmissionRequest:
     float_precision: float = 1e-5     # Floating point precision
     delimiter: Optional[str] = None
 
+    callback_url: Optional[str] = None  # Where to send the results when they're ready
+
     def __post_init__(self):
         self.language = self.language.lower()
         assert self.problem is not None and self.test_cases is None or \

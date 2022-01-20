@@ -2,6 +2,7 @@ import gzip
 from typing import Optional, List, Dict
 
 import boto3
+import requests as requests
 
 from checkers import Checker
 from coderunners import CodeRunner, CodeRunRequest
@@ -14,7 +15,8 @@ aws_lambda = boto3.client('lambda')
 def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_limit: int, output_limit: float,
                    problem: Optional[str], test_cases: Optional[List[TestCase]],
                    aggregate_results: bool, return_outputs: bool, return_compile_outputs: bool,
-                   comparison_mode: str, float_precision: float, delimiter: Optional[str]) -> SubmissionResult:
+                   comparison_mode: str, float_precision: float, delimiter: Optional[str],
+                   callback_url: Optional[str]) -> SubmissionResult:
     print('checking...:', locals())
     if problem:
         gzipped_tests = s3.Object('lambda-judge-bucket', f'problems/{problem}.gz').get()['Body'].read()
@@ -58,11 +60,19 @@ def check_equality(code: Dict[str, str], language: str, memory_limit: int, time_
     nb_success = sum(t.status == Status.OK for t in test_results)
     max_memory = max(t.memory for t in test_results)
     max_time = max(t.time for t in test_results)
-    return SubmissionResult(
+
+    res = SubmissionResult(
         status=status if aggregate_results else [t.status for t in test_results],
         memory=max_memory if aggregate_results else [t.memory for t in test_results],
         time=max_time if aggregate_results else [t.time for t in test_results],
         score=100 * nb_success / len(test_inputs),
         outputs=[t.outputs or '' for t in test_results] if return_outputs else None,
         errors=[t.errors or '' for t in test_results] if return_outputs else None,
-        compile_outputs=compilation.outputs if return_compile_outputs else None)
+        compile_outputs=compilation.outputs if return_compile_outputs else None
+    )
+    if callback_url is not None:
+        print('Sending results to the callback url...')
+        print(res.to_dict())
+        r = requests.post(callback_url, data=res.to_dict())
+        print('callback:', r.status_code, r.reason)
+    return res
