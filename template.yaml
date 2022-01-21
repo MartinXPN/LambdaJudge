@@ -16,7 +16,7 @@ Resources:
     Type: 'AWS::IAM::Role'
     Properties:
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
@@ -27,7 +27,7 @@ Resources:
       Policies:
         - PolicyName: EqualityCheckerPolicy
           PolicyDocument:
-            Version: "2012-10-17"
+            Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
@@ -46,7 +46,7 @@ Resources:
     Type: 'AWS::IAM::Role'
     Properties:
       AssumeRolePolicyDocument:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Principal:
@@ -57,7 +57,7 @@ Resources:
       Policies:
         - PolicyName: ContestantLogPolicy
           PolicyDocument:
-            Version: "2012-10-17"
+            Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
@@ -67,7 +67,7 @@ Resources:
                 Resource: '*'
         - PolicyName: ContestantNetworkPolicy
           PolicyDocument:
-            Version: "2012-10-17"
+            Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
@@ -78,7 +78,7 @@ Resources:
                 Resource: '*'
         - PolicyName: ContestantElasticFileSystemPolicy
           PolicyDocument:
-            Version: "2012-10-17"
+            Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
@@ -102,24 +102,27 @@ Resources:
     Properties:
       CidrBlock: 192.168.0.0/28
       VpcId: !Ref CodeRunnerVPC
-      AvailabilityZone: "us-east-1a"
+      AvailabilityZone: 'us-east-1a'
 
   FileSystemResource:
     Type: 'AWS::EFS::FileSystem'
     Properties:
       PerformanceMode: generalPurpose  # generalPurpose | maxIO
       Encrypted: true
+      BackupPolicy:
+        Status: ENABLED
       FileSystemTags:
         - Key: Name
           Value: JudgeFS
       FileSystemPolicy:
-        Version: "2012-10-17"
+        Version: '2012-10-17'
         Statement:
-          - Effect: "Allow"
+          - Effect: 'Allow'
             Action:
-              - "elasticfilesystem:ClientMount"
+              - 'elasticfilesystem:ClientMount'
+              - 'elasticfilesystem:ClientWrite'
             Principal:
-              AWS: "*"
+              AWS: '*'
 
   CodeRunnerMountTarget:
     Type: AWS::EFS::MountTarget
@@ -134,14 +137,14 @@ Resources:
     Properties:
       FileSystemId: !Ref FileSystemResource
       PosixUser:
-        Uid: "1000"
-        Gid: "1000"
+        Uid: '1000'
+        Gid: '1000'
       RootDirectory:
         CreationInfo:
-          OwnerGid: "1000"
-          OwnerUid: "1000"
-          Permissions: "0777"
-        Path: "/mnt/efs"
+          OwnerGid: '1000'
+          OwnerUid: '1000'
+          Permissions: '0777'
+        Path: '/mnt/efs'
 
 
   # Lambda Functions
@@ -175,7 +178,7 @@ Resources:
           - !Ref CodeRunnerSubnet
       FileSystemConfigs:
         - Arn: !GetAtt AccessPointResource.Arn
-          LocalMountPath: "/mnt/efs"
+          LocalMountPath: '/mnt/efs'
 
   GCCLayer:
     Type: AWS::Serverless::LayerVersion
@@ -201,7 +204,7 @@ Resources:
           - !Ref CodeRunnerSubnet
       FileSystemConfigs:
         - Arn: !GetAtt AccessPointResource.Arn
-          LocalMountPath: "/mnt/efs"
+          LocalMountPath: '/mnt/efs'
       Layers:
         - !Ref GCCLayer
 
@@ -210,14 +213,14 @@ Outputs:
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   Check:
-    Description: "API Gateway endpoint URL for Prod stage for EqualityChecker function"
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/check/"
+    Description: 'API Gateway endpoint URL for Prod stage for EqualityChecker function'
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/check/'
   EqualityChecker:
-    Description: "AWS Lambda checker for determining if the output of a code is exactly the same es the target"
+    Description: 'AWS Lambda checker for determining if the output of a code is exactly the same es the target'
     Value: !GetAtt EqualityChecker.Arn
   CodeRunnerPython:
-    Description: "AWS Lambda for executing a python code and getting the outputs"
+    Description: 'AWS Lambda for executing a python code and getting the outputs'
     Value: !GetAtt CodeRunnerPython.Arn
   CodeRunnerCpp:
-    Description: "AWS Lambda for executing a C++ code and getting the outputs"
+    Description: 'AWS Lambda for executing a C++ code and getting the outputs'
     Value: !GetAtt CodeRunnerCpp.Arn
