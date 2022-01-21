@@ -1,15 +1,29 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
-Description: >
-  LambdaJudge
-
-  SAM Template for LambdaJudge
+Description: SAM Template for LambdaJudge
 
 # More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
 Globals:
   Function:
     Timeout: 300
+    MemorySize: 1769
     Runtime: python3.9
+
+
+Parameters:
+  SecurityGroupIds:
+    Type: CommaDelimitedList
+    Default: sg-0cad05170fc6eaf5a
+  SubnetIDs:
+    Type: CommaDelimitedList
+    Description: The list of SubnetIDs in the Virtual Private Cloud (VPC)
+    Default: subnet-06c3260a22cb3f755
+  EFSpath:
+    Type: String
+    Default: /mnt/efs
+  AccessPointARN:
+    Type: String
+    Description: Access point ARN
 
 
 Resources:
@@ -107,29 +121,23 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: CodeRunnerPython
-      MemorySize: 1769
       CodeUri: coderunners/
       Handler: app.run_code_lambda
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
-        SecurityGroupIds:
-          - sg-0cad05170fc6eaf5a
-        SubnetIds:
-          - subnet-06c3260a22cb3f755
+        SecurityGroupIds: !Ref SecurityGroupIds
+        SubnetIds: !Ref SubnetIDs
 
   CodeRunnerCpp:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: CodeRunnerCpp
-      MemorySize: 1769
       CodeUri: coderunners/
       Handler: app.run_code_lambda
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
-        SecurityGroupIds:
-          - sg-0cad05170fc6eaf5a
-        SubnetIds:
-          - subnet-06c3260a22cb3f755
+        SecurityGroupIds: !Ref SecurityGroupIds
+        SubnetIds: !Ref SubnetIDs
       Layers:
         - !Ref GCCLayer
 
