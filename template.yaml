@@ -10,23 +10,8 @@ Globals:
     Runtime: python3.9
 
 
-Parameters:
-  SecurityGroupIds:
-    Type: CommaDelimitedList
-    Default: sg-0cad05170fc6eaf5a
-  SubnetIDs:
-    Type: CommaDelimitedList
-    Description: The list of SubnetIDs in the Virtual Private Cloud (VPC)
-    Default: subnet-06c3260a22cb3f755
-  EFSpath:
-    Type: String
-    Default: /mnt/efs
-  AccessPointARN:
-    Type: String
-    Description: Access point ARN
-
-
 Resources:
+  # Execution roles
   EqualityCheckerRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -91,8 +76,75 @@ Resources:
                   - 'ec2:DescribeNetworkInterfaces'
                   - 'ec2:DetachNetworkInterface'
                 Resource: '*'
+        - PolicyName: ContestantElasticFileSystemPolicy
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'elasticfilesystem:ClientMount'
+                  - 'elasticfilesystem:ClientRootAccess'
+                  - 'elasticfilesystem:ClientWrite'
+                  - 'elasticfilesystem:DescribeMountTargets'
+                Resource: '*'
+
+  # VPC, Subnet, EFS config
+  # source: https://github.com/aws-samples/aws-lambda-efs-samples/blob/master/1-setup/create-efs-cfn.yml
+  CodeRunnerVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 192.168.0.0/28
+      EnableDnsHostnames: False
+      EnableDnsSupport: True
+
+  CodeRunnerSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 192.168.0.0/28
+      VpcId: !Ref CodeRunnerVPC
+      AvailabilityZone: "us-east-1a"
+
+  FileSystemResource:
+    Type: 'AWS::EFS::FileSystem'
+    Properties:
+      PerformanceMode: generalPurpose  # generalPurpose | maxIO
+      Encrypted: true
+      FileSystemTags:
+        - Key: Name
+          Value: JudgeFS
+      FileSystemPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Action:
+              - "elasticfilesystem:ClientMount"
+            Principal:
+              AWS: "*"
+
+  CodeRunnerMountTarget:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystemResource
+      SubnetId: !Ref CodeRunnerSubnet
+      SecurityGroups:
+        - !GetAtt CodeRunnerVPC.DefaultSecurityGroup
+
+  AccessPointResource:
+    Type: 'AWS::EFS::AccessPoint'
+    Properties:
+      FileSystemId: !Ref FileSystemResource
+      PosixUser:
+        Uid: "1000"
+        Gid: "1000"
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: "1000"
+          OwnerUid: "1000"
+          Permissions: "0777"
+        Path: "/mnt/efs"
 
 
+  # Lambda Functions
   EqualityChecker:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -108,6 +160,23 @@ Resources:
             Path: /check
             Method: post
 
+  CodeRunnerPython:
+    Type: AWS::Serverless::Function
+    DependsOn: CodeRunnerMountTarget
+    Properties:
+      FunctionName: CodeRunnerPython
+      CodeUri: coderunners/
+      Handler: app.run_code_lambda
+      Role: !GetAtt ContestantRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt CodeRunnerVPC.DefaultSecurityGroup
+        SubnetIds:
+          - !Ref CodeRunnerSubnet
+      FileSystemConfigs:
+        - Arn: !GetAtt AccessPointResource.Arn
+          LocalMountPath: "/mnt/efs"
+
   GCCLayer:
     Type: AWS::Serverless::LayerVersion
     Properties:
@@ -117,27 +186,22 @@ Resources:
         CompatibleRuntimes:
         RetentionPolicy: Retain
 
-  CodeRunnerPython:
-    Type: AWS::Serverless::Function
-    Properties:
-      FunctionName: CodeRunnerPython
-      CodeUri: coderunners/
-      Handler: app.run_code_lambda
-      Role: !GetAtt ContestantRole.Arn
-      VpcConfig:
-        SecurityGroupIds: !Ref SecurityGroupIds
-        SubnetIds: !Ref SubnetIDs
-
   CodeRunnerCpp:
     Type: AWS::Serverless::Function
+    DependsOn: CodeRunnerMountTarget
     Properties:
       FunctionName: CodeRunnerCpp
       CodeUri: coderunners/
       Handler: app.run_code_lambda
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
-        SecurityGroupIds: !Ref SecurityGroupIds
-        SubnetIds: !Ref SubnetIDs
+        SecurityGroupIds:
+          - !GetAtt CodeRunnerVPC.DefaultSecurityGroup
+        SubnetIds:
+          - !Ref CodeRunnerSubnet
+      FileSystemConfigs:
+        - Arn: !GetAtt AccessPointResource.Arn
+          LocalMountPath: "/mnt/efs"
       Layers:
         - !Ref GCCLayer
 
