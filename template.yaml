@@ -83,8 +83,8 @@ Resources:
               - Effect: Allow
                 Action:
                   - 'elasticfilesystem:ClientMount'
-                  - 'elasticfilesystem:ClientRootAccess'
-                  - 'elasticfilesystem:ClientWrite'
+                  # - 'elasticfilesystem:ClientRootAccess'
+                  # - 'elasticfilesystem:ClientWrite'
                   - 'elasticfilesystem:DescribeMountTargets'
                 Resource: '*'
 
