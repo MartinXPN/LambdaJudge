@@ -1,6 +1,6 @@
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Union
 
 from dataclasses_json import dataclass_json, LetterCase
 
@@ -24,17 +24,47 @@ class TestCase:
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
-class CodeRunRequest:
+class SubmissionRequest:
     # Code is a mapping from filename.extension -> content (Http requests have 2MB limit)
     code: Dict[str, str]
     language: str
-    memory_limit: int = 512
-    time_limit: int = 5
-    output_limit: float = 1
-    program_inputs: List[str] = field(default_factory=list)
+    memory_limit: int = 512     # MB
+    time_limit: int = 5         # seconds
+    output_limit: float = 1     # MB
+
+    # Provide either problem (which is used to find the test cases in the s3 bucket)
+    # Or provide the test cases as a list of TestCases directly
+    problem: Optional[str] = None
+    test_cases: Optional[List[TestCase]] = None
+
+    aggregate_results: bool = True
+    return_outputs: bool = False
+    return_compile_outputs: bool = True
+
+    # Grader parameters
+    comparison_mode: str = 'whole'    # whole / token
+    float_precision: float = 1e-5     # Floating point precision
+    delimiter: Optional[str] = None
+
+    callback_url: Optional[str] = None  # Where to send the results when they're ready
 
     def __post_init__(self):
         self.language = self.language.lower()
+        assert self.problem is not None and self.test_cases is None or \
+               self.problem is None     and self.test_cases is not None
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL)
+@dataclass
+class SubmissionResult:
+    status: Union[Status, List[Status]]
+    memory: Union[float, List[float]]
+    time: Union[float, List[float]]
+    score: float
+    message: Optional[str] = None
+    outputs: Union[str, List[str], None] = None
+    errors: Union[str, List[str], None] = None
+    compile_outputs: Optional[str] = None
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
