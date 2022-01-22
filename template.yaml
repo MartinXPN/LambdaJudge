@@ -31,8 +31,6 @@ Resources:
             Statement:
               - Effect: Allow
                 Action:
-                  - 's3:*'
-                  - 's3-object-lambda:*'
                   - 'cloudformation:Get*'
                   - 'logs:CreateLogGroup'
                   - 'logs:CreateLogStream'
@@ -153,7 +151,7 @@ Resources:
     Properties:
       FunctionName: EqualityChecker
       MemorySize: 256
-      CodeUri: checkers/
+      CodeUri: judges/
       Handler: app.equality_checker_lambda
       Role: !GetAtt EqualityCheckerRole.Arn
       Events:

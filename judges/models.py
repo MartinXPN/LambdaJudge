@@ -65,14 +65,3 @@ class SubmissionResult:
     outputs: Union[str, List[str], None] = None
     errors: Union[str, List[str], None] = None
     compile_outputs: Optional[str] = None
-
-
-@dataclass_json(letter_case=LetterCase.CAMEL)
-@dataclass
-class RunResult:
-    status: Status
-    memory: float
-    time: float
-    return_code: int
-    outputs: Optional[str] = None
-    errors: Optional[str] = None

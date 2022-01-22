@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, List, Dict, Union
+from typing import Optional, List, Union, Dict
 
 from dataclasses_json import dataclass_json, LetterCase
 

@@ -8,7 +8,7 @@ def equality_checker_lambda(event, context):
     request = SubmissionRequest.from_json(event['body'])
     print('ALl the params:', request)
 
-    result = check_equality(**request.__dict__)
+    result = check_equality(request)
     return {
         'statusCode': 200,
         'body': result.to_json(),

@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from checkers import app
+from judges import app
 
 
 @pytest.fixture()
