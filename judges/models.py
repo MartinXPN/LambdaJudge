@@ -40,6 +40,9 @@ class SubmissionRequest:
     aggregate_results: bool = True
     return_outputs: bool = False
     return_compile_outputs: bool = True
+    stop_on_first_fail: bool = True
+
+    # Grader parameters
     comparison_mode: str = 'whole'    # whole / token
     float_precision: float = 1e-5     # Floating point precision
     delimiter: Optional[str] = None
@@ -63,14 +66,3 @@ class SubmissionResult:
     outputs: Union[str, List[str], None] = None
     errors: Union[str, List[str], None] = None
     compile_outputs: Optional[str] = None
-
-
-@dataclass_json(letter_case=LetterCase.CAMEL)
-@dataclass
-class RunResult:
-    status: Status
-    memory: float
-    time: float
-    return_code: int
-    outputs: Optional[str] = None
-    errors: Optional[str] = None

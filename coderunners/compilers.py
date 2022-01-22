@@ -3,13 +3,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple
 
-from models import Stats
+from models import RunResult
 from process import Process
 
 
 class Compiler(ABC):
     @abstractmethod
-    def compile(self, submission_path: Path) -> Tuple[Path, Stats]:
+    def compile(self, submission_path: Path) -> Tuple[Path, RunResult]:
         ...
 
     @staticmethod
@@ -33,8 +33,7 @@ class CppCompiler(Compiler):
         compile_res = Process(f'g++ -O3 -Wno-write-strings '
                               f'-std={self.language_standard} {submission_path} '
                               f'-o {executable_path}',
-                              timeout=10,
-                              memory_limit_mb=512).run()
+                              timeout=10, memory_limit_mb=512).run()
 
         print('Compile res', compile_res)
         return executable_path, compile_res
@@ -49,10 +48,9 @@ class PythonCompiler(Compiler):
         binary_path = submission_path.with_suffix('.pyc')
         print('Creating python binary at:', binary_path)
         compile_res = Process(f'{self.language_standard} -m py_compile {submission_path}',
-                              timeout=10,
-                              memory_limit_mb=512).run()
+                              timeout=10, memory_limit_mb=512).run()
 
-        print('Compilation res', compile_res)
+        print('Compile res', compile_res)
         binary_path.unlink(missing_ok=True)
         executable_path = f'{self.language_standard} {submission_path}'
         return executable_path, compile_res
