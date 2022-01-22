@@ -58,7 +58,7 @@ class Process:
         try:
             self.execute()
             if program_input:
-                self.p.stdin.write(program_input)
+                self.p.stdin.write(program_input + '\n')
                 self.p.stdin.flush()
 
             # poll as often as possible; otherwise the subprocess might

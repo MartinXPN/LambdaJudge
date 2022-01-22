@@ -3,7 +3,6 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from checkers import Checker
-from coderunners import CodeRunner
 from compilers import Compiler
 from models import Status, SubmissionResult, TestCase
 from process import Process
@@ -43,19 +42,21 @@ def check_code(code: Dict[str, str], language: str, memory_limit: int, time_limi
         return SubmissionResult(status=Status.COMPILATION_ERROR,
                                 memory=compilation.memory, time=compilation.time, score=0, message=message,
                                 compile_outputs=(compilation.outputs or '') + '\n' + (compilation.errors or ''))
-
-    code_runner = CodeRunner(executable_path=executable_path,
-                             time_limit=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit)
     if problem:
+        print('getting test cases from the storage: ', f'/mnt/efs/{problem}.gz')
         with open(f'/mnt/efs/{problem}.gz', 'rb') as f:
             json_tests = gzip.decompress(f.read()).decode('utf-8')
             test_cases = TestCase.schema().loads(json_tests, many=True)
+    print(f'There are: {len(test_cases)} test cases')
 
     checker = Checker.from_mode(comparison_mode, float_precision=float_precision, delimiter=delimiter)
-
     test_results = []
     for test in test_cases:
-        r = code_runner.run(test.input)
+        r = Process(
+            f'{executable_path}',
+            timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit
+        ).run(test.input)
+
         if r.status == Status.OK and not checker.is_correct(inputs=test.input, output=r.outputs, target=test.target):
             r.status = Status.WA
         test_results.append(r)

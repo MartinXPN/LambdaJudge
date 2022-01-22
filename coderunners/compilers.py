@@ -50,7 +50,7 @@ class PythonCompiler(Compiler):
         compile_res = Process(f'{self.language_standard} -m py_compile {submission_path}',
                               timeout=10, memory_limit_mb=512).run()
 
-        print('Compilation res', compile_res)
+        print('Compile res', compile_res)
         binary_path.unlink(missing_ok=True)
         executable_path = f'{self.language_standard} {submission_path}'
         return executable_path, compile_res

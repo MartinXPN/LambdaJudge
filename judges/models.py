@@ -40,6 +40,7 @@ class SubmissionRequest:
     aggregate_results: bool = True
     return_outputs: bool = False
     return_compile_outputs: bool = True
+    stop_on_first_fail: bool = True
 
     # Grader parameters
     comparison_mode: str = 'whole'    # whole / token
