@@ -15,15 +15,11 @@ class Status(Enum):
     COMPILATION_ERROR = 'Compilation error'
 
 
+@dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
-class Stats:
-    max_rss: float
-    max_vms: float
-    total_time: float
-    return_code: int
-    outputs: str
-    errors: str
-    status: Status
+class TestCase:
+    input: str
+    target: str
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)

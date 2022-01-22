@@ -8,7 +8,7 @@ from typing import Union, Iterable, Optional
 
 import psutil
 
-from models import Stats, Status
+from models import RunResult, Status
 
 
 def limit_resources(max_bytes: int):
@@ -53,7 +53,7 @@ class Process:
         )
         self.execution_state = True
 
-    def run(self, program_input: Optional[str] = None) -> Stats:
+    def run(self, program_input: Optional[str] = None) -> RunResult:
         outs, errs, status = None, None, Status.OK
         try:
             self.execute()
@@ -104,11 +104,13 @@ class Process:
             status = Status.OLE
             errs = errs[:self.output_limit // 2]
 
-        return Stats(max_rss=self.max_rss_memory / 1024 / 1024,
-                     max_vms=self.max_vms_memory / 1024 / 1024,
-                     total_time=self.finish_time - self.start_time,
-                     return_code=self.p.returncode or 0,
-                     outputs=outs, errors=errs, status=status)
+        return RunResult(
+            status=status,
+            memory=self.max_rss_memory / 1024 / 1024,
+            time=self.finish_time - self.start_time,
+            return_code=self.p.returncode or 0,
+            outputs=outs, errors=errs
+        )
 
     def poll(self):
         if not self.check_execution_state():

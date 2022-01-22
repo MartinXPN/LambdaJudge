@@ -3,13 +3,13 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Tuple
 
-from models import Stats
+from models import RunResult
 from process import Process
 
 
 class Compiler(ABC):
     @abstractmethod
-    def compile(self, submission_path: Path) -> Tuple[Path, Stats]:
+    def compile(self, submission_path: Path) -> Tuple[Path, RunResult]:
         ...
 
     @staticmethod

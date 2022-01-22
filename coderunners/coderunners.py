@@ -22,6 +22,4 @@ class CodeRunner:
             print(f'Errs: {res.errors}')
             print(f'Return code: {res.return_code}, status: {res.status}')
 
-        return RunResult(status=res.status, memory=res.max_rss, time=res.total_time,
-                         return_code=res.return_code,
-                         outputs=res.outputs, errors=res.errors)
+        return res
