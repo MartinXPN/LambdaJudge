@@ -1,3 +1,4 @@
+import json
 from dataclasses import dataclass
 
 from models import SubmissionRequest, SubmissionResult
@@ -21,6 +22,7 @@ class CodeRunner:
     def invoke(self, aws_lambda_client, request: SubmissionRequest) -> SubmissionResult:
         res = aws_lambda_client.invoke(FunctionName=self.name, Payload=request.to_json())['Payload']
         res = res.read().decode('utf-8')
+        res = json.loads(res)
         print('invocation result:', res)
         return SubmissionResult.from_json(res)
 
