@@ -166,8 +166,7 @@ Resources:
     DependsOn: CodeRunnerMountTarget
     Properties:
       FunctionName: CodeRunnerPython
-      CodeUri: coderunners/
-      Handler: app.run_code_lambda
+      PackageType: Image
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
         SecurityGroupIds:
@@ -177,6 +176,10 @@ Resources:
       FileSystemConfigs:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
+    Metadata:
+      DockerTag: python3.9-v1
+      DockerContext: ./coderunners
+      Dockerfile: python.Dockerfile
 
   GCCLayer:
     Type: AWS::Serverless::LayerVersion

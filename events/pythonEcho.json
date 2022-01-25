@@ -1,0 +1,12 @@
+{
+  "code": {
+    "main.py": "a = input(); print(a)"
+  },
+  "testCases": [{"input":"hello","target":"hello"}],
+  "language": "python",
+  "timeLimit": 20,
+  "memory_limit": 500,
+  "returnOutputs": true,
+  "return_compile_outputs": true,
+  "stopOnFirstFail": false
+}
