@@ -2,6 +2,10 @@
   "code": {
     "main.cpp": "#include <iostream>\nusing namespace std;\n\nint a[1002][1002];\nint n, num = 1;\n\nvoid Round(int r){\n    for(int i = n + r - 1; i >= n - r; i--){\n        a[n - r][i] = num;\n        num++;\n    }\n    for(int i = n - r + 1; i <= n + r; i++){\n        a[i][n - r] = num;\n        num++;\n    }\n    for(int i = n - r + 1; i <= n + r; i++){\n        a[n + r][i] = num;\n        num++;\n    }\n    for(int i = n + r - 1; i >= n - r; i--){\n        a[i][n + r] = num;\n        num++;\n    }\n}\n\nint main(){\n    int r = 1; \n    cin >> n;\n    for(int i = 1; i <= n; i++){\n        Round(i);\n    }\n    for(int i = 0; i <= 2 * n; i++){\n        for(int j = 0; j <= 2 * n; j++){\n            cout << a[i][j] << \" \";\n        }\n        cout << \"\\n\";\n    }\n}"
   },
+  "testCases": [{"input":"hello","target":"hello"}],
+  "returnOutputs": true,
+  "return_compile_outputs": true,
+  "stopOnFirstFail": false,
   "programInputs": ["1", "5", "10", "50", "55", "100"],
   "language": "C++17",
   "timeLimit": 2,

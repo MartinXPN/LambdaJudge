@@ -1,4 +1,6 @@
+import getpass
 import gzip
+import os
 from pathlib import Path
 from typing import Dict, List, Optional
 
@@ -28,6 +30,7 @@ def check_code(code: Dict[str, str], language: str, memory_limit: int, time_limi
                callback_url: Optional[str]) -> SubmissionResult:
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
     submission_path = save_code(save_dir=ROOT, code=code)[0]        # Currently we only support single-file submissions
+    print('current user:', os.getuid(), getpass.getuser(), os.getgroups())
 
     # Compile and prepare the executable
     compiler = Compiler.from_language(language=language)
@@ -54,7 +57,9 @@ def check_code(code: Dict[str, str], language: str, memory_limit: int, time_limi
     for test in test_cases:
         r = Process(
             f'{executable_path}',
-            timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit
+            timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
+            user=None,  # The default lambda user is sbx_user1051, so we run under a different user
+                        #  so that the process does not have access to EFS files
         ).run(test.input)
 
         if r.status == Status.OK and not checker.is_correct(inputs=test.input, output=r.outputs, target=test.target):

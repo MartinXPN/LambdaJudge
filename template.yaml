@@ -2,13 +2,6 @@ AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: SAM Template for LambdaJudge
 
-# More info about Globals: https://github.com/awslabs/serverless-application-model/blob/master/docs/globals.rst
-Globals:
-  Function:
-    Timeout: 300
-    MemorySize: 1769
-    Runtime: python3.9
-
 
 Resources:
   # Execution roles
@@ -151,6 +144,8 @@ Resources:
     Properties:
       FunctionName: EqualityChecker
       MemorySize: 256
+      Timeout: 300
+      Runtime: python3.9
       CodeUri: judges/
       Handler: app.equality_checker_lambda
       Role: !GetAtt EqualityCheckerRole.Arn
@@ -166,8 +161,9 @@ Resources:
     DependsOn: CodeRunnerMountTarget
     Properties:
       FunctionName: CodeRunnerPython
-      CodeUri: coderunners/
-      Handler: app.run_code_lambda
+      Timeout: 300
+      MemorySize: 1769
+      PackageType: Image
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
         SecurityGroupIds:
@@ -177,23 +173,19 @@ Resources:
       FileSystemConfigs:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
-
-  GCCLayer:
-    Type: AWS::Serverless::LayerVersion
-    Properties:
-        LayerName: gcc
-        Description: GCC with dependencies
-        ContentUri: layers/gcc.zip
-        CompatibleRuntimes:
-        RetentionPolicy: Retain
+    Metadata:
+      DockerTag: python3.9-v1
+      DockerContext: ./coderunners
+      Dockerfile: python.Dockerfile
 
   CodeRunnerCpp:
     Type: AWS::Serverless::Function
     DependsOn: CodeRunnerMountTarget
     Properties:
       FunctionName: CodeRunnerCpp
-      CodeUri: coderunners/
-      Handler: app.run_code_lambda
+      Timeout: 300
+      MemorySize: 1769
+      PackageType: Image
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
         SecurityGroupIds:
@@ -203,8 +195,10 @@ Resources:
       FileSystemConfigs:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
-      Layers:
-        - !Ref GCCLayer
+    Metadata:
+      DockerTag: python3.9-v1
+      DockerContext: ./coderunners
+      Dockerfile: cpp.Dockerfile
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
