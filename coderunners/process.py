@@ -36,6 +36,7 @@ class Process:
     finish_time: float = time.time()
     memory_limit: int = field(init=False)
     output_limit: int = field(init=False)
+    user: Optional[int] = None
 
     def __post_init__(self):
         self.memory_limit = self.memory_limit_mb * 1024 * 1024
@@ -46,10 +47,12 @@ class Process:
         self.max_rss_memory = 0
         self.start_time = time.time()
 
+        # noinspection PyArgumentList
         self.p = subprocess.Popen(
             self.command, shell=True,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
             preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit),
+            user=self.user,
         )
         self.execution_state = True
 
