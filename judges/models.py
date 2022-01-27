@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, List, Union, Dict
+from typing import Optional, Union
 
 from dataclasses_json import dataclass_json, LetterCase
 
@@ -26,7 +26,7 @@ class TestCase:
 @dataclass
 class SubmissionRequest:
     # Code is a mapping from filename.extension -> content (Http requests have 2MB limit)
-    code: Dict[str, str]
+    code: dict[str, str]
     language: str
     memory_limit: int = 512     # MB
     time_limit: int = 5         # seconds
@@ -35,7 +35,7 @@ class SubmissionRequest:
     # Provide either problem (which is used to find the test cases in the s3 bucket)
     # Or provide the test cases as a list of TestCases directly
     problem: Optional[str] = None
-    test_cases: Optional[List[TestCase]] = None
+    test_cases: Optional[list[TestCase]] = None
 
     aggregate_results: bool = True
     return_outputs: bool = False
@@ -58,11 +58,11 @@ class SubmissionRequest:
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
 class SubmissionResult:
-    status: Union[Status, List[Status]]
-    memory: Union[float, List[float]]
-    time: Union[float, List[float]]
+    status: Union[Status, list[Status]]
+    memory: Union[float, list[float]]
+    time: Union[float, list[float]]
     score: float
     message: Optional[str] = None
-    outputs: Union[str, List[str], None] = None
-    errors: Union[str, List[str], None] = None
+    outputs: Union[str, list[str], None] = None
+    errors: Union[str, list[str], None] = None
     compile_outputs: Optional[str] = None
