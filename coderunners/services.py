@@ -1,36 +1,25 @@
-import getpass
 import gzip
-import os
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
+
+from cryptography.fernet import Fernet
 
 from checkers import Checker
 from compilers import Compiler
 from models import Status, SubmissionResult, TestCase
 from process import Process
+from util import save_code
 
 ROOT = Path('/tmp/')
 
 
-def save_code(save_dir: Path, code: Dict[str, str]) -> List[Path]:
-    saved_paths: List[Path] = []
-    for filename, content in code.items():
-        path = save_dir / filename
-        saved_paths.append(path)
-        with open(path, 'w') as f:
-            f.write(content)
-
-    return saved_paths
-
-
-def check_code(code: Dict[str, str], language: str, memory_limit: int, time_limit: int, output_limit: float,
-               problem: Optional[str], test_cases: Optional[List[TestCase]],
+def check_code(code: dict[str, str], language: str, memory_limit: int, time_limit: int, output_limit: float,
+               problem: Optional[str], test_cases: Optional[list[TestCase]],
                aggregate_results: bool, return_outputs: bool, return_compile_outputs: bool,
                comparison_mode: str, float_precision: float, delimiter: Optional[str],
-               callback_url: Optional[str]) -> SubmissionResult:
+               callback_url: Optional[str], encryption_key: Optional[bytes]) -> SubmissionResult:
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
     submission_path = save_code(save_dir=ROOT, code=code)[0]        # Currently we only support single-file submissions
-    print('current user:', os.getuid(), getpass.getuser(), os.getgroups())
 
     # Compile and prepare the executable
     compiler = Compiler.from_language(language=language)
@@ -46,10 +35,16 @@ def check_code(code: Dict[str, str], language: str, memory_limit: int, time_limi
                                 memory=compilation.memory, time=compilation.time, score=0, message=message,
                                 compile_outputs=(compilation.outputs or '') + '\n' + (compilation.errors or ''))
     if problem:
-        print('getting test cases from the storage: ', f'/mnt/efs/{problem}.gz')
-        with open(f'/mnt/efs/{problem}.gz', 'rb') as f:
-            json_tests = gzip.decompress(f.read()).decode('utf-8')
-            test_cases = TestCase.schema().loads(json_tests, many=True)
+        # Compress:   (1) json.dumps   (2) .encode('utf-8')   (3) gzip.compress()   (4) encrypt
+        # Decompress: (1) decrypt      (2) gzip.decompress()  (3) .decode('utf-8')  (4) json.loads()
+        problem_file = f'/mnt/efs/{problem}.gz.fer'
+        print('getting test cases from the storage: ', problem_file)
+        fernet = Fernet(encryption_key)
+        with open(problem_file, 'rb') as f:
+            data = fernet.decrypt(f.read())
+            data = gzip.decompress(data)
+            data = data.decode('utf-8')
+            test_cases = TestCase.schema().loads(data, many=True)
     print(f'There are: {len(test_cases)} test cases')
 
     checker = Checker.from_mode(comparison_mode, float_precision=float_precision, delimiter=delimiter)
@@ -58,8 +53,6 @@ def check_code(code: Dict[str, str], language: str, memory_limit: int, time_limi
         r = Process(
             f'{executable_path}',
             timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
-            user=None,  # The default lambda user is sbx_user1051, so we run under a different user
-                        #  so that the process does not have access to EFS files
         ).run(test.input)
 
         if r.status == Status.OK and not checker.is_correct(inputs=test.input, output=r.outputs, target=test.target):

@@ -36,7 +36,6 @@ class Process:
     finish_time: float = time.time()
     memory_limit: int = field(init=False)
     output_limit: int = field(init=False)
-    user: Optional[int] = None
 
     def __post_init__(self):
         self.memory_limit = self.memory_limit_mb * 1024 * 1024
@@ -52,7 +51,6 @@ class Process:
             self.command, shell=True,
             stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
             preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit),
-            user=self.user,
         )
         self.execution_state = True
 
@@ -61,7 +59,8 @@ class Process:
         try:
             self.execute()
             if program_input:
-                self.p.stdin.write(program_input + '\n')
+                end = '' if program_input.endswith('\n') else '\n'  # Otherwise, the program hangs
+                self.p.stdin.write(program_input + end)
                 self.p.stdin.flush()
 
             # poll as often as possible; otherwise the subprocess might
