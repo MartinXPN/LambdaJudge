@@ -16,7 +16,7 @@ def run_code_lambda(event, context):
 
     # Clear the data so that the sensitive information does not propagate to subprocesses
     encryption_key = os.environb.pop(b'ENCRYPTION_KEY') if 'ENCRYPTION_KEY' in os.environ else None
-    print('encryption key:', encryption_key)
+    print('encryption key length:', len(encryption_key) if encryption_key is not None else None)
 
     results: SubmissionResult = check_code(**request.__dict__, encryption_key=encryption_key)
     if encryption_key:  # Lambda can be reused => keep the state unchanged
