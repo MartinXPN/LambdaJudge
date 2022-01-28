@@ -32,6 +32,9 @@ Resources:
                   - 'lambda:*'
                   - 'cloudwatch:ListMetrics'
                   - 'cloudwatch:GetMetricData'
+                  - 'secretsmanager:GetSecretValue'
+                  - 'secretsmanager:DescribeSecret'
+                  - 'secretsmanager:ListSecretVersionIds'
                 Resource: '*'
   ContestantRole:
     Type: 'AWS::IAM::Role'

@@ -47,11 +47,15 @@ class SubmissionRequest:
     delimiter: Optional[str] = None
 
     callback_url: Optional[str] = None  # Where to send the results when they're ready
+    encryption_key: Union[str, bytes, None] = None
 
     def __post_init__(self):
         self.language = self.language.lower()
         assert self.problem is not None and self.test_cases is None or \
                self.problem is None     and self.test_cases is not None
+
+        if self.encryption_key and isinstance(self.encryption_key, str):
+            self.encryption_key = self.encryption_key.encode()
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
