@@ -48,7 +48,7 @@ class SubmissionRequest:
     delimiter: Optional[str] = None
 
     callback_url: Optional[str] = None  # Where to send the results when they're ready
-    encryption_key: Union[str, None] = None
+    encryption_key: Optional[str] = None
 
     def __post_init__(self):
         self.language = self.language.lower()
