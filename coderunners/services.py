@@ -17,9 +17,9 @@ def compile_code(code: dict[str, str], language: str) -> tuple[Optional[Path], O
     # Currently, we only support single-file submissions
     submission_path = save_code(save_dir=ROOT, code=code)[0]
 
-    # Compile and prepare the executable
     compiler = Compiler.from_language(language=language)
     executable_path, compilation = compiler.compile(submission_path=submission_path)
+
     # Compile error
     if compilation.status != Status.OK or compilation.errors:
         print('Compile error:', compilation)
