@@ -59,12 +59,11 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
             r.status, score, r.message = checker.check(inputs=test.input, output=r.outputs,
                                                        target=test.target, code=code)
             test_scores.append(score)
-            test_results.append(r)
         else:
             test_scores.append(0)
-            test_results.append(r)
-            if stop_on_first_fail:
-                break
+        test_results.append(r)
+        if stop_on_first_fail and r.status != Status.OK:
+            break
     print('test_results:', test_results)
 
     # Aggregate all the results across test cases
