@@ -13,13 +13,9 @@ from util import save_code
 ROOT = Path('/tmp/')
 
 
-def check_code(code: dict[str, str], language: str, memory_limit: int, time_limit: int, output_limit: float,
-               problem: Optional[str], test_cases: Optional[list[TestCase]],
-               aggregate_results: bool, return_outputs: bool, return_compile_outputs: bool, stop_on_first_fail: bool,
-               comparison_mode: str, float_precision: float, delimiter: Optional[str],
-               callback_url: Optional[str], encryption_key: Optional[str]) -> SubmissionResult:
-    Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
-    submission_path = save_code(save_dir=ROOT, code=code)[0]        # Currently we only support single-file submissions
+def compile_code(code: dict[str, str], language: str) -> tuple[Optional[Path], Optional[SubmissionResult]]:
+    # Currently, we only support single-file submissions
+    submission_path = save_code(save_dir=ROOT, code=code)[0]
 
     # Compile and prepare the executable
     compiler = Compiler.from_language(language=language)
@@ -31,9 +27,26 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
         if compilation.status == Status.TLE:    message = 'Compilation time limit exceeded'
         if compilation.status == Status.MLE:    message = 'Compilation memory limit exceeded'
 
-        return SubmissionResult(status=Status.COMPILATION_ERROR,
-                                memory=compilation.memory, time=compilation.time, score=0, message=message,
-                                compile_outputs=(compilation.outputs or '') + '\n' + (compilation.errors or ''))
+        return None, SubmissionResult(
+            status=Status.COMPILATION_ERROR,
+            memory=compilation.memory, time=compilation.time, score=0, message=message,
+            compile_outputs=(compilation.outputs or '') + '\n' + (compilation.errors or '')
+        )
+    return executable_path, None
+
+
+def check_code(code: dict[str, str], language: str, memory_limit: int, time_limit: int, output_limit: float,
+               problem: Optional[str], test_cases: Optional[list[TestCase]],
+               aggregate_results: bool, return_outputs: bool, stop_on_first_fail: bool,
+               comparison_mode: str, float_precision: float, delimiter: Optional[str],
+               checker_code: Optional[dict[str, str]], checker_language: Optional[str],
+               callback_url: Optional[str], encryption_key: Optional[str]) -> SubmissionResult:
+    Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
+
+    executable_path, compilation_errors = compile_code(code, language)
+    if compilation_errors:
+        return compilation_errors
+
     if problem:
         # Compress:   (1) json.dumps   (2) .encode('utf-8')   (3) gzip.compress()   (4) encrypt
         # Decompress: (1) decrypt      (2) gzip.decompress()  (3) .decode('utf-8')  (4) json.loads()
@@ -47,7 +60,19 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
             test_cases = TestCase.schema().loads(data, many=True)
     print(f'There are: {len(test_cases)} test cases')
 
-    checker = Checker.from_mode(comparison_mode, float_precision=float_precision, delimiter=delimiter)
+    # Prepare the checker
+    checker_executable_path = None
+    if comparison_mode == 'custom':
+        checker_executable_path, checker_compilation_errors = compile_code(checker_code, checker_language)
+        if checker_compilation_errors:
+            return checker_compilation_errors
+
+    checker = Checker.from_mode(
+        mode=comparison_mode,
+        float_precision=float_precision, delimiter=delimiter, executable_path=checker_executable_path
+    )
+
+    # Process all tests
     test_results, test_scores = [], []
     for test in test_cases:
         r = Process(
@@ -80,7 +105,7 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
         message=[t.message or '' for t in test_results] if return_outputs else None,
         outputs=[t.outputs or '' for t in test_results] if return_outputs else None,
         errors=[t.errors or '' for t in test_results] if return_outputs else None,
-        compile_outputs=compilation.outputs if return_compile_outputs else None
+        compile_outputs=None
     )
     print('submission result:', res)
     return res

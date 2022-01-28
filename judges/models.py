@@ -39,13 +39,14 @@ class SubmissionRequest:
 
     aggregate_results: bool = True
     return_outputs: bool = False
-    return_compile_outputs: bool = True
     stop_on_first_fail: bool = True
 
-    # Grader parameters
-    comparison_mode: str = 'whole'    # whole / token
+    # Checker parameters
+    comparison_mode: str = 'whole'    # whole | token | custom
     float_precision: float = 1e-5     # Floating point precision
     delimiter: Optional[str] = None
+    checker_code: Optional[dict[str, str]] = None
+    checker_language: Optional[str] = None
 
     callback_url: Optional[str] = None  # Where to send the results when they're ready
     encryption_key: Optional[str] = None
@@ -54,6 +55,8 @@ class SubmissionRequest:
         self.language = self.language.lower()
         assert self.problem is not None and self.test_cases is None or \
                self.problem is None     and self.test_cases is not None
+        if self.comparison_mode == 'custom':
+            assert self.checker_code is not None and self.checker_language is not None
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
