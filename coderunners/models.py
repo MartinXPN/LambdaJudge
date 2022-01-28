@@ -32,7 +32,7 @@ class SubmissionRequest:
     time_limit: int = 5         # seconds
     output_limit: float = 1     # MB
 
-    # Provide either problem (which is used to find the test cases in the s3 bucket)
+    # Provide either problem (which is used to find the test cases in the EFS)
     # Or provide the test cases as a list of TestCases directly
     problem: Optional[str] = None
     test_cases: Optional[list[TestCase]] = None
@@ -40,6 +40,7 @@ class SubmissionRequest:
     aggregate_results: bool = True
     return_outputs: bool = False
     return_compile_outputs: bool = True
+    stop_on_first_fail: bool = True
 
     # Grader parameters
     comparison_mode: str = 'whole'    # whole / token
@@ -47,15 +48,12 @@ class SubmissionRequest:
     delimiter: Optional[str] = None
 
     callback_url: Optional[str] = None  # Where to send the results when they're ready
-    encryption_key: Union[str, bytes, None] = None
+    encryption_key: Union[str, None] = None
 
     def __post_init__(self):
         self.language = self.language.lower()
         assert self.problem is not None and self.test_cases is None or \
                self.problem is None     and self.test_cases is not None
-
-        if self.encryption_key and isinstance(self.encryption_key, str):
-            self.encryption_key = self.encryption_key.encode()
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
@@ -65,7 +63,7 @@ class SubmissionResult:
     memory: Union[float, list[float]]
     time: Union[float, list[float]]
     score: float
-    message: Optional[str] = None
+    message: Union[str, list[str], None] = None
     outputs: Union[str, list[str], None] = None
     errors: Union[str, list[str], None] = None
     compile_outputs: Optional[str] = None
@@ -78,5 +76,6 @@ class RunResult:
     memory: float
     time: float
     return_code: int
+    message: Optional[str] = None
     outputs: Optional[str] = None
     errors: Optional[str] = None

@@ -15,9 +15,9 @@ ROOT = Path('/tmp/')
 
 def check_code(code: dict[str, str], language: str, memory_limit: int, time_limit: int, output_limit: float,
                problem: Optional[str], test_cases: Optional[list[TestCase]],
-               aggregate_results: bool, return_outputs: bool, return_compile_outputs: bool,
+               aggregate_results: bool, return_outputs: bool, return_compile_outputs: bool, stop_on_first_fail: bool,
                comparison_mode: str, float_precision: float, delimiter: Optional[str],
-               callback_url: Optional[str], encryption_key: Optional[bytes]) -> SubmissionResult:
+               callback_url: Optional[str], encryption_key: Optional[str]) -> SubmissionResult:
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
     submission_path = save_code(save_dir=ROOT, code=code)[0]        # Currently we only support single-file submissions
 
@@ -39,7 +39,7 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
         # Decompress: (1) decrypt      (2) gzip.decompress()  (3) .decode('utf-8')  (4) json.loads()
         problem_file = f'/mnt/efs/{problem}.gz.fer'
         print('getting test cases from the storage: ', problem_file)
-        fernet = Fernet(encryption_key)
+        fernet = Fernet(encryption_key.encode())
         with open(problem_file, 'rb') as f:
             data = fernet.decrypt(f.read())
             data = gzip.decompress(data)
@@ -48,22 +48,28 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
     print(f'There are: {len(test_cases)} test cases')
 
     checker = Checker.from_mode(comparison_mode, float_precision=float_precision, delimiter=delimiter)
-    test_results = []
+    test_results, test_scores = [], []
     for test in test_cases:
         r = Process(
             f'{executable_path}',
             timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
         ).run(test.input)
 
-        if r.status == Status.OK and not checker.is_correct(inputs=test.input, output=r.outputs, target=test.target):
-            r.status = Status.WA
-        test_results.append(r)
+        if r.status == Status.OK:
+            r.status, score, r.message = checker.check(inputs=test.input, output=r.outputs,
+                                                       target=test.target, code=code)
+            test_scores.append(score)
+            test_results.append(r)
+        else:
+            test_scores.append(0)
+            test_results.append(r)
+            if stop_on_first_fail:
+                break
     print('test_results:', test_results)
 
     # Aggregate all the results across test cases
     failed_test = next((i for i, x in enumerate(test_results) if x.status != Status.OK), None)
     status = Status.OK if failed_test is None else test_results[failed_test].status
-    nb_success = sum(t.status == Status.OK for t in test_results)
     max_memory = max(t.memory for t in test_results)
     max_time = max(t.time for t in test_results)
 
@@ -71,7 +77,8 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
         status=status if aggregate_results else [t.status for t in test_results],
         memory=max_memory if aggregate_results else [t.memory for t in test_results],
         time=max_time if aggregate_results else [t.time for t in test_results],
-        score=100 * nb_success / len(test_cases),
+        score=sum(test_scores) / len(test_cases),
+        message=[t.message or '' for t in test_results] if return_outputs else None,
         outputs=[t.outputs or '' for t in test_results] if return_outputs else None,
         errors=[t.errors or '' for t in test_results] if return_outputs else None,
         compile_outputs=compilation.outputs if return_compile_outputs else None

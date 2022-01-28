@@ -3,12 +3,21 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
+from models import Status
 from util import is_float
 
 
 class Checker(ABC):
     @abstractmethod
-    def is_correct(self, inputs: str, output: str, target: str) -> bool:
+    def check(self, inputs: str, output: str, target: str, code: dict[str, str]) -> tuple[Status, float, Optional[str]]:
+        """
+        Check if the program behaved correctly and return the verdict
+        :param inputs: all the input of the program
+        :param output: the output of the submitted program
+        :param target: what the output should be according to the precalculated test
+        :param code: mapping {filename: content} of the submitted code
+        :return: [verdict: Status, score: float 0 to 100, message: str]
+        """
         ...
 
     @staticmethod
@@ -23,8 +32,8 @@ class Checker(ABC):
 
 
 class WholeEquality(Checker):
-    def is_correct(self, inputs: str, output: str, target: str) -> bool:
-        return output.strip() == target.strip()
+    def check(self, inputs: str, output: str, target: str, code: dict[str, str]) -> tuple[Status, float, Optional[str]]:
+        return (Status.OK, 100, None) if output.strip() == target.strip() else (Status.WA, 0, None)
 
 
 @dataclass
@@ -32,7 +41,7 @@ class TokenEquality(Checker):
     float_precision: float = 1e-5
     delimiter: Optional[str] = None
 
-    def is_correct(self, inputs: str, output: str, target: str) -> bool:
+    def is_correct(self, output: str, target: str) -> bool:
         output = output.strip().split(self.delimiter)
         target = target.strip().split(self.delimiter)
         if len(output) != len(target):
@@ -47,3 +56,12 @@ class TokenEquality(Checker):
                 return False
 
         return True
+
+    def check(self, inputs: str, output: str, target: str, code: dict[str, str]) -> tuple[Status, float, Optional[str]]:
+        return (Status.OK, 100, None) if self.is_correct(output, target) else (Status.WA, 0, None)
+
+
+@dataclass
+class CustomChecker(Checker):
+    def check(self, inputs: str, output: str, target: str, code: dict[str, str]) -> tuple[Status, float, Optional[str]]:
+        pass

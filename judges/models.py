@@ -32,7 +32,7 @@ class SubmissionRequest:
     time_limit: int = 5         # seconds
     output_limit: float = 1     # MB
 
-    # Provide either problem (which is used to find the test cases in the s3 bucket)
+    # Provide either problem (which is used to find the test cases in the EFS)
     # Or provide the test cases as a list of TestCases directly
     problem: Optional[str] = None
     test_cases: Optional[list[TestCase]] = None
@@ -63,7 +63,7 @@ class SubmissionResult:
     memory: Union[float, list[float]]
     time: Union[float, list[float]]
     score: float
-    message: Optional[str] = None
+    message: Union[str, list[str], None] = None
     outputs: Union[str, list[str], None] = None
     errors: Union[str, list[str], None] = None
     compile_outputs: Optional[str] = None
