@@ -5,6 +5,73 @@ Description: SAM Template for LambdaJudge
 
 Resources:
   # Execution roles
+  SyncS3WithEFSRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: SyncNetworkPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ec2:CreateNetworkInterface'
+                  - 'ec2:DeleteNetworkInterface'
+                  - 'ec2:DescribeNetworkInterfaces'
+                  - 'ec2:DetachNetworkInterface'
+                Resource: '*'
+        - PolicyName: SyncLogPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+        - PolicyName: SyncSecretsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'secretsmanager:GetSecretValue'
+                  - 'secretsmanager:DescribeSecret'
+                  - 'secretsmanager:ListSecretVersionIds'
+                Resource: '*'
+        - PolicyName: SyncS3Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:ListBucket'
+                  - 's3:GetBucketLocation'
+                  - 's3:GetObjectVersion'
+                  - 's3:GetLifecycleConfiguration'
+                Resource: '*'
+        - PolicyName: SyncEFSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'elasticfilesystem:ClientMount'
+                  - 'elasticfilesystem:ClientRootAccess'
+                  - 'elasticfilesystem:ClientWrite'
+                  - 'elasticfilesystem:DescribeMountTargets'
+                Resource: '*'
   EqualityCheckerRole:
     Type: 'AWS::IAM::Role'
     Properties:
@@ -82,6 +149,24 @@ Resources:
                   - 'elasticfilesystem:DescribeMountTargets'
                 Resource: '*'
 
+
+  # S3 bucket for test cases (zip files)
+  LambdaJudgeTestsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: 'lambda-judge-tests-bucket'
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - GET
+              - PUT
+              - HEAD
+            AllowedOrigins:
+              - "*"
+
+
   # VPC, Subnet, EFS config
   # source: https://github.com/aws-samples/aws-lambda-efs-samples/blob/master/1-setup/create-efs-cfn.yml
   CodeRunnerVPC:
@@ -142,8 +227,38 @@ Resources:
 
 
   # Lambda Functions
-  EqualityChecker:
+  SyncS3WithEFS:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Properties:
+      FunctionName: SyncS3WithEFS
+      MemorySize: 1769
+      Timeout: 600
+      Runtime: python3.9
+      CodeUri: sync/
+      Handler: app.sync_handler
+      Role: !GetAtt SyncS3WithEFSRole.Arn
+      Events:
+        SyncS3TestsWithEFSEvent:
+          Type: S3
+          Properties:
+            Bucket: !Ref LambdaJudgeTestsBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: suffix      # or prefix
+                    Value: zip        # The value to search for in the S3 object key names
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt CodeRunnerVPC.DefaultSecurityGroup   # Should ideally be a separate VPC and security group, but there isn't much need for that
+        SubnetIds:
+          - !Ref CodeRunnerSubnet
+      FileSystemConfigs:
+        - Arn: !GetAtt AccessPointResource.Arn
+          LocalMountPath: '/mnt/efs'
+
+  EqualityChecker:
+    Type: AWS::Serverless::Function
     Properties:
       FunctionName: EqualityChecker
       MemorySize: 256
@@ -219,3 +334,6 @@ Outputs:
   CodeRunnerCpp:
     Description: 'AWS Lambda for executing a C++ code and getting the outputs'
     Value: !GetAtt CodeRunnerCpp.Arn
+  SyncS3WithEFSName:
+    Description: 'S3 bucket for uploading test cases of the problems'
+    Value: !Ref 'SyncS3WithEFS'

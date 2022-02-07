@@ -1,3 +1,2 @@
 boto3>=1.20.49
 dataclasses-json>=0.5.6
-requests>=2.26.0
