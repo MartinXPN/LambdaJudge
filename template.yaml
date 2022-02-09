@@ -6,7 +6,7 @@ Description: SAM Template for LambdaJudge
 Resources:
   # Execution roles
   SyncS3WithEFSRole:
-    Type: 'AWS::IAM::Role'
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -73,7 +73,7 @@ Resources:
                   - 'elasticfilesystem:DescribeMountTargets'
                 Resource: '*'
   EqualityCheckerRole:
-    Type: 'AWS::IAM::Role'
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -104,7 +104,7 @@ Resources:
                   - 'secretsmanager:ListSecretVersionIds'
                 Resource: '*'
   ContestantRole:
-    Type: 'AWS::IAM::Role'
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -186,6 +186,7 @@ Resources:
         - Key: Name
           Value: CodeRunnerPrivateSubnet
 
+  # source: https://gist.github.com/lizrice/5889f33511aab739d873cb622688317e
   PrivateSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -294,7 +295,7 @@ Resources:
         - !GetAtt JudgeVPC.DefaultSecurityGroup
 
   AccessPointResource:
-    Type: 'AWS::EFS::AccessPoint'
+    Type: AWS::EFS::AccessPoint
     Properties:
       FileSystemId: !Ref FileSystemResource
       PosixUser:
@@ -418,5 +419,5 @@ Outputs:
     Description: 'AWS Lambda for executing a C++ code and getting the outputs'
     Value: !GetAtt CodeRunnerCpp.Arn
   SyncS3WithEFSName:
-    Description: 'S3 bucket for uploading test cases of the problems'
-    Value: !Ref SyncS3WithEFS
+    Description: 'AWS Lambda for syncing S3 bucket for test cases with EFS'
+    Value: !GetAtt SyncS3WithEFS.Arn
