@@ -38,7 +38,8 @@ def sync_handler(event, context):
                   glob.glob(f'{extraction_dir}/**/*.out', recursive=True)
         targets = sorted(targets)
         print('targets:', targets)
-        inputs = [t.replace('.a', '') if t.endswith('a') else t.replace('ans', 'in') for t in targets]
+        inputs = [t.replace('.a', '') if t.endswith('.a') else t.replace('.ans', '.in').replace('.out', '.in')
+                  for t in targets]
         print('inputs:', inputs)
 
         tests = []
