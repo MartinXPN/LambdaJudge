@@ -5,8 +5,75 @@ Description: SAM Template for LambdaJudge
 
 Resources:
   # Execution roles
+  SyncS3WithEFSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Policies:
+        - PolicyName: SyncNetworkPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'ec2:CreateNetworkInterface'
+                  - 'ec2:DeleteNetworkInterface'
+                  - 'ec2:DescribeNetworkInterfaces'
+                  - 'ec2:DetachNetworkInterface'
+                Resource: '*'
+        - PolicyName: SyncLogPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+        - PolicyName: SyncSecretsPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'secretsmanager:GetSecretValue'
+                  - 'secretsmanager:DescribeSecret'
+                  - 'secretsmanager:ListSecretVersionIds'
+                Resource: '*'
+        - PolicyName: SyncS3Policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 's3:GetObject'
+                  - 's3:ListBucket'
+                  - 's3:GetBucketLocation'
+                  - 's3:GetObjectVersion'
+                  - 's3:GetLifecycleConfiguration'
+                Resource: '*'
+        - PolicyName: SyncEFSPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'elasticfilesystem:ClientMount'
+                  - 'elasticfilesystem:ClientRootAccess'
+                  - 'elasticfilesystem:ClientWrite'
+                  - 'elasticfilesystem:DescribeMountTargets'
+                Resource: '*'
   EqualityCheckerRole:
-    Type: 'AWS::IAM::Role'
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -37,7 +104,7 @@ Resources:
                   - 'secretsmanager:ListSecretVersionIds'
                 Resource: '*'
   ContestantRole:
-    Type: 'AWS::IAM::Role'
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -82,24 +149,125 @@ Resources:
                   - 'elasticfilesystem:DescribeMountTargets'
                 Resource: '*'
 
+
+  # S3 bucket for test cases (zip files)
+  LambdaJudgeTestsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: 'lambda-judge-tests-bucket'
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - "*"
+            AllowedMethods:
+              - GET
+              - PUT
+              - HEAD
+            AllowedOrigins:
+              - "*"
+
+
   # VPC, Subnet, EFS config
   # source: https://github.com/aws-samples/aws-lambda-efs-samples/blob/master/1-setup/create-efs-cfn.yml
-  CodeRunnerVPC:
+  JudgeVPC:
     Type: AWS::EC2::VPC
     Properties:
-      CidrBlock: 192.168.0.0/28
+      CidrBlock: 172.31.0.0/16
       EnableDnsHostnames: False
       EnableDnsSupport: True
 
-  CodeRunnerSubnet:
+  CodeRunnerPrivateSubnet:
     Type: AWS::EC2::Subnet
     Properties:
-      CidrBlock: 192.168.0.0/28
-      VpcId: !Ref CodeRunnerVPC
+      CidrBlock: 172.31.1.0/24
+      VpcId: !Ref JudgeVPC
       AvailabilityZone: 'us-east-1a'
+      Tags:
+        - Key: Name
+          Value: CodeRunnerPrivateSubnet
+
+  # source: https://gist.github.com/lizrice/5889f33511aab739d873cb622688317e
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 172.31.2.0/24
+      VpcId: !Ref JudgeVPC
+      AvailabilityZone: 'us-east-1a'
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet
+
+  PublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref JudgeVPC
+      AvailabilityZone: 'us-east-1a'
+      CidrBlock: 172.31.3.0/24
+      MapPublicIpOnLaunch: true
+      Tags:
+        - Key: Name
+          Value: PublicSubnet
+
+  InternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  GatewayToInternet:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref JudgeVPC
+      InternetGatewayId: !Ref InternetGateway
+  EIP:
+    Type: AWS::EC2::EIP
+    DependsOn: JudgeVPC
+    Properties:
+      Domain: vpc
+  NatGateway:
+    Type: AWS::EC2::NatGateway
+    DependsOn: EIP
+    Properties:
+      AllocationId: !GetAtt EIP.AllocationId
+      SubnetId: !Ref PublicSubnet
+
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref JudgeVPC
+
+  PrivateRoute:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref PrivateRouteTable
+      DestinationCidrBlock: '0.0.0.0/0'
+      NatGatewayId: !Ref NatGateway
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref JudgeVPC
+
+  PublicSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PublicSubnet
+      RouteTableId: !Ref PublicRouteTable
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: GatewayToInternet
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref InternetGateway
+
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref PrivateRouteTable
+
 
   FileSystemResource:
-    Type: 'AWS::EFS::FileSystem'
+    Type: AWS::EFS::FileSystem
     Properties:
       PerformanceMode: generalPurpose  # generalPurpose | maxIO
       Encrypted: true
@@ -122,12 +290,12 @@ Resources:
     Type: AWS::EFS::MountTarget
     Properties:
       FileSystemId: !Ref FileSystemResource
-      SubnetId: !Ref CodeRunnerSubnet
+      SubnetId: !Ref CodeRunnerPrivateSubnet
       SecurityGroups:
-        - !GetAtt CodeRunnerVPC.DefaultSecurityGroup
+        - !GetAtt JudgeVPC.DefaultSecurityGroup
 
   AccessPointResource:
-    Type: 'AWS::EFS::AccessPoint'
+    Type: AWS::EFS::AccessPoint
     Properties:
       FileSystemId: !Ref FileSystemResource
       PosixUser:
@@ -142,8 +310,39 @@ Resources:
 
 
   # Lambda Functions
-  EqualityChecker:
+  SyncS3WithEFS:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    DependsOn: CodeRunnerMountTarget
+    Properties:
+      FunctionName: SyncS3WithEFS
+      MemorySize: 1769
+      Timeout: 60  # 1 min
+      Runtime: python3.9
+      CodeUri: sync/
+      Handler: app.sync_handler
+      Role: !GetAtt SyncS3WithEFSRole.Arn
+      Events:
+        SyncS3TestsWithEFSEvent:
+          Type: S3
+          Properties:
+            Bucket: !Ref LambdaJudgeTestsBucket
+            Events: s3:ObjectCreated:*
+            Filter:
+              S3Key:
+                Rules:
+                  - Name: suffix      # or prefix
+                    Value: zip        # The value to search for in the S3 object key names
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt JudgeVPC.DefaultSecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet
+      FileSystemConfigs:
+        - Arn: !GetAtt AccessPointResource.Arn
+          LocalMountPath: '/mnt/efs'
+
+  EqualityChecker:
+    Type: AWS::Serverless::Function
     Properties:
       FunctionName: EqualityChecker
       MemorySize: 256
@@ -170,9 +369,9 @@ Resources:
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
         SecurityGroupIds:
-          - !GetAtt CodeRunnerVPC.DefaultSecurityGroup
+          - !GetAtt JudgeVPC.DefaultSecurityGroup
         SubnetIds:
-          - !Ref CodeRunnerSubnet
+          - !Ref CodeRunnerPrivateSubnet
       FileSystemConfigs:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
@@ -192,9 +391,9 @@ Resources:
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
         SecurityGroupIds:
-          - !GetAtt CodeRunnerVPC.DefaultSecurityGroup
+          - !GetAtt JudgeVPC.DefaultSecurityGroup
         SubnetIds:
-          - !Ref CodeRunnerSubnet
+          - !Ref CodeRunnerPrivateSubnet
       FileSystemConfigs:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
@@ -219,3 +418,6 @@ Outputs:
   CodeRunnerCpp:
     Description: 'AWS Lambda for executing a C++ code and getting the outputs'
     Value: !GetAtt CodeRunnerCpp.Arn
+  SyncS3WithEFSName:
+    Description: 'AWS Lambda for syncing S3 bucket for test cases with EFS'
+    Value: !GetAtt SyncS3WithEFS.Arn
