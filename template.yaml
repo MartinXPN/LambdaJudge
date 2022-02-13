@@ -4,7 +4,104 @@ Description: SAM Template for LambdaJudge
 
 
 Resources:
+  # Policies
+  AllowLoggingPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AllowLoggingPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'logs:CreateLogGroup'
+              - 'logs:CreateLogStream'
+              - 'logs:PutLogEvents'
+            Resource: '*'
+      Roles:
+        - Ref: SyncS3WithEFSRole
+        - Ref: EqualityCheckerRole
+        - Ref: ContestantRole
+        - Ref: TriggerSyncRole
+  AllowSecretsAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AllowSecretsAccessPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'secretsmanager:GetSecretValue'
+              - 'secretsmanager:DescribeSecret'
+              - 'secretsmanager:ListSecretVersionIds'
+            Resource: '*'
+      Roles:
+        - Ref: EqualityCheckerRole
+        - Ref: TriggerSyncRole
+  AllowS3ReadPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AllowS3ReadPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 's3:GetObject'
+              - 's3:ListBucket'
+              - 's3:GetBucketLocation'
+              - 's3:GetObjectVersion'
+              - 's3:GetLifecycleConfiguration'
+            Resource: '*'
+      Roles:
+        - Ref: TriggerSyncRole
+        - Ref: SyncS3WithEFSRole
+  AllowEC2NetworkInterfacesPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AllowEC2NetworkInterfacesPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'ec2:CreateNetworkInterface'
+              - 'ec2:DeleteNetworkInterface'
+              - 'ec2:DescribeNetworkInterfaces'
+              - 'ec2:DetachNetworkInterface'
+            Resource: '*'
+      Roles:
+        - Ref: SyncS3WithEFSRole
+        - Ref: ContestantRole
+  AllowLambdaInvokationPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AllowLambdaInvokationPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'lambda:InvokeFunction'
+            Resource: '*'
+      Roles:
+        - Ref: TriggerSyncRole
+        - Ref: EqualityCheckerRole
+
   # Execution roles
+  TriggerSyncRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
   SyncS3WithEFSRole:
     Type: AWS::IAM::Role
     Properties:
@@ -18,50 +115,7 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Policies:
-        - PolicyName: SyncNetworkPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'ec2:CreateNetworkInterface'
-                  - 'ec2:DeleteNetworkInterface'
-                  - 'ec2:DescribeNetworkInterfaces'
-                  - 'ec2:DetachNetworkInterface'
-                Resource: '*'
-        - PolicyName: SyncLogPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'logs:CreateLogGroup'
-                  - 'logs:CreateLogStream'
-                  - 'logs:PutLogEvents'
-                Resource: '*'
-        - PolicyName: SyncSecretsPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'secretsmanager:GetSecretValue'
-                  - 'secretsmanager:DescribeSecret'
-                  - 'secretsmanager:ListSecretVersionIds'
-                Resource: '*'
-        - PolicyName: SyncS3Policy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 's3:GetObject'
-                  - 's3:ListBucket'
-                  - 's3:GetBucketLocation'
-                  - 's3:GetObjectVersion'
-                  - 's3:GetLifecycleConfiguration'
-                Resource: '*'
-        - PolicyName: SyncEFSPolicy
+        - PolicyName: SyncS3WithEFSPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
@@ -84,25 +138,6 @@ Resources:
                 - lambda.amazonaws.com
             Action:
               - 'sts:AssumeRole'
-      Policies:
-        - PolicyName: EqualityCheckerPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'cloudformation:Get*'
-                  - 'logs:CreateLogGroup'
-                  - 'logs:CreateLogStream'
-                  - 'logs:PutLogEvents'
-                  - 'logs:DescribeLogGroups'
-                  - 'lambda:*'
-                  - 'cloudwatch:ListMetrics'
-                  - 'cloudwatch:GetMetricData'
-                  - 'secretsmanager:GetSecretValue'
-                  - 'secretsmanager:DescribeSecret'
-                  - 'secretsmanager:ListSecretVersionIds'
-                Resource: '*'
   ContestantRole:
     Type: AWS::IAM::Role
     Properties:
@@ -116,39 +151,15 @@ Resources:
             Action:
               - 'sts:AssumeRole'
       Policies:
-        - PolicyName: ContestantLogPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'logs:CreateLogGroup'
-                  - 'logs:CreateLogStream'
-                  - 'logs:PutLogEvents'
-                Resource: '*'
-        - PolicyName: ContestantNetworkPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'ec2:CreateNetworkInterface'
-                  - 'ec2:DeleteNetworkInterface'
-                  - 'ec2:DescribeNetworkInterfaces'
-                  - 'ec2:DetachNetworkInterface'
-                Resource: '*'
-        - PolicyName: ContestantElasticFileSystemPolicy
+        - PolicyName: ContestantPolicy
           PolicyDocument:
             Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action:
                   - 'elasticfilesystem:ClientMount'
-                  # - 'elasticfilesystem:ClientRootAccess'
-                  # - 'elasticfilesystem:ClientWrite'
                   - 'elasticfilesystem:DescribeMountTargets'
                 Resource: '*'
-
 
   # S3 bucket for test cases (zip files)
   LambdaJudgeTestsBucket:
@@ -166,6 +177,56 @@ Resources:
             AllowedOrigins:
               - "*"
 
+  # S3 VPC Endpoint
+  S3VPCEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
+      RouteTableIds:
+        - !Ref PrivateRouteTable
+      VpcEndpointType: Gateway
+      VpcId: !Ref JudgeVPC
+
+  # EFS
+  FileSystemResource:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      PerformanceMode: generalPurpose  # generalPurpose | maxIO
+      Encrypted: true
+      BackupPolicy:
+        Status: ENABLED
+      FileSystemTags:
+        - Key: Name
+          Value: JudgeFS
+      FileSystemPolicy:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Action:
+              - 'elasticfilesystem:ClientMount'
+              - 'elasticfilesystem:ClientWrite'
+            Principal:
+              AWS: '*'
+  AccessPointResource:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref FileSystemResource
+      PosixUser:
+        Uid: '1000'
+        Gid: '1000'
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: '1000'
+          OwnerUid: '1000'
+          Permissions: '0777'
+        Path: '/mnt/efs'
+  CodeRunnerMountTarget:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystemResource
+      SubnetId: !Ref CodeRunnerPrivateSubnet
+      SecurityGroups:
+        - !GetAtt JudgeVPC.DefaultSecurityGroup
 
   # VPC, Subnet, EFS config
   # source: https://github.com/aws-samples/aws-lambda-efs-samples/blob/master/1-setup/create-efs-cfn.yml
@@ -189,27 +250,7 @@ Resources:
         - Key: Name
           Value: CodeRunnerPrivateSubnet
 
-
-  # source: https://github.com/widdix/aws-cf-templates/blob/master/vpc/vpc-endpoint-s3.yaml
-  # source: https://github.com/aws-samples/lambda-event-sources-vpc-setup-example/blob/main/VPCEndpoint.yml
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-  GatewayToInternet:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref JudgeVPC
-      InternetGatewayId: !Ref InternetGateway
-
-  PublicSubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref JudgeVPC
-      AvailabilityZone: 'us-east-1a'
-      CidrBlock: 172.31.3.0/24
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: PublicSubnet
+  # source: https://github.com/awsdocs/aws-lambda-developer-guide/blob/main/templates/vpc-private.yaml
   PrivateSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -220,109 +261,30 @@ Resources:
       Tags:
         - Key: Name
           Value: PrivateSubnet
-
-  PublicRouteTable:
+  PrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref JudgeVPC
       Tags:
         - Key: Name
           Value: Public Routes
-  PublicRoute:
-    Type: AWS::EC2::Route
-    DependsOn: GatewayToInternet
-    Properties:
-      RouteTableId: !Ref PublicRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
-  PublicSubnetRouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet
-      RouteTableId: !Ref PublicRouteTable
   PrivateSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet
-      RouteTableId: !Ref PublicRouteTable
-
-  # VPC Endpoints (Lambda, S3, SecretManager)
-  S3VPCEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
-      RouteTableIds:
-        - !Ref PublicRouteTable
-      VpcEndpointType: Gateway
-      VpcId: !Ref JudgeVPC
-  SecretManagerVPCEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      PrivateDnsEnabled: true
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.secretsmanager
-      SubnetIds:
-        - !Ref PrivateSubnet
-      VpcEndpointType: Interface
-      VpcId: !Ref JudgeVPC
-      SecurityGroupIds:
-        - !GetAtt JudgeVPC.DefaultSecurityGroup
-
-
-  FileSystemResource:
-    Type: AWS::EFS::FileSystem
-    Properties:
-      PerformanceMode: generalPurpose  # generalPurpose | maxIO
-      Encrypted: true
-      BackupPolicy:
-        Status: ENABLED
-      FileSystemTags:
-        - Key: Name
-          Value: JudgeFS
-      FileSystemPolicy:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: 'Allow'
-            Action:
-              - 'elasticfilesystem:ClientMount'
-              - 'elasticfilesystem:ClientWrite'
-            Principal:
-              AWS: '*'
-
-  CodeRunnerMountTarget:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref FileSystemResource
-      SubnetId: !Ref CodeRunnerPrivateSubnet
-      SecurityGroups:
-        - !GetAtt JudgeVPC.DefaultSecurityGroup
-
-  AccessPointResource:
-    Type: AWS::EFS::AccessPoint
-    Properties:
-      FileSystemId: !Ref FileSystemResource
-      PosixUser:
-        Uid: '1000'
-        Gid: '1000'
-      RootDirectory:
-        CreationInfo:
-          OwnerGid: '1000'
-          OwnerUid: '1000'
-          Permissions: '0777'
-        Path: '/mnt/efs'
-
+      RouteTableId: !Ref PrivateRouteTable
 
   # Lambda Functions
-  SyncS3WithEFS:
+  SyncS3Trigger:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-    DependsOn: CodeRunnerMountTarget
     Properties:
-      FunctionName: SyncS3WithEFS
-      MemorySize: 1769
+      FunctionName: TriggerSyncS3
+      MemorySize: 256
       Timeout: 60  # 1 min
       Runtime: python3.9
       CodeUri: sync/
-      Handler: app.sync_handler
-      Role: !GetAtt SyncS3WithEFSRole.Arn
+      Handler: app.sync_s3_handler
+      Role: !GetAtt TriggerSyncRole.Arn
       Events:
         SyncS3TestsWithEFSEvent:
           Type: S3
@@ -334,6 +296,18 @@ Resources:
                 Rules:
                   - Name: suffix      # or prefix
                     Value: zip        # The value to search for in the S3 object key names
+
+  SyncS3WithEFS:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    DependsOn: CodeRunnerMountTarget
+    Properties:
+      FunctionName: SyncS3WithEFS
+      MemorySize: 1769
+      Timeout: 60  # 1 min
+      Runtime: python3.9
+      CodeUri: sync/
+      Handler: app.sync_efs_handler
+      Role: !GetAtt SyncS3WithEFSRole.Arn
       VpcConfig:
         SecurityGroupIds:
           - !GetAtt JudgeVPC.DefaultSecurityGroup
