@@ -29,6 +29,14 @@ Resources:
                   - 'ec2:DescribeNetworkInterfaces'
                   - 'ec2:DetachNetworkInterface'
                 Resource: '*'
+        - PolicyName: SyncLambdaPolicy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'lambda:*'
+                Resource: '*'
         - PolicyName: SyncLogPolicy
           PolicyDocument:
             Version: '2012-10-17'
@@ -255,17 +263,6 @@ Resources:
         - !Ref PublicRouteTable
       VpcEndpointType: Gateway
       VpcId: !Ref JudgeVPC
-  SecretManagerVPCEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      PrivateDnsEnabled: true
-      ServiceName: !Sub com.amazonaws.${AWS::Region}.secretsmanager
-      SubnetIds:
-        - !Ref PrivateSubnet
-      VpcEndpointType: Interface
-      VpcId: !Ref JudgeVPC
-      SecurityGroupIds:
-        - !GetAtt JudgeVPC.DefaultSecurityGroup
 
 
   FileSystemResource:
@@ -312,16 +309,15 @@ Resources:
 
 
   # Lambda Functions
-  SyncS3WithEFS:
+  SyncS3Trigger:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
-    DependsOn: CodeRunnerMountTarget
     Properties:
-      FunctionName: SyncS3WithEFS
-      MemorySize: 1769
+      FunctionName: TriggerSyncS3
+      MemorySize: 256
       Timeout: 60  # 1 min
       Runtime: python3.9
       CodeUri: sync/
-      Handler: app.sync_handler
+      Handler: app.sync_s3_handler
       Role: !GetAtt SyncS3WithEFSRole.Arn
       Events:
         SyncS3TestsWithEFSEvent:
@@ -334,6 +330,18 @@ Resources:
                 Rules:
                   - Name: suffix      # or prefix
                     Value: zip        # The value to search for in the S3 object key names
+
+  SyncS3WithEFS:
+    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    DependsOn: CodeRunnerMountTarget
+    Properties:
+      FunctionName: SyncS3WithEFS
+      MemorySize: 1769
+      Timeout: 60  # 1 min
+      Runtime: python3.9
+      CodeUri: sync/
+      Handler: app.sync_efs_handler
+      Role: !GetAtt SyncS3WithEFSRole.Arn
       VpcConfig:
         SecurityGroupIds:
           - !GetAtt JudgeVPC.DefaultSecurityGroup
