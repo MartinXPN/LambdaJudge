@@ -198,26 +198,7 @@ Resources:
           Value: CodeRunnerPrivateSubnet
 
 
-  # source: https://github.com/widdix/aws-cf-templates/blob/master/vpc/vpc-endpoint-s3.yaml
-  # source: https://github.com/aws-samples/lambda-event-sources-vpc-setup-example/blob/main/VPCEndpoint.yml
-  InternetGateway:
-    Type: AWS::EC2::InternetGateway
-  GatewayToInternet:
-    Type: AWS::EC2::VPCGatewayAttachment
-    Properties:
-      VpcId: !Ref JudgeVPC
-      InternetGatewayId: !Ref InternetGateway
-
-  PublicSubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      VpcId: !Ref JudgeVPC
-      AvailabilityZone: 'us-east-1a'
-      CidrBlock: 172.31.3.0/24
-      MapPublicIpOnLaunch: true
-      Tags:
-        - Key: Name
-          Value: PublicSubnet
+  # source: https://github.com/awsdocs/aws-lambda-developer-guide/blob/main/templates/vpc-private.yaml
   PrivateSubnet:
     Type: AWS::EC2::Subnet
     Properties:
@@ -228,39 +209,26 @@ Resources:
       Tags:
         - Key: Name
           Value: PrivateSubnet
-
-  PublicRouteTable:
+  PrivateRouteTable:
     Type: AWS::EC2::RouteTable
     Properties:
       VpcId: !Ref JudgeVPC
       Tags:
         - Key: Name
           Value: Public Routes
-  PublicRoute:
-    Type: AWS::EC2::Route
-    DependsOn: GatewayToInternet
-    Properties:
-      RouteTableId: !Ref PublicRouteTable
-      DestinationCidrBlock: 0.0.0.0/0
-      GatewayId: !Ref InternetGateway
-  PublicSubnetRouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PublicSubnet
-      RouteTableId: !Ref PublicRouteTable
   PrivateSubnetRouteTableAssociation:
     Type: AWS::EC2::SubnetRouteTableAssociation
     Properties:
       SubnetId: !Ref PrivateSubnet
-      RouteTableId: !Ref PublicRouteTable
+      RouteTableId: !Ref PrivateRouteTable
 
-  # VPC Endpoints (Lambda, S3, SecretManager)
+  # S3 VPC Endpoint
   S3VPCEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       ServiceName: !Sub com.amazonaws.${AWS::Region}.s3
       RouteTableIds:
-        - !Ref PublicRouteTable
+        - !Ref PrivateRouteTable
       VpcEndpointType: Gateway
       VpcId: !Ref JudgeVPC
 
