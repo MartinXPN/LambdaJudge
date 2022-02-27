@@ -324,7 +324,7 @@ Resources:
       MemorySize: 256
       Timeout: 300
       Runtime: python3.9
-      CodeUri: judges/
+      CodeUri: coderunners/
       Handler: app.equality_checker_lambda
       Role: !GetAtt EqualityCheckerRole.Arn
       Events:

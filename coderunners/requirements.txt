@@ -1,3 +1,4 @@
+# Requirements for the judge lambda
+boto3>=1.20.49
 dataclasses-json>=0.5.6
-psutil>=5.9.0
-cryptography>=36.0.1
+requests>=2.26.0

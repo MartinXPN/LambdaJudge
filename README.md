@@ -107,7 +107,7 @@ You can find more information and examples about filtering Lambda function logs 
 Tests are defined in the `tests` folder in this project. Use PIP to install the test dependencies and run tests.
 
 ```bash
-LambdaJudge$ pip install -r tests/requirements.txt --user
+LambdaJudge$ pip install -r tests/coderunner.requirements.txt --user
 # unit test
 LambdaJudge$ python -m pytest tests/unit -v
 # integration test, requiring deploying the stack first.
