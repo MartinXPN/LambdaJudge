@@ -63,13 +63,14 @@ class CSharpCompiler(Compiler):
     supported_standards = {'c#'}
 
     dotnet_path = Path('/root/.dotnet/dotnet')
-    project_file_path = Path('/tmp/program/program.csproj')
-    code_path = Path(project_file_path.parent, 'Program.cs')
+    project_dir = Path('/tmp/program')
+    project_file_path = Path(project_dir, 'program.csproj')
+    code_path = Path(project_dir, 'Program.cs')
     dll_path = Path('/tmp/out/program.dll')
 
     def compile(self, submission_path: Path):
         print('Creating CSharp project at:', self.project_file_path)
-        Process(f'{self.dotnet_path} new console -o {self.project_file_path.parent}' + f'&& cat {submission_path} > {self.code_path}',
+        Process(f'{self.dotnet_path} new console -o {self.project_dir}' + f'&& cat {submission_path} > {self.code_path}',
                 timeout=10, memory_limit_mb=512).run()
         
         print("Build CSharp project")
@@ -77,5 +78,5 @@ class CSharpCompiler(Compiler):
                               timeout=10, memory_limit_mb=512).run()
 
         print('Compile res', compile_res)
-        executable_path = f'{self.dotnet_path} run {self.dll_path} --project {self.project_file_path.parent}'
+        executable_path = f'{self.dotnet_path} run {self.dll_path} --project {self.project_dir}'
         return executable_path, compile_res

@@ -47,15 +47,6 @@ class PythonRunner(CodeRunner):
         return 'CodeRunnerPython'
 
 @dataclass
-class CppRunner(CodeRunner):
-    supported_standards = {'c++11', 'c++14', 'c++17', 'c++20'}
-
-    @property
-    def name(self) -> str:
-        return 'CodeRunnerCpp'
-
-
-@dataclass
 class CSharpRunner(CodeRunner):
     supported_standards = {'c#'}
 
