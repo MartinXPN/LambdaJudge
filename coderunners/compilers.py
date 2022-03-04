@@ -19,6 +19,8 @@ class Compiler(ABC):
             return CppCompiler(language_standard=language)
         if language in PythonCompiler.supported_standards:
             return PythonCompiler(language_standard=language)
+        if language in CSharpCompiler.supported_standards:
+            return CSharpCompiler(language_standard=language)
         raise ValueError(f'{language} does not have a compiler yet')
 
 
@@ -53,4 +55,28 @@ class PythonCompiler(Compiler):
         print('Compile res', compile_res)
         binary_path.unlink(missing_ok=True)
         executable_path = f'{self.language_standard} {submission_path}'
+        return executable_path, compile_res
+
+@dataclass
+class CSharpCompiler(Compiler):
+    language_standard: str
+    supported_standards = {'c#'}
+
+    dotnet_path = Path('/root/.dotnet/dotnet')
+    project_dir = Path('/tmp/program')
+    project_file_path = Path(project_dir, 'program.csproj')
+    code_path = Path(project_dir, 'Program.cs')
+    dll_path = Path('/tmp/out/program.dll')
+
+    def compile(self, submission_path: Path):
+        print('Creating CSharp project at:', self.project_file_path)
+        Process(f'{self.dotnet_path} new console -o {self.project_dir}' + f'&& cat {submission_path} > {self.code_path}',
+                timeout=10, memory_limit_mb=512).run()
+        
+        print("Build CSharp project")
+        compile_res = Process(f'{self.dotnet_path} build {self.project_file_path} -c Release -o {self.dll_path.parent}',
+                              timeout=10, memory_limit_mb=512).run()
+
+        print('Compile res', compile_res)
+        executable_path = f'{self.dotnet_path} run {self.dll_path} --project {self.project_dir}'
         return executable_path, compile_res
