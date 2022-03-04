@@ -1,14 +1,12 @@
 {
     "code": {
-      "main.cs": "Console.WriteLine(\"Hello, World!\");"
+      "main.cs": "Console.WriteLine(\"Hello, World!\");\n"
     },
-    "testCases": [{"input":"hello","target":"hello"}],
+    "testCases": [{"input":"", "target":"Hello, World!"}],
     "returnOutputs": true,
     "return_compile_outputs": true,
     "stopOnFirstFail": false,
-    "programInputs": ["1", "5", "10", "50", "55", "100"],
     "language": "C#",
-    "timeLimit": 2,
+    "timeLimit": 10,
     "memory_limit": 512
-  }
-  
+}

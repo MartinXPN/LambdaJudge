@@ -4,9 +4,8 @@
   },
   "testCases": [{"input":"hello","target":"hello"}],
   "returnOutputs": true,
-  "return_compile_outputs": true,
+  "returnCompileOutputs": true,
   "stopOnFirstFail": false,
-  "programInputs": ["1", "5", "10", "50", "55", "100"],
   "language": "C++17",
   "timeLimit": 2,
   "memory_limit": 512
