@@ -17,6 +17,8 @@ class CodeRunner:
             return CppRunner()
         if language in PythonRunner.supported_standards:
             return PythonRunner()
+        if language in CSharpRunner.supported_standards:
+            return CSharpRunner()
         raise ValueError(f'{language} does not have a compiler yet')
 
     def invoke(self, aws_lambda_client, request: SubmissionRequest) -> SubmissionResult:
@@ -43,3 +45,20 @@ class PythonRunner(CodeRunner):
     @property
     def name(self) -> str:
         return 'CodeRunnerPython'
+
+@dataclass
+class CppRunner(CodeRunner):
+    supported_standards = {'c++11', 'c++14', 'c++17', 'c++20'}
+
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerCpp'
+
+
+@dataclass
+class CSharpRunner(CodeRunner):
+    supported_standards = {'c#'}
+
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerCSharp'
