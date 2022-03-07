@@ -4,6 +4,7 @@ FROM public.ecr.aws/sam/build-python3.9:latest
 RUN yum install -y wget
 RUN wget https://dot.net/v1/dotnet-install.sh
 RUN sh dotnet-install.sh -c 6.0
+RUN mv /root/.dotnet /var/task/
 
 RUN pip install --upgrade pip
 RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"

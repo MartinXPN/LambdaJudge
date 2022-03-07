@@ -62,7 +62,7 @@ class CSharpCompiler(Compiler):
     language_standard: str
     supported_standards = {'c#'}
 
-    dotnet_path = Path('/root/.dotnet/dotnet')
+    dotnet_path = Path('/var/task/.dotnet/dotnet')
     project_dir = Path('/tmp/program')
     project_file_path = Path(project_dir, 'program.csproj')
     code_path = Path(project_dir, 'Program.cs')
@@ -79,4 +79,5 @@ class CSharpCompiler(Compiler):
 
         print('Compile res', compile_res)
         executable_path = f'{self.dotnet_path} run {self.dll_path} --project {self.project_dir}'
+        
         return executable_path, compile_res
