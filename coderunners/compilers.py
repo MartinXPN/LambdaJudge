@@ -57,6 +57,7 @@ class PythonCompiler(Compiler):
         executable_path = f'{self.language_standard} {submission_path}'
         return executable_path, compile_res
 
+
 @dataclass
 class CSharpCompiler(Compiler):
     language_standard: str
@@ -71,17 +72,12 @@ class CSharpCompiler(Compiler):
     def compile(self, submission_path: Path):
         create_project_cmd = f'{self.dotnet_path} new console -o {self.project_dir}'
         copy_source_code_cmd = f'cat {submission_path} > {self.code_path}'
-        project_create_res = Process(' && '.join([create_project_cmd, copy_source_code_cmd]), timeout=10, memory_limit_mb=512).run()
+        project_create_res = Process(' && '.join([create_project_cmd, copy_source_code_cmd]),
+                                     timeout=10, memory_limit_mb=512).run()
         print('Project Create res', project_create_res)
         
         compile_cmd = f'{self.dotnet_path} build {self.project_file_path} -c Release -o {self.dll_path.parent}'
-        
-        # all_cmds = ' && '.join([create_project_cmd, copy_source_code_cmd, compile_cmd])
-        
-        print('Build CSharp project')
         compile_res = Process(compile_cmd, timeout=10, memory_limit_mb=512).run()
-        # compile_res = Process(all_cmds, timeout=100, memory_limit_mb=512).run()
-        
 
         print('Compile res', compile_res)
         executable_path = f'{self.dotnet_path} run {self.dll_path} --project {self.project_dir}'

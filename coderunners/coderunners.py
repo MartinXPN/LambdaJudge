@@ -46,6 +46,7 @@ class PythonRunner(CodeRunner):
     def name(self) -> str:
         return 'CodeRunnerPython'
 
+
 @dataclass
 class CSharpRunner(CodeRunner):
     supported_standards = {'c#'}

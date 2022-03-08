@@ -18,7 +18,6 @@ def compile_code(code: dict[str, str], language: str) -> tuple[Optional[Path], O
     submission_path = save_code(save_dir=ROOT, code=code)[0]
 
     compiler = Compiler.from_language(language=language)
-    print("Submission path:", submission_path)
     executable_path, compilation = compiler.compile(submission_path=submission_path)
 
     # Compile error
@@ -73,14 +72,14 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
         float_precision=float_precision, delimiter=delimiter, executable_path=checker_executable_path
     )
 
-    # Process all tests
-    test_results, test_scores = [], []
-
+    # Run the first test as a warmup to avoid having big time consumption on the first run
     Process(
         f'{executable_path}',
         timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
     ).run(test_cases[0].input)
 
+    # Process all tests
+    test_results, test_scores = [], []
     for test in test_cases:
         r = Process(
             f'{executable_path}',
