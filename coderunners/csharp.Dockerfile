@@ -1,10 +1,26 @@
 FROM public.ecr.aws/sam/build-python3.9:latest
 
-## Initial setup
+# Initial setup
 RUN yum install -y wget
 RUN wget https://dot.net/v1/dotnet-install.sh
 RUN sh dotnet-install.sh -c 6.0
-RUN mv /root/.dotnet /var/task/
+RUN mv /root/.dotnet /var/dotnet
+
+ENV \
+    # Export .NET version as environment variable
+    # DOTNET_VERSION=$ASPNET_VERSION \
+    # Enable detection of running in a container
+    DOTNET_RUNNING_IN_CONTAINER=true \
+    # Lambda is opinionated about installing tooling under /var
+    DOTNET_CLI_HOME=/tmp \
+    # Don't display welcome message on first run
+    DOTNET_NOLOGO=true \
+    # Disable Microsoft's telemetry collection
+    DOTNET_CLI_TELEMETRY_OPTOUT=true \
+    HOME=/tmp
+
+# RUN rpm -Uvh https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
+# RUN yum install -y dotnet-sdk-3.1
 
 RUN pip install --upgrade pip
 RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"

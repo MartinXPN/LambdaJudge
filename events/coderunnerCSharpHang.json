@@ -1,6 +1,6 @@
 {
     "code": {
-      "main.cs": "Console.WriteLine(\"Hello, World!\");\n"
+      "main.cs": "namespace HelloWorld\n{\n    class Hello {         \n        static void Main(string[] args)\n        {\n            System.Console.WriteLine(\"Hello World!\");\n        }\n    }\n}"
     },
     "testCases": [{"input":"", "target":"Hello, World!"}],
     "returnOutputs": true,
