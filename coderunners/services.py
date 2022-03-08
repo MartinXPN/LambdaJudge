@@ -72,6 +72,12 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
         float_precision=float_precision, delimiter=delimiter, executable_path=checker_executable_path
     )
 
+    # Run the first test as a warmup to avoid having big time consumption on the first run
+    Process(
+        f'{executable_path}',
+        timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
+    ).run(test_cases[0].input)
+
     # Process all tests
     test_results, test_scores = [], []
     for test in test_cases:
