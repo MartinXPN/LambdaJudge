@@ -1,5 +1,6 @@
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
+from http.server import executable
 from pathlib import Path
 from typing import Tuple
 
@@ -21,6 +22,8 @@ class Compiler(ABC):
             return PythonCompiler(language_standard=language)
         if language in CSharpCompiler.supported_standards:
             return CSharpCompiler(language_standard=language)
+        if language in JsCompiler.supported_standards:
+            return JsCompiler(language_standard=language)
         raise ValueError(f'{language} does not have a compiler yet')
 
 
@@ -81,5 +84,17 @@ class CSharpCompiler(Compiler):
 
         print('Compile res', compile_res)
         executable_path = f'{self.dotnet_path} run {self.dll_path} --project {self.project_dir}'
+        
+        return executable_path, compile_res
+
+@dataclass
+class JsCompiler(Compiler):
+    language_standard: str
+    supported_standards = {'js'}
+
+    def compile(self, submission_path: Path):
+        compile_res = Process(f'node --check {submission_path}', timeout=10, memory_limit_mb=512).run()
+        print('Compile res', compile_res)
+        executable_path = f'node {submission_path}'
         
         return executable_path, compile_res
