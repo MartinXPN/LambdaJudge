@@ -400,6 +400,28 @@ Resources:
       DockerContext: ./coderunners
       Dockerfile: csharp.Dockerfile
 
+  CodeRunnerJs:
+    Type: AWS::Serverless::Function
+    DependsOn: CodeRunnerMountTarget
+    Properties:
+      FunctionName: CodeRunnerJs
+      Timeout: 300
+      MemorySize: 1769
+      PackageType: Image
+      Role: !GetAtt ContestantRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt JudgeVPC.DefaultSecurityGroup
+        SubnetIds:
+          - !Ref CodeRunnerPrivateSubnet
+      FileSystemConfigs:
+        - Arn: !GetAtt AccessPointResource.Arn
+          LocalMountPath: '/mnt/efs'
+    Metadata:
+      DockerTag: python3.9-v1
+      DockerContext: ./coderunners
+      Dockerfile: js.Dockerfile
+
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
@@ -419,6 +441,9 @@ Outputs:
   CodeRunnerCSharp:
     Description: 'AWS Lambda for executing a C# code and getting the outputs'
     Value: !GetAtt CodeRunnerCSharp.Arn
+  CodeRunnerJs:
+    Description: 'AWS Lambda for executing a JS code and getting the outputs'
+    Value: !GetAtt CodeRunnerJs.Arn
   SyncS3WithEFSName:
     Description: 'AWS Lambda for syncing S3 bucket for test cases with EFS'
     Value: !GetAtt SyncS3WithEFS.Arn

@@ -19,9 +19,6 @@ ENV \
     DOTNET_CLI_TELEMETRY_OPTOUT=true \
     HOME=/tmp
 
-# RUN rpm -Uvh https://packages.microsoft.com/config/centos/7/packages-microsoft-prod.rpm
-# RUN yum install -y dotnet-sdk-3.1
-
 RUN pip install --upgrade pip
 RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"
 
