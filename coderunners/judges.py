@@ -2,14 +2,17 @@ import copy
 import json
 
 import boto3
+import botocore
 import requests as requests
 
 from coderunners import CodeRunner
 from models import SubmissionResult, SubmissionRequest
 
-aws_lambda = boto3.client('lambda')
+cfg = botocore.config.Config(retries={'max_attempts': 0}, read_timeout=300, connect_timeout=300 )
+aws_lambda = boto3.client('lambda', config=cfg)
 secret_manager = boto3.client('secretsmanager')
 encryption_secret_key_id = 'arn:aws:secretsmanager:us-east-1:370358067229:secret:efs/problem/encryptionKey-xTnJWC'
+
 
 
 def check_equality(request: SubmissionRequest) -> SubmissionResult:
