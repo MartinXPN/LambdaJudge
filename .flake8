@@ -1,0 +1,15 @@
+[flake8]
+ignore = D203
+exclude =
+    .git,
+    .aws-sam,
+    venv,
+    playground,
+    __pycache__,
+    docs/source/conf.py,
+    evalaute_all.py
+    old,
+    build,
+    dist
+max-complexity = 11
+max-line-length = 120
