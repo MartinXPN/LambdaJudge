@@ -6,9 +6,10 @@ from cryptography.fernet import Fernet
 
 from checkers import Checker
 from compilers import Compiler
-from models import Status, SubmissionResult, TestCase
+from models import Status, SubmissionRequest, SubmissionResult, TestCase, TestGroup
 from process import Process
 from util import save_code
+import scoring
 
 ROOT = Path('/tmp/')
 
@@ -40,7 +41,8 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
                aggregate_results: bool, return_outputs: bool, stop_on_first_fail: bool,
                comparison_mode: str, float_precision: float, delimiter: Optional[str],
                checker_code: Optional[dict[str, str]], checker_language: Optional[str],
-               callback_url: Optional[str], encryption_key: Optional[str]) -> SubmissionResult:
+               callback_url: Optional[str], encryption_key: Optional[str],
+               test_groups: list[TestGroup]) -> SubmissionResult:
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
 
     executable_path, compilation_errors = compile_code(code, language)
@@ -80,7 +82,7 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
 
     # Process all tests
     test_results, test_scores = [], []
-    for test in test_cases:
+    for i, test in enumerate(test_cases):
         r = Process(
             f'{executable_path}',
             timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
@@ -102,12 +104,17 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
     status = Status.OK if failed_test is None else test_results[failed_test].status
     max_memory = max(t.memory for t in test_results)
     max_time = max(t.time for t in test_results)
-
+    
+    if test_groups:
+        scorer = scoring.SubtaskScorer(test_groups)
+    else:
+        scorer = scoring.PerTestScorer()
+        
     res = SubmissionResult(
         status=status if aggregate_results else [t.status for t in test_results],
         memory=max_memory if aggregate_results else [t.memory for t in test_results],
         time=max_time if aggregate_results else [t.time for t in test_results],
-        score=sum(test_scores) / len(test_cases),
+        score=scorer.get_score(test_results, test_scores),
         message=[t.message or '' for t in test_results] if return_outputs else None,
         outputs=[t.outputs or '' for t in test_results] if return_outputs else None,
         errors=[t.errors or '' for t in test_results] if return_outputs else None,
