@@ -6,50 +6,46 @@ from cryptography.fernet import Fernet
 
 from checkers import Checker
 from compilers import Compiler
-from models import Status, SubmissionResult, TestCase, TestGroup
+from models import Status, SubmissionResult, TestCase, TestGroup, RunResult
 from process import Process
+from scoring import AbstractScorer
 from util import save_code
-import scoring
 
 ROOT = Path('/tmp/')
 
 
-def compile_code(code: dict[str, str], language: str) -> tuple[Optional[Path], Optional[SubmissionResult]]:
+def compile_code(code: dict[str, str], language: str) -> tuple[Optional[Path], RunResult]:
     # Currently, we only support single-file submissions
     submission_path = save_code(save_dir=ROOT, code=code)[0]
 
     compiler = Compiler.from_language(language=language)
     executable_path, compilation = compiler.compile(submission_path=submission_path)
+    if compilation.status == Status.OK and not compilation.errors:
+        return executable_path, compilation
 
     # Compile error
-    if compilation.status != Status.OK or compilation.errors:
-        print('Compile error:', compilation)
-        message = None
-        if compilation.status == Status.TLE:
-            message = 'Compilation time limit exceeded'
-        if compilation.status == Status.MLE:
-            message = 'Compilation memory limit exceeded'
+    print('Compile error:', compilation)
+    if compilation.status == Status.TLE:
+        compilation.message = 'Compilation time limit exceeded'
+    if compilation.status == Status.MLE:
+        compilation.message = 'Compilation memory limit exceeded'
 
-        return None, SubmissionResult(
-            status=Status.COMPILATION_ERROR,
-            memory=compilation.memory, time=compilation.time, score=0, message=message,
-            compile_outputs=(compilation.outputs or '') + '\n' + (compilation.errors or '')
-        )
-    return executable_path, None
+    compilation.status = Status.COMPILATION_ERROR
+    compilation.score = 0
+    return None, compilation
 
 
 def check_code(code: dict[str, str], language: str, memory_limit: int, time_limit: int, output_limit: float,
-               problem: Optional[str], test_cases: Optional[list[TestCase]],
-               aggregate_results: bool, return_outputs: bool, stop_on_first_fail: bool,
+               problem: Optional[str], test_cases: Optional[list[TestCase]], test_groups: list[TestGroup],
+               return_outputs: bool, stop_on_first_fail: bool,
                comparison_mode: str, float_precision: float, delimiter: Optional[str],
                checker_code: Optional[dict[str, str]], checker_language: Optional[str],
-               callback_url: Optional[str], encryption_key: Optional[str],
-               test_groups: list[TestGroup]) -> SubmissionResult:
+               callback_url: Optional[str], encryption_key: Optional[str]) -> SubmissionResult:
     Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
 
-    executable_path, compilation_errors = compile_code(code, language)
-    if compilation_errors:
-        return compilation_errors
+    executable_path, compilation_result = compile_code(code, language)
+    if executable_path is None:
+        return SubmissionResult(overall=compilation_result, compile_result=compilation_result)
 
     if problem:
         # Compress:   (1) json.dumps   (2) .encode('utf-8')   (3) gzip.compress()   (4) encrypt
@@ -67,9 +63,9 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
     # Prepare the checker
     checker_executable_path = None
     if comparison_mode == 'custom':
-        checker_executable_path, checker_compilation_errors = compile_code(checker_code, checker_language)
-        if checker_compilation_errors:
-            return checker_compilation_errors
+        checker_executable_path, checker_compilation_result = compile_code(checker_code, checker_language)
+        if checker_compilation_result:
+            return SubmissionResult(overall=checker_compilation_result, compile_result=checker_compilation_result)
 
     checker = Checker.from_mode(
         mode=comparison_mode,
@@ -78,45 +74,42 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
 
     # Run the first test as a warmup to avoid having big time consumption on the first run
     Process(
-        f'{executable_path}',
-        timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
+        f'{executable_path}', timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
     ).run(test_cases[0].input)
 
     # Process all tests
-    test_results, test_scores = [], []
+    test_results: list[RunResult] = []
     for test in test_cases:
         r = Process(
-            f'{executable_path}',
-            timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
+            f'{executable_path}', timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
         ).run(test.input)
 
         if r.status == Status.OK:
-            r.status, score, r.message = checker.check(inputs=test.input, output=r.outputs,
-                                                       target=test.target, code=code)
-            test_scores.append(score)
+            r.status, r.score, r.message = checker.check(inputs=test.input, output=r.outputs,
+                                                         target=test.target, code=code)
         else:
-            test_scores.append(0)
+            r.score = 0
+
         test_results.append(r)
+        if not return_outputs:
+            test_results[-1].outputs = None
+            test_results[-1].errors = None
+
         if stop_on_first_fail and r.status != Status.OK:
             break
     print('test_results:', test_results)
 
     # Aggregate all the results across test cases
-    failed_test = next((i for i, x in enumerate(test_results) if x.status != Status.OK), None)
-    status = Status.OK if failed_test is None else test_results[failed_test].status
-    max_memory = max(t.memory for t in test_results)
-    max_time = max(t.time for t in test_results)
-
-    scorer = scoring.AbstractScorer.from_request(test_groups)
-    res = SubmissionResult(
-        status=status if aggregate_results else [t.status for t in test_results],
-        memory=max_memory if aggregate_results else [t.memory for t in test_results],
-        time=max_time if aggregate_results else [t.time for t in test_results],
-        score=scorer.get_score(test_results, test_scores),
-        message=[t.message or '' for t in test_results] if return_outputs else None,
-        outputs=[t.outputs or '' for t in test_results] if return_outputs else None,
-        errors=[t.errors or '' for t in test_results] if return_outputs else None,
-        compile_outputs=None
+    first_failed = next((i for i, x in enumerate(test_results) if x.status != Status.OK), None)
+    scorer = AbstractScorer.from_request(test_groups)
+    overall = RunResult(
+        status=Status.OK if first_failed is None else test_results[first_failed].status,
+        memory=max(t.memory for t in test_results),
+        time=max(t.time for t in test_results),
+        return_code=0 if first_failed is None else test_results[first_failed].return_code,
+        score=scorer.get_score(test_results),
     )
+
+    res = SubmissionResult(overall=overall, compile_result=compilation_result, test_results=test_results)
     print('submission result:', res)
     return res
