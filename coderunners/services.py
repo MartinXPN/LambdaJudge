@@ -106,7 +106,7 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
     status = Status.OK if failed_test is None else test_results[failed_test].status
     max_memory = max(t.memory for t in test_results)
     max_time = max(t.time for t in test_results)
-    
+
     scorer = scoring.AbstractScorer.from_request(test_groups)
     res = SubmissionResult(
         status=status if aggregate_results else [t.status for t in test_results],

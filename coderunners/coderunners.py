@@ -57,6 +57,7 @@ class CSharpRunner(CodeRunner):
     def name(self) -> str:
         return 'CodeRunnerCSharp'
 
+
 @dataclass
 class JsRunner(CodeRunner):
     supported_standards = {'js'}

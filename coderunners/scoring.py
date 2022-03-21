@@ -1,27 +1,29 @@
 from abc import abstractmethod, ABC
 from dataclasses import dataclass
 
-from models import Status, TestGroup
+from models import Status, TestGroup, RunResult
 
 
 class AbstractScorer(ABC):
     @abstractmethod
-    def get_score(self, test_results: list[Status], test_scores: list[float]) -> float:
+    def get_score(self, test_results: list[RunResult], test_scores: list[float]) -> float:
         ...
-    
+
     @staticmethod
     def from_request(test_groups) -> 'AbstractScorer':
         return SubtaskScorer(test_groups=test_groups) if test_groups else PerTestScorer()
-    
+
+
 class PerTestScorer(AbstractScorer):
-    def get_score(self, test_results: list[Status], test_scores: list[float]) -> float:
+    def get_score(self, test_results: list[RunResult], test_scores: list[float]) -> float:
         return sum(test_scores) / len(test_scores)
+
 
 @dataclass
 class SubtaskScorer(AbstractScorer):
     test_groups: list[TestGroup]
-    
-    def get_score(self, test_results: list[Status], test_scores: list[float]) -> float:
+
+    def get_score(self, test_results: list[RunResult], test_scores: list[float]) -> float:
         score = 0
         test_results = test_results[:]
         for test_group in self.test_groups:

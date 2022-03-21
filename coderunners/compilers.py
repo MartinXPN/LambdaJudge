@@ -86,6 +86,7 @@ class CSharpCompiler(Compiler):
 
         return executable_path, compile_res
 
+
 @dataclass
 class JsCompiler(Compiler):
     language_standard: str
@@ -95,5 +96,5 @@ class JsCompiler(Compiler):
         compile_res = Process(f'node --check {submission_path}', timeout=10, memory_limit_mb=512).run()
         print('Compile res', compile_res)
         executable_path = f'node {submission_path}'
-        
+
         return executable_path, compile_res
