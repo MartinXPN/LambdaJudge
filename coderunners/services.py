@@ -6,7 +6,7 @@ from cryptography.fernet import Fernet
 
 from checkers import Checker
 from compilers import Compiler
-from models import Status, SubmissionRequest, SubmissionResult, TestCase, TestGroup
+from models import Status, SubmissionResult, TestCase, TestGroup
 from process import Process
 from util import save_code
 import scoring
@@ -82,7 +82,7 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
 
     # Process all tests
     test_results, test_scores = [], []
-    for i, test in enumerate(test_cases):
+    for test in test_cases:
         r = Process(
             f'{executable_path}',
             timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
@@ -105,11 +105,7 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
     max_memory = max(t.memory for t in test_results)
     max_time = max(t.time for t in test_results)
     
-    if test_groups:
-        scorer = scoring.SubtaskScorer(test_groups)
-    else:
-        scorer = scoring.PerTestScorer()
-        
+    scorer = scoring.AbstractScorer.from_request(test_groups)
     res = SubmissionResult(
         status=status if aggregate_results else [t.status for t in test_results],
         memory=max_memory if aggregate_results else [t.memory for t in test_results],
