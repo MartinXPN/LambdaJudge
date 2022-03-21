@@ -22,7 +22,7 @@ def save_code(save_dir: Path, code: dict[str, str]) -> list[Path]:
 
 
 return_code2status = errno.errorcode
-return_code2status += {
+return_code2status |= {
     137: 'SIGKILL',
     139: 'SIGSEGV',
     143: 'SIGTERM',

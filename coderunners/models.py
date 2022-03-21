@@ -21,6 +21,12 @@ class TestCase:
     input: str
     target: str
 
+@dataclass_json(letter_case=LetterCase.CAMEL)
+@dataclass
+class TestGroup:
+    points: float
+    points_per_test: float
+    count: int
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
@@ -36,6 +42,7 @@ class SubmissionRequest:
     # Or provide the test cases as a list of TestCases directly
     problem: Optional[str] = None
     test_cases: Optional[list[TestCase]] = None
+    test_groups: Optional[list[TestGroup]] = None
 
     aggregate_results: bool = True
     return_outputs: bool = False
