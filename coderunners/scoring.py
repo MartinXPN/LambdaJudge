@@ -7,7 +7,7 @@ from models import Status, TestGroup
 class AbstractScorer(ABC):
     @abstractmethod
     def get_score(self, test_results: list[Status], test_scores: list[float]) -> float:
-        raise NotImplementedError()
+        ...
     
     @staticmethod
     def from_request(test_groups) -> 'AbstractScorer':

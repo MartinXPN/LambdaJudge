@@ -139,7 +139,7 @@ class Process:
                     # sometimes a subprocess descendant will have terminated between the time
                     # we obtain a list of descendants, and the time we actually poll this
                     # descendant's memory usage.
-                    pass
+                    ...
             self.max_vms_memory = max(self.max_vms_memory, vms_memory)
             self.max_rss_memory = max(self.max_rss_memory, rss_memory)
 
@@ -170,7 +170,7 @@ class Process:
             else:
                 pp.terminate()
         except psutil.NoSuchProcess:
-            pass
+            ...
 
 
 if __name__ == '__main__':
