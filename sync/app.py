@@ -57,11 +57,11 @@ def sync_efs_handler(event, context):
 
     with TemporaryDirectory() as extraction_dir, ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(extraction_dir)
-        targets = glob.glob(f'{extraction_dir}/**/*.ans.txt', recursive=True) + \
-                  glob.glob(f'{extraction_dir}/**/*.out.txt', recursive=True) + \
-                  glob.glob(f'{extraction_dir}/**/*.a', recursive=True) + \
-                  glob.glob(f'{extraction_dir}/**/*.ans', recursive=True) + \
-                  glob.glob(f'{extraction_dir}/**/*.out', recursive=True)
+        targets = (glob.glob(f'{extraction_dir}/**/*.ans.txt', recursive=True) +
+                   glob.glob(f'{extraction_dir}/**/*.out.txt', recursive=True) +
+                   glob.glob(f'{extraction_dir}/**/*.a', recursive=True) +
+                   glob.glob(f'{extraction_dir}/**/*.ans', recursive=True) +
+                   glob.glob(f'{extraction_dir}/**/*.out', recursive=True))
         targets = sorted(targets)
         print('targets:', targets)
         inputs = [t.replace('.a', '') if t.endswith('.a') else t.replace('.ans', '.in').replace('.out', '.in')
