@@ -25,8 +25,10 @@ def compile_code(code: dict[str, str], language: str) -> tuple[Optional[Path], O
     if compilation.status != Status.OK or compilation.errors:
         print('Compile error:', compilation)
         message = None
-        if compilation.status == Status.TLE:    message = 'Compilation time limit exceeded'
-        if compilation.status == Status.MLE:    message = 'Compilation memory limit exceeded'
+        if compilation.status == Status.TLE:
+            message = 'Compilation time limit exceeded'
+        if compilation.status == Status.MLE:
+            message = 'Compilation memory limit exceeded'
 
         return None, SubmissionResult(
             status=Status.COMPILATION_ERROR,

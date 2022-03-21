@@ -61,7 +61,7 @@ class SubmissionRequest:
     def __post_init__(self):
         self.language = self.language.lower()
         assert self.problem is not None and self.test_cases is None or \
-               self.problem is None     and self.test_cases is not None
+               self.problem is None and self.test_cases is not None
         if self.comparison_mode == 'custom':
             assert self.checker_code is not None and self.checker_language is not None
 

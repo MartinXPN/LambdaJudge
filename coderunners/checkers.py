@@ -92,8 +92,8 @@ class CustomChecker(Checker):
 
         outputs = res.outputs.split('\n', maxsplit=2)
         if len(outputs) < 2:
-            return Status.RUNTIME_ERROR, 0, \
-                   f'Checker failed to produce status and score (each should be on separate lines)'
+            return (Status.RUNTIME_ERROR, 0,
+                    'Checker failed to produce status and score (each should be on separate lines)')
         if len(outputs) == 2:
             status, score = outputs
             message = None
@@ -101,12 +101,12 @@ class CustomChecker(Checker):
             status, score, message = outputs
 
         if not is_float(score):
-            return Status.RUNTIME_ERROR, 0, f'Checker did not produce a valid score value'
+            return Status.RUNTIME_ERROR, 0, 'Checker did not produce a valid score value'
         score = float(score)
 
         try:
             status = Status(status)
         except ValueError:
-            return Status.RUNTIME_ERROR, 0, f'Checker did not produce a valid status'
+            return Status.RUNTIME_ERROR, 0, 'Checker did not produce a valid status'
 
         return status, score, message
