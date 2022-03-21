@@ -19,6 +19,8 @@ class PerTestScorer(AbstractScorer):
 
 @dataclass
 class SubtaskScorer(AbstractScorer):
+    test_groups: list[TestGroup] = None
+    
     def get_score(self, test_results: list[Status], test_scores: list[float]) -> float:
         score = 0
         test_results = test_results[:]
