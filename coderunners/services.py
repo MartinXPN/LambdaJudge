@@ -79,16 +79,14 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
 
     # Process all tests
     test_results: list[RunResult] = []
-    for test in test_cases:
+    for i, test in enumerate(test_cases):
         r = Process(
             f'{executable_path}', timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
         ).run(test.input)
 
-        if r.status == Status.OK:
-            r.status, r.score, r.message = checker.check(inputs=test.input, output=r.outputs,
-                                                         target=test.target, code=code)
-        else:
-            r.score = 0
+        (r.status, r.score, r.message) = checker.check(
+            inputs=test.input, output=r.outputs, target=test.target, code=code
+        ) if r.status == Status.OK else (r.status, 0, r.message)
 
         test_results.append(r)
         if not return_outputs:
@@ -96,18 +94,26 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
             test_results[-1].errors = None
 
         if stop_on_first_fail and r.status != Status.OK:
+            test_results += ([RunResult(status=Status.WA, memory=0, time=0, return_code=0)] * (len(test_cases) - i - 1))
             break
     print('test_results:', test_results)
+    assert len(test_results) == len(test_cases)
+
+    # Scoring
+    scorer = AbstractScorer.from_request(test_groups)
+    total, per_test = scorer.score(test_results)
+    print('Total score:', total, 'Score per test:', per_test)
+    for r, score in zip(test_results, per_test):
+        r.score = score
 
     # Aggregate all the results across test cases
     first_failed = next((i for i, x in enumerate(test_results) if x.status != Status.OK), None)
-    scorer = AbstractScorer.from_request(test_groups)
     overall = RunResult(
         status=Status.OK if first_failed is None else test_results[first_failed].status,
         memory=max(t.memory for t in test_results),
         time=max(t.time for t in test_results),
         return_code=0 if first_failed is None else test_results[first_failed].return_code,
-        score=scorer.get_score(test_results),
+        score=total,
     )
 
     res = SubmissionResult(overall=overall, compile_result=compilation_result, test_results=test_results)

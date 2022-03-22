@@ -7,7 +7,7 @@ from models import Status, TestGroup, RunResult
 
 class AbstractScorer(ABC):
     @abstractmethod
-    def get_score(self, test_results: list[RunResult]) -> float:
+    def score(self, test_results: list[RunResult]) -> tuple[float, list[float]]:
         ...
 
     @staticmethod
@@ -16,20 +16,21 @@ class AbstractScorer(ABC):
 
 
 class PerTestScorer(AbstractScorer):
-    def get_score(self, test_results: list[RunResult]) -> float:
-        test_scores = [t.score for t in test_results]
-        return sum(test_scores) / len(test_scores)
+    def score(self, test_results: list[RunResult]) -> tuple[float, list[float]]:
+        test_scores = [t.score / len(test_results) for t in test_results]
+        return sum(test_scores), test_scores
 
 
 @dataclass
 class SubtaskScorer(AbstractScorer):
     test_groups: list[TestGroup]
 
-    def get_score(self, test_results: list[RunResult]) -> float:
-        score = 0
+    def score(self, test_results: list[RunResult]) -> tuple[float, list[float]]:
+        scores = []
         results = test_results[:]
         for test_group in self.test_groups:
             oks = [int(test_result.status == Status.OK) for test_result in results[:test_group.count]]
-            score += sum(oks) * test_group.points_per_test + min(oks) * test_group.points
+            per_test = test_group.points_per_test + min(oks) * test_group.points / test_group.count
+            scores += [per_test] * test_group.count
             del results[:test_group.count]
-        return score
+        return sum(scores), scores
