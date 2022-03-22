@@ -64,7 +64,8 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
     checker_executable_path = None
     if comparison_mode == 'custom':
         checker_executable_path, checker_compilation_result = compile_code(checker_code, checker_language)
-        if checker_compilation_result:
+        if checker_executable_path is None:
+            checker_compilation_result.message = 'Checker compilation failed'
             return SubmissionResult(overall=checker_compilation_result, compile_result=checker_compilation_result)
 
     checker = Checker.from_mode(
@@ -94,7 +95,7 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
             test_results[-1].errors = None
 
         if stop_on_first_fail and r.status != Status.OK:
-            test_results += ([RunResult(status=Status.WA, memory=0, time=0, return_code=0)] * (len(test_cases) - i - 1))
+            test_results += [RunResult(status=Status.WA, memory=0, time=0, return_code=0)] * (len(test_cases) - i - 1)
             break
     print('test_results:', test_results)
     assert len(test_results) == len(test_cases)
