@@ -29,7 +29,7 @@ def check_equality(request: SubmissionRequest) -> SubmissionResult:
     res = coderunner.invoke(aws_lambda, request=request)
 
     if callback_url is not None:
-        print('Sending results to the callback url:\n', res.to_dict())
-        r = requests.post(callback_url, json=res.to_dict())
+        print('Sending results to the callback url:\n', res.to_dict(encode_json=True))
+        r = requests.post(callback_url, json=res.to_dict(encode_json=True))
         print('callback:', r.status_code, r.reason)
     return res
