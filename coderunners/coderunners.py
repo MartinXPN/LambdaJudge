@@ -21,6 +21,8 @@ class CodeRunner:
             return CSharpRunner()
         if language in JsRunner.supported_standards:
             return JsRunner()
+        if language in JavaRunner.supported_standards:
+            return JavaRunner()
         raise ValueError(f'{language} does not have a compiler yet')
 
     def invoke(self, aws_lambda_client, request: SubmissionRequest) -> SubmissionResult:
@@ -65,3 +67,11 @@ class JsRunner(CodeRunner):
     @property
     def name(self) -> str:
         return 'CodeRunnerJs'
+
+@dataclass
+class JavaRunner(CodeRunner):
+    supported_standards = {'java'}
+    
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerJava'

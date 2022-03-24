@@ -1,0 +1,13 @@
+{
+    "code": {
+        "main.java": "class Main {\n    public static void main(String[] args) {\n        System.out.println(\"hello\"); \n    }\n}\n"
+    },
+    "testCases": [{"input":"hello","target":"hello"}],
+    "returnOutputs": true,
+    "returnCompileOutputs": true,
+    "stopOnFirstFail": false,
+    "language": "Java",
+    "timeLimit": 2,
+    "memory_limit": 512
+  }
+  

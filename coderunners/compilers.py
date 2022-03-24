@@ -23,6 +23,8 @@ class Compiler(ABC):
             return CSharpCompiler(language_standard=language)
         if language in JsCompiler.supported_standards:
             return JsCompiler(language_standard=language)
+        if language in JavaCompiler.supported_standards:
+            return JavaCompiler()
         raise ValueError(f'{language} does not have a compiler yet')
 
 
@@ -98,3 +100,19 @@ class JsCompiler(Compiler):
         executable_path = f'node {submission_path}'
 
         return executable_path, compile_res
+
+@dataclass
+class JavaCompiler(Compiler):
+    supported_standards = {'java'}
+    language_standard: str = 'java'
+    
+    def compile(self, submission_path: Path):
+        compile_res = Process(f'javac -d /tmp/build {submission_path}', timeout=10, memory_limit_mb=512).run()
+        classname = "Main"
+        print('Compile res:', compile_res, 'Class name:', classname)
+        executable_path = f'java -classpath /tmp/build/ {classname}'
+
+        return executable_path, compile_res
+        
+    
+    

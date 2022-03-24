@@ -1,0 +1,16 @@
+FROM public.ecr.aws/sam/build-python3.9:latest
+
+RUN yum install -y java-17-amazon-corretto-devel
+RUN pip install --upgrade pip
+RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"
+
+# Install dependencies
+COPY coderunner.requirements.txt ./
+RUN pip install -r coderunner.requirements.txt -t "${LAMBDA_TASK_ROOT}"
+
+# Setup source files
+COPY *.py ${LAMBDA_TASK_ROOT}/
+
+# Run the lambda function handler
+ENTRYPOINT [ "python", "-m", "awslambdaric" ]
+CMD [ "app.run_code_lambda" ]
