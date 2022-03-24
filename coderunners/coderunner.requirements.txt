@@ -1,4 +1,4 @@
 # Requirements for the coderunner lambda
-dataclasses-json>=0.5.6
+cryptography>=36.0.2
+dataclasses-json>=0.5.7
 psutil>=5.9.0
-cryptography>=36.0.1

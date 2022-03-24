@@ -1,6 +1,6 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional, Union
+from typing import Optional
 
 from dataclasses_json import dataclass_json, LetterCase
 
@@ -46,7 +46,6 @@ class SubmissionRequest:
     test_cases: Optional[list[TestCase]] = None
     test_groups: Optional[list[TestGroup]] = None
 
-    aggregate_results: bool = True
     return_outputs: bool = False
     stop_on_first_fail: bool = True
 
@@ -70,24 +69,20 @@ class SubmissionRequest:
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
-class SubmissionResult:
-    status: Union[Status, list[Status]]
-    memory: Union[float, list[float]]
-    time: Union[float, list[float]]
-    score: float
-    message: Union[str, list[str], None] = None
-    outputs: Union[str, list[str], None] = None
-    errors: Union[str, list[str], None] = None
-    compile_outputs: Optional[str] = None
-
-
-@dataclass_json(letter_case=LetterCase.CAMEL)
-@dataclass
 class RunResult:
     status: Status
     memory: float
     time: float
     return_code: int
+    score: float = 0
     message: Optional[str] = None
     outputs: Optional[str] = None
     errors: Optional[str] = None
+
+
+@dataclass_json(letter_case=LetterCase.CAMEL)
+@dataclass
+class SubmissionResult:
+    overall: RunResult
+    compile_result: RunResult
+    test_results: Optional[list[RunResult]] = None
