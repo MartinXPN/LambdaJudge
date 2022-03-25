@@ -465,10 +465,10 @@ Outputs:
   CodeRunnerJs:
     Description: 'AWS Lambda for executing a JS code and getting the outputs'
     Value: !GetAtt CodeRunnerJs.Arn
-  
+
   CodeRunnerJava:
     Description: 'AWS Lambda for executing a Java code and getting the outputs'
-    Value: !GetAtt CodeRunnerJava.Arn    
+    Value: !GetAtt CodeRunnerJava.Arn
   SyncS3WithEFSName:
     Description: 'AWS Lambda for syncing S3 bucket for test cases with EFS'
     Value: !GetAtt SyncS3WithEFS.Arn

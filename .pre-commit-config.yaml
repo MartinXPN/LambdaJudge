@@ -1,0 +1,32 @@
+repos:
+-   repo: https://github.com/pre-commit/mirrors-autopep8
+    rev: 'v1.6.0'  # Use the sha / tag you want to point at
+    hooks:
+    -   id: autopep8
+
+-   repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v4.1.0
+    hooks:
+      - id: check-json
+      - id: check-toml
+      - id: check-yaml
+        exclude: template.yaml
+      - id: end-of-file-fixer
+      - id: trailing-whitespace
+
+-   repo: https://github.com/asottile/pyupgrade
+    rev: v2.31.1
+    hooks:
+      - id: pyupgrade
+        args: [--py39-plus]
+
+-   repo: https://github.com/pycqa/isort
+    rev: 5.10.1
+    hooks:
+      - id: isort
+        language_version: python3
+
+-   repo: https://github.com/pycqa/flake8
+    rev: '4.0.1'  # pick a git hash / tag to point to
+    hooks:
+    -   id: flake8

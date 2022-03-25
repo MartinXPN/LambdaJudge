@@ -1,7 +1,6 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Tuple
 
 from models import RunResult
 from process import Process
@@ -9,7 +8,7 @@ from process import Process
 
 class Compiler(ABC):
     @abstractmethod
-    def compile(self, submission_path: Path) -> Tuple[Path, RunResult]:
+    def compile(self, submission_path: Path) -> tuple[Path, RunResult]:
         ...
 
     @staticmethod
@@ -101,11 +100,12 @@ class JsCompiler(Compiler):
 
         return executable_path, compile_res
 
+
 @dataclass
 class JavaCompiler(Compiler):
     supported_standards = {'java'}
     language_standard: str = 'java'
-    
+
     def compile(self, submission_path: Path):
         compile_res = Process(f'javac -d /tmp/build {submission_path}', timeout=10, memory_limit_mb=512).run()
         classname = "Main"
@@ -113,6 +113,3 @@ class JavaCompiler(Compiler):
         executable_path = f'java -classpath /tmp/build/ {classname}'
 
         return executable_path, compile_res
-        
-    
-    

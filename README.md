@@ -5,7 +5,7 @@ Serverless Online Judge for automated solution checking written in Python.
 LambdaJudge compiles and executes code in several languages and returns the results stating if the code passed given tests or resulted in an error.
 The judge supports several languages including `C++`, `Python3`, `C#`, `JavaScript (Node.js)`.
 The whole execution happens in an AWS Lambda which does not have internet access (is in a VPC inside a private subnet) and does not have access outside the container.
-All the test cases are encrypted and the executor process does not have the key. 
+All the test cases are encrypted and the executor process does not have the key.
 Therefore, the arbitrary code cannot read the answers for the test cases.
 The test cases are kept on EFS (Elastic File System), which is mounted with a read access.
 
@@ -13,7 +13,7 @@ The test cases are kept on EFS (Elastic File System), which is mounted with a re
 LambdaJudge infrastructure is best described in the image below.
 
 ### Checkers and CodeRunners
-* A submission comes through an API gateway, which triggers EqualityChecker Lambda. 
+* A submission comes through an API gateway, which triggers EqualityChecker Lambda.
 EqualityChecker is not in a VPC, and therefore easily fetches the encryption key from the Secrets Manager.
 * Afterward, it triggers the appropriate Lambda specific to the language of submission.
 * The CodeRunner lambda gets the encrypted test cases from the attached EFS mounted in `read` mode.
@@ -34,12 +34,12 @@ EqualityChecker is not in a VPC, and therefore easily fetches the encryption key
 # Development
 
 This project uses [AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
-to define the serverless architecture and deploy it. 
-The serverless infrastructure is defined in `template.yaml`. 
+to define the serverless architecture and deploy it.
+The serverless infrastructure is defined in `template.yaml`.
 SAM default configs are defined in `samconfig.toml`.
 
-In case of using IDEs, the AWS Toolkit plugin can speed up the process of working with SAM. 
-Here is the list of plugins for each IDE: 
+In case of using IDEs, the AWS Toolkit plugin can speed up the process of working with SAM.
+Here is the list of plugins for each IDE:
 [CLion](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
 [GoLand](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
 [IntelliJ](https://docs.aws.amazon.com/toolkit-for-jetbrains/latest/userguide/welcome.html)
