@@ -1,3 +1,4 @@
+import glob
 import gzip
 import shutil
 from pathlib import Path
@@ -41,8 +42,7 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
                comparison_mode: str, float_precision: float, delimiter: Optional[str],
                checker_code: Optional[dict[str, str]], checker_language: Optional[str],
                callback_url: Optional[str], encryption_key: Optional[str]) -> SubmissionResult:
-    shutil.rmtree(ROOT)  # Avoid having no space left on device issues
-    ROOT.mkdir(exist_ok=True)
+    [shutil.rmtree(p) for p in glob.glob(f'{ROOT}/*')]  # Avoid having no space left on device issues
 
     executable_path, compilation_result = compile_code(code, language)
     if executable_path is None:
