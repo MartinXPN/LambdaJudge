@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
-from dataclasses_json import dataclass_json, LetterCase
+from dataclasses_json import LetterCase, dataclass_json
 
 
 class Status(Enum):
@@ -62,7 +62,7 @@ class SubmissionRequest:
     def __post_init__(self):
         self.language = self.language.lower()
         assert self.problem is not None and self.test_cases is None or \
-               self.problem is None and self.test_cases is not None
+            self.problem is None and self.test_cases is not None
         if self.comparison_mode == 'custom':
             assert self.checker_code is not None and self.checker_language is not None
 

@@ -2,11 +2,10 @@ import gzip
 from pathlib import Path
 from typing import Optional
 
-from cryptography.fernet import Fernet
-
 from checkers import Checker
 from compilers import Compiler
-from models import Status, SubmissionResult, TestCase, TestGroup, RunResult
+from cryptography.fernet import Fernet
+from models import RunResult, Status, SubmissionResult, TestCase, TestGroup
 from process import Process
 from scoring import AbstractScorer
 from util import save_code

@@ -1,8 +1,8 @@
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import Optional
 
-from models import Status, TestGroup, RunResult
+from models import RunResult, Status, TestGroup
 
 
 class AbstractScorer(ABC):

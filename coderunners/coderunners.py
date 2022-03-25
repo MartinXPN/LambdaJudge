@@ -68,10 +68,11 @@ class JsRunner(CodeRunner):
     def name(self) -> str:
         return 'CodeRunnerJs'
 
+
 @dataclass
 class JavaRunner(CodeRunner):
     supported_standards = {'java'}
-    
+
     @property
     def name(self) -> str:
         return 'CodeRunnerJava'

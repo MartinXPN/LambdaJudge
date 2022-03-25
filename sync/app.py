@@ -2,13 +2,12 @@ import glob
 import gzip
 import json
 import sys
-from zipfile import ZipFile
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from zipfile import ZipFile
 
 import boto3
 from cryptography.fernet import Fernet
-
 from models import SyncRequest
 
 ROOT = Path('/tmp/')
@@ -70,7 +69,7 @@ def sync_efs_handler(event, context):
 
         tests = []
         for ins, outs in zip(inputs, targets):
-            with open(ins, 'r') as inf, open(outs, 'r') as of:
+            with open(ins) as inf, open(outs) as of:
                 print(ins, outs)
                 tests.append({
                     'input': inf.read(),

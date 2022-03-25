@@ -4,9 +4,9 @@ import json
 import boto3
 import botocore
 import requests as requests
+from models import SubmissionRequest, SubmissionResult
 
 from coderunners import CodeRunner
-from models import SubmissionResult, SubmissionRequest
 
 cfg = botocore.config.Config(retries={'max_attempts': 0}, read_timeout=300, connect_timeout=300)
 aws_lambda = boto3.client('lambda', config=cfg)

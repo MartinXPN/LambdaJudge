@@ -4,10 +4,9 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
-from typing import Union, Iterable, Optional
+from typing import Iterable, Optional, Union
 
 import psutil
-
 from models import RunResult, Status
 
 
