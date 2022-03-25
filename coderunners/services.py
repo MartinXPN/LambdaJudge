@@ -1,4 +1,5 @@
 import gzip
+import shutil
 from pathlib import Path
 from typing import Optional
 
@@ -40,7 +41,8 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
                comparison_mode: str, float_precision: float, delimiter: Optional[str],
                checker_code: Optional[dict[str, str]], checker_language: Optional[str],
                callback_url: Optional[str], encryption_key: Optional[str]) -> SubmissionResult:
-    Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
+    shutil.rmtree(ROOT)  # Avoid having no space left on device issues
+    ROOT.mkdir(exist_ok=True)
 
     executable_path, compilation_result = compile_code(code, language)
     if executable_path is None:
@@ -80,6 +82,7 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
     # Process all tests
     test_results: list[RunResult] = []
     for i, test in enumerate(test_cases):
+        print(f'Running test {i}', end='...')
         r = Process(
             f'{executable_path}', timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
         ).run(test.input)
@@ -87,6 +90,7 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
         (r.status, r.score, r.message) = checker.check(
             inputs=test.input, output=r.outputs, target=test.target, code=code
         ) if r.status == Status.OK else (r.status, 0, r.message)
+        print(f'Test {i} res: {r.status} => {r.score}')
 
         test_results.append(r)
         if not return_outputs:
