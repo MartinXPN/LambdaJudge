@@ -1,10 +1,10 @@
 import errno
+import fcntl
 import resource
 import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
-from tempfile import NamedTemporaryFile
 from typing import Iterable, Union
 
 import psutil
@@ -47,18 +47,22 @@ class Process:
         self.max_rss_memory = 0
         self.start_time = time.time()
 
-        ins = NamedTemporaryFile('w+')
-        end = '' if program_input.endswith('\n') else '\n'
-        ins.write(program_input + end)
-        ins.flush()
-
         try:
             self.p = subprocess.Popen(
-                f'cat {ins.name} | {self.command}', shell=True,
+                self.command, shell=True,
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                 preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit),
             )
+            # TODO: Update this to pipesize=1024*1024 when upgrading to Python 3.10
+            #  Ref: https://github.com/MartinXPN/LambdaJudge/issues/50#issuecomment-1080488293
+            fcntl.fcntl(self.p.stdin, 1031, 1024 * 1024)
+            fcntl.fcntl(self.p.stdout, 1031, 1024 * 1024)
+            fcntl.fcntl(self.p.stderr, 1031, 1024 * 1024)
             self.execution_state = True
+
+            end = '' if program_input.endswith('\n') else '\n'
+            self.p.stdin.write(program_input + end)
+            self.p.stdin.flush()
 
             # poll as often as possible; otherwise the subprocess might
             # "sneak" in some extra memory usage while you aren't looking
@@ -68,16 +72,20 @@ class Process:
                     status = Status.MLE
                     break
             outs, errs = self.p.communicate(timeout=self.timeout / 100)
-
+        except subprocess.TimeoutExpired:
+            self.close(kill=True)
+            outs, errs = self.p.communicate(timeout=1)
+            if self.finish_time - self.start_time > self.timeout:
+                status = Status.TLE
         except Exception as e:
             print('Program execution resulted in an error:', e)
             status = Status.RUNTIME_ERROR
         finally:
-            self.close(kill=True)   # make sure that we don't leave the process dangling?
-            ins.close()             # Close the temporary file
-            # Collect the outputs in case an exception occurred
             if outs is None and errs is None:
+                self.p.stdout.flush()
+                self.p.stderr.flush()
                 outs, errs = self.p.stdout.read(self.output_limit + 1), self.p.stderr.read(self.output_limit + 1)
+            self.close(kill=True)   # make sure that we don't leave the process dangling?
 
             if self.finish_time - self.start_time > self.timeout:
                 status = Status.TLE
@@ -100,7 +108,7 @@ class Process:
             memory=self.max_rss_memory / 1024 / 1024,
             time=self.finish_time - self.start_time,
             return_code=self.p.returncode or 0,
-            outputs=outs, errors=errs
+            outputs=outs, errors=errs,
         )
 
     def poll(self):
