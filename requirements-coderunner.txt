@@ -1,4 +1,5 @@
 # Requirements for the coderunner lambda
-cryptography>=36.0.2
+cryptography>=36.0.2,<37
 dataclasses-json>=0.5.7
-psutil>=5.9.0
+psutil>=5.9.0,<6
+awslambdaric>=2,<3

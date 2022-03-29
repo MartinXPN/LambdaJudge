@@ -19,16 +19,9 @@ ENV \
     DOTNET_CLI_TELEMETRY_OPTOUT=true \
     HOME=/tmp
 
-RUN pip install --upgrade pip
-RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"
-
-# Install dependencies
-COPY coderunner.requirements.txt ./
-RUN pip install -r coderunner.requirements.txt -t "${LAMBDA_TASK_ROOT}"
-
-# Setup source files
-COPY *.py ${LAMBDA_TASK_ROOT}/
+COPY ./* /tmp/docker/
+RUN source /tmp/docker/coderunners/build_image.sh
 
 # Run the lambda function handler
 ENTRYPOINT [ "python", "-m", "awslambdaric" ]
-CMD [ "app.run_code_lambda" ]
+CMD [ "coderunners.app.run_code_lambda" ]

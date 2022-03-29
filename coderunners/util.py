@@ -5,9 +5,9 @@ from pathlib import Path
 def is_float(value: str) -> bool:
     try:
         float(value)
-        return True
     except ValueError:
         return False
+    return True
 
 
 def save_code(save_dir: Path, code: dict[str, str]) -> list[Path]:

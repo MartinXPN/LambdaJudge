@@ -354,7 +354,7 @@ Resources:
     Metadata:
       DockerTag: python3.9-v1
       DockerContext: ./coderunners
-      Dockerfile: python.Dockerfile
+      Dockerfile: lang/python.Dockerfile
 
   CodeRunnerCpp:
     Type: AWS::Serverless::Function
@@ -376,7 +376,7 @@ Resources:
     Metadata:
       DockerTag: python3.9-v1
       DockerContext: ./coderunners
-      Dockerfile: cpp.Dockerfile
+      Dockerfile: lang/cpp.Dockerfile
 
   CodeRunnerCSharp:
     Type: AWS::Serverless::Function
@@ -398,7 +398,7 @@ Resources:
     Metadata:
       DockerTag: python3.9-v1
       DockerContext: ./coderunners
-      Dockerfile: csharp.Dockerfile
+      Dockerfile: lang/csharp.Dockerfile
 
   CodeRunnerJs:
     Type: AWS::Serverless::Function
@@ -420,7 +420,7 @@ Resources:
     Metadata:
       DockerTag: python3.9-v1
       DockerContext: ./coderunners
-      Dockerfile: js.Dockerfile
+      Dockerfile: lang/js.Dockerfile
   CodeRunnerJava:
     Type: AWS::Serverless::Function
     DependsOn: CodeRunnerMountTarget
@@ -441,7 +441,7 @@ Resources:
     Metadata:
       DockerTag: python3.9-v1
       DockerContext: ./coderunners
-      Dockerfile: java.Dockerfile
+      Dockerfile: lang/java.Dockerfile
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
