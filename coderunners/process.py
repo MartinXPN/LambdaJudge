@@ -1,10 +1,11 @@
 import errno
+import fcntl
 import resource
 import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
-from typing import Iterable, Optional, Union
+from typing import Iterable, Union
 
 import psutil
 from models import RunResult, Status
@@ -40,27 +41,28 @@ class Process:
         self.memory_limit = self.memory_limit_mb * 1024 * 1024
         self.output_limit = int(self.output_limit_mb * 1024 * 1024)
 
-    def execute(self):
+    def run(self, program_input: str = '') -> RunResult:
+        outs, errs, status = None, None, Status.OK
         self.max_vms_memory = 0
         self.max_rss_memory = 0
         self.start_time = time.time()
 
-        # noinspection PyArgumentList
-        self.p = subprocess.Popen(
-            self.command, shell=True,
-            stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-            preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit),
-        )
-        self.execution_state = True
-
-    def run(self, program_input: Optional[str] = None) -> RunResult:
-        outs, errs, status = None, None, Status.OK
         try:
-            self.execute()
-            if program_input:
-                end = '' if program_input.endswith('\n') else '\n'  # Otherwise, the program hangs
-                self.p.stdin.write(program_input + end)
-                self.p.stdin.flush()
+            self.p = subprocess.Popen(
+                self.command, shell=True,
+                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit),
+            )
+            # TODO: Update this to pipesize=1024*1024 when upgrading to Python 3.10
+            #  Ref: https://github.com/MartinXPN/LambdaJudge/issues/50#issuecomment-1080488293
+            fcntl.fcntl(self.p.stdin, 1031, 1024 * 1024)
+            fcntl.fcntl(self.p.stdout, 1031, 1024 * 1024)
+            fcntl.fcntl(self.p.stderr, 1031, 1024 * 1024)
+            self.execution_state = True
+
+            end = '' if program_input.endswith('\n') else '\n'
+            self.p.stdin.write(program_input + end)
+            self.p.stdin.flush()
 
             # poll as often as possible; otherwise the subprocess might
             # "sneak" in some extra memory usage while you aren't looking
@@ -69,33 +71,29 @@ class Process:
                 if self.max_rss_memory > self.memory_limit:
                     status = Status.MLE
                     break
-
             outs, errs = self.p.communicate(timeout=self.timeout / 100)
-
         except subprocess.TimeoutExpired:
             self.close(kill=True)
             outs, errs = self.p.communicate(timeout=1)
             if self.finish_time - self.start_time > self.timeout:
                 status = Status.TLE
-        except MemoryError:
-            status = Status.MLE
         except Exception as e:
-            print(e)
+            print('Program execution resulted in an error:', e)
             status = Status.RUNTIME_ERROR
-
         finally:
-            # make sure that we don't leave the process dangling?
-            self.close(kill=True)
-
-            # Collect the outputs in case an exception occurred
             if outs is None and errs is None:
+                self.p.stdout.flush()
+                self.p.stderr.flush()
                 outs, errs = self.p.stdout.read(self.output_limit + 1), self.p.stderr.read(self.output_limit + 1)
+            self.close(kill=True)   # make sure that we don't leave the process dangling?
 
+            if self.finish_time - self.start_time > self.timeout:
+                status = Status.TLE
             if self.p.returncode in {errno.ENOMEM, 137}:            # SIGKILL
                 status = Status.MLE
             elif self.p.returncode in {139, 143}:                   # SIGSEGV, SIGTERM
                 status = Status.RUNTIME_ERROR
-            elif self.p.returncode != 0 and status == Status.OK:    # Nonzero return code is considered a runtime error
+            elif self.p.returncode != 0 and status == Status.OK:    # Nonzero return code is a runtime error
                 status = Status.RUNTIME_ERROR
 
         if sys.getsizeof(outs) > self.output_limit:
@@ -110,7 +108,7 @@ class Process:
             memory=self.max_rss_memory / 1024 / 1024,
             time=self.finish_time - self.start_time,
             return_code=self.p.returncode or 0,
-            outputs=outs, errors=errs
+            outputs=outs, errors=errs,
         )
 
     def poll(self):

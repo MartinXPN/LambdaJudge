@@ -80,6 +80,7 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
     # Process all tests
     test_results: list[RunResult] = []
     for i, test in enumerate(test_cases):
+        print(f'Running test {i}', end='...')
         r = Process(
             f'{executable_path}', timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
         ).run(test.input)
@@ -87,6 +88,7 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
         (r.status, r.score, r.message) = checker.check(
             inputs=test.input, output=r.outputs, target=test.target, code=code
         ) if r.status == Status.OK else (r.status, 0, r.message)
+        print(f'Test {i} res: {r.status} => {r.score}')
 
         test_results.append(r)
         if not return_outputs:
