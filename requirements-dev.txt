@@ -1,1 +1,2 @@
 pre-commit>=2,<3
+pytest>=7,<8
