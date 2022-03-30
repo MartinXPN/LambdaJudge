@@ -19,7 +19,7 @@ ENV \
     DOTNET_CLI_TELEMETRY_OPTOUT=true \
     HOME=/tmp
 
-COPY ./* /tmp/docker/
+COPY ./ /tmp/docker/
 RUN source /tmp/docker/coderunners/build_image.sh
 
 # Run the lambda function handler

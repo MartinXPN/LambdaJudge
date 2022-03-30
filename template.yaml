@@ -324,8 +324,7 @@ Resources:
       MemorySize: 256
       Timeout: 300
       Runtime: python3.9
-      CodeUri: coderunners/
-      Handler: app.equality_checker_lambda
+      PackageType: Image
       Role: !GetAtt EqualityCheckerRole.Arn
       Events:
         Check:
@@ -333,6 +332,10 @@ Resources:
           Properties:
             Path: /check
             Method: post
+    Metadata:
+      DockerTag: python3.9-v1
+      DockerContext: ./
+      Dockerfile: bouncer/bouncer.Dockerfile
 
   CodeRunnerPython:
     Type: AWS::Serverless::Function
@@ -353,8 +356,8 @@ Resources:
           LocalMountPath: '/mnt/efs'
     Metadata:
       DockerTag: python3.9-v1
-      DockerContext: ./coderunners
-      Dockerfile: lang/python.Dockerfile
+      DockerContext: ./
+      Dockerfile: coderunners/lang/python.Dockerfile
 
   CodeRunnerCpp:
     Type: AWS::Serverless::Function
@@ -375,8 +378,8 @@ Resources:
           LocalMountPath: '/mnt/efs'
     Metadata:
       DockerTag: python3.9-v1
-      DockerContext: ./coderunners
-      Dockerfile: lang/cpp.Dockerfile
+      DockerContext: ./
+      Dockerfile: coderunners/lang/cpp.Dockerfile
 
   CodeRunnerCSharp:
     Type: AWS::Serverless::Function
@@ -397,8 +400,8 @@ Resources:
           LocalMountPath: '/mnt/efs'
     Metadata:
       DockerTag: python3.9-v1
-      DockerContext: ./coderunners
-      Dockerfile: lang/csharp.Dockerfile
+      DockerContext: ./
+      Dockerfile: coderunners/lang/csharp.Dockerfile
 
   CodeRunnerJs:
     Type: AWS::Serverless::Function
@@ -419,8 +422,8 @@ Resources:
           LocalMountPath: '/mnt/efs'
     Metadata:
       DockerTag: python3.9-v1
-      DockerContext: ./coderunners
-      Dockerfile: lang/js.Dockerfile
+      DockerContext: ./
+      Dockerfile: coderunners/lang/js.Dockerfile
   CodeRunnerJava:
     Type: AWS::Serverless::Function
     DependsOn: CodeRunnerMountTarget
@@ -440,8 +443,8 @@ Resources:
           LocalMountPath: '/mnt/efs'
     Metadata:
       DockerTag: python3.9-v1
-      DockerContext: ./coderunners
-      Dockerfile: lang/java.Dockerfile
+      DockerContext: ./
+      Dockerfile: coderunners/lang/java.Dockerfile
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
