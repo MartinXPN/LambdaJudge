@@ -30,7 +30,7 @@ class SubtaskScorer(AbstractScorer):
         results = test_results[:]
         for test_group in self.test_groups:
             oks = [int(test_result.status == Status.OK) for test_result in results[:test_group.count]]
-            per_test = test_group.points_per_test + min(oks) * test_group.points / test_group.count
-            scores += [per_test] * test_group.count
+            points_per_test = test_group.points_per_test or min(oks) * (test_group.points / test_group.count)
+            scores += [points_per_test * ok for ok in oks]
             del results[:test_group.count]
         return sum(scores), scores

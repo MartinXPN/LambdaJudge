@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Iterable, Union
 
 import psutil
+
 from models import RunResult, Status
 
 

@@ -5,12 +5,12 @@
     "testCases": [{"input":"1","target":"2"}, {"input":"2","target":"3"}, {"input":"3","target":"4"}, {"input":"4","target":"6"}],
     "testGroups": [{
         "count": 2,
-        "points": 18,
-        "pointsPerTest": 1
+        "points": 20,
+        "pointsPerTest": 0
     }, {
         "count": 2,
-        "points": 78,
-        "pointsPerTest": 1
+        "points": 80,
+        "pointsPerTest": 0
     }],
     "returnOutputs": true,
     "returnCompileOutputs": true,
