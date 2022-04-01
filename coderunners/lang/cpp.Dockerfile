@@ -7,8 +7,8 @@ RUN pip install --upgrade pip
 RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"
 
 # Install dependencies
-COPY requirements-coderunners.txt ./
-RUN pip install -r requirements-coderunners.txt -t "${LAMBDA_TASK_ROOT}"
+COPY coderunners/requirements.txt ./
+RUN pip install -r requirements.txt -t "${LAMBDA_TASK_ROOT}"
 
 # Setup source files
 COPY coderunners/*.py ${LAMBDA_TASK_ROOT}/coderunners/
