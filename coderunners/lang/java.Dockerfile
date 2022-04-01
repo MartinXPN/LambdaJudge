@@ -2,8 +2,17 @@ FROM public.ecr.aws/sam/build-python3.9:latest
 
 RUN yum install -y java-17-amazon-corretto-devel
 
-COPY ./ /tmp/docker/
-RUN source /tmp/docker/coderunners/build_image.sh
+RUN pip install --upgrade pip
+RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"
+
+# Install dependencies
+COPY requirements-coderunners.txt ./
+RUN pip install -r requirements-coderunners.txt -t "${LAMBDA_TASK_ROOT}"
+
+# Setup source files
+COPY coderunners/*.py ${LAMBDA_TASK_ROOT}/coderunners/
+COPY models.py ${LAMBDA_TASK_ROOT}/
+COPY errors.py ${LAMBDA_TASK_ROOT}/
 
 # Run the lambda function handler
 ENTRYPOINT [ "python", "-m", "awslambdaric" ]

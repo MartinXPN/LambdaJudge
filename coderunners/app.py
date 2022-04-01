@@ -7,7 +7,7 @@ def run_code_lambda(event, context):
     This lambda has no internet access and no permissions to access resources
     It is run on an isolated container after which the results are returned to the "caller" function
     """
-    from services import check_code
+    from coderunners.services import check_code
     print('Event:', type(event), event)
     print('Context:', context)
     request = SubmissionRequest.from_dict(event)
