@@ -2,9 +2,11 @@ FROM public.ecr.aws/sam/build-python3.9:latest
 
 ## Initial setup
 
+RUN pip install --upgrade pip
+RUN pip install "awslambdaric>=2,<3" -t "${LAMBDA_TASK_ROOT}"
+
 COPY ./bouncer/requirements.txt ${LAMBDA_TASK_ROOT}/
 
-RUN pip install --upgrade pip
 RUN pip install -r ${LAMBDA_TASK_ROOT}/requirements.txt -t "${LAMBDA_TASK_ROOT}"
 
 COPY ./bouncer/*.py ${LAMBDA_TASK_ROOT}/bouncer/

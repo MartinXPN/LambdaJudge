@@ -1,4 +1,3 @@
-# Requirements for the judge lambda
 boto3>=1.21.24,<2
 cryptography>=36.0.2,<37
 requests>=2.26.0

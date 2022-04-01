@@ -4,8 +4,6 @@ from typing import Optional
 
 from dataclasses_json import LetterCase, dataclass_json
 
-import errors
-
 
 class Status(Enum):
     OK = 'Solved'
@@ -33,7 +31,7 @@ class TestGroup:
 
     def __post_init__(self):
         if self.points != 0 and self.points_per_test != 0:
-            raise errors.InvalidTestGroupError('Both points and points_per_test values are nonzero')
+            raise ValueError('Both points and points_per_test values are nonzero')
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
