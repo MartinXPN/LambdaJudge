@@ -5,9 +5,9 @@ from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 from typing import Optional
 
+from coderunners.process import Process
+from coderunners.util import is_float, save_code
 from models import Status
-from process import Process
-from util import is_float, save_code
 
 
 class Checker(ABC):

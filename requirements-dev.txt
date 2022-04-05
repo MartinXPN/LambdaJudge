@@ -1,1 +1,5 @@
+cryptography>=36.0.2,<37
+dataclasses-json==0.5.7
+
 pre-commit>=2,<3
+pytest>=7,<8

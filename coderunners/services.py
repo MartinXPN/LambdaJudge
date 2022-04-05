@@ -2,13 +2,14 @@ import gzip
 from pathlib import Path
 from typing import Optional
 
-from checkers import Checker
-from compilers import Compiler
 from cryptography.fernet import Fernet
+
+from coderunners.checkers import Checker
+from coderunners.compilers import Compiler
+from coderunners.process import Process
+from coderunners.scoring import AbstractScorer
+from coderunners.util import save_code
 from models import RunResult, Status, SubmissionResult, TestCase, TestGroup
-from process import Process
-from scoring import AbstractScorer
-from util import save_code
 
 ROOT = Path('/tmp/')
 

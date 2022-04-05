@@ -5,9 +5,9 @@ from pathlib import Path
 def is_float(value: str) -> bool:
     try:
         float(value)
-        return True
     except ValueError:
         return False
+    return True
 
 
 def save_code(save_dir: Path, code: dict[str, str]) -> list[Path]:
@@ -21,8 +21,7 @@ def save_code(save_dir: Path, code: dict[str, str]) -> list[Path]:
     return saved_paths
 
 
-return_code2status = errno.errorcode
-return_code2status |= {
+return_code2status = errno.errorcode | {
     137: 'SIGKILL',
     139: 'SIGSEGV',
     143: 'SIGTERM',

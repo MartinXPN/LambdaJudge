@@ -2,8 +2,8 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 
+from coderunners.process import Process
 from models import RunResult
-from process import Process
 
 
 class Compiler(ABC):
