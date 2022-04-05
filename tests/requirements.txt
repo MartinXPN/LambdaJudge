@@ -1,5 +1,5 @@
-pytest
-pytest-mock>=3.6.1
+pytest>=7.1.1
+pytest-mock>=3.7.0
 boto3>=1.18.33
 dataclasses-json>=0.5.5
 psutil>=5.8.0
