@@ -321,9 +321,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: EqualityChecker
-      MemorySize: 256
       Timeout: 300
-      Runtime: python3.9
+      MemorySize: 256
       PackageType: Image
       Role: !GetAtt EqualityCheckerRole.Arn
       Events:

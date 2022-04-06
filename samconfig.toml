@@ -1,7 +1,7 @@
 version=0.1
 
 [default.deploy.parameters]
-stack_name = "LambdaJudgeProd"
+stack_name = "LambdaJudge"
 s3_bucket = "serverless-pycharm-lambda-judge"
 image_repository = "370358067229.dkr.ecr.us-east-1.amazonaws.com/lambda-judge-ecr-repo"
 region = "us-east-1"

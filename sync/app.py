@@ -9,7 +9,7 @@ from zipfile import ZipFile
 import boto3
 from cryptography.fernet import Fernet
 
-from .models import SyncRequest
+from models import SyncRequest
 
 ROOT = Path('/tmp/')
 aws_lambda = boto3.client('lambda')

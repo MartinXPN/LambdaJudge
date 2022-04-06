@@ -5,7 +5,7 @@ import boto3
 import botocore
 import requests as requests
 
-from coderunners import CodeRunner
+from bouncer.coderunners import CodeRunner
 from models import SubmissionRequest, SubmissionResult
 
 cfg = botocore.config.Config(retries={'max_attempts': 0}, read_timeout=300, connect_timeout=300)
