@@ -1,3 +1,6 @@
+import os
+
+
 class PrivateTestLoggerException(Exception):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -5,7 +8,7 @@ class PrivateTestLoggerException(Exception):
 
 class PrivateTestLogger:
 
-    TABLENAME = 'private-tests'
+    TABLENAME = os.getenv('DYNAMODB_TABLE_NAME', 'private-tests')
 
     def __init__(self, dynamodb):
         self.table = dynamodb.Table(self.TABLENAME)

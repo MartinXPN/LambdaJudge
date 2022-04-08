@@ -39,6 +39,20 @@ Resources:
       Roles:
         - Ref: EqualityCheckerRole
         - Ref: TriggerSyncRole
+
+  DynamoDBAccessPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: DynamoDBAccessPolicy
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - 'dynamodb:PutItem'
+            Resource: '*'
+      Roles:
+        - Ref: TriggerSyncRole
   AllowS3ReadPolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -285,6 +299,9 @@ Resources:
       CodeUri: sync/
       Handler: app.sync_s3_handler
       Role: !GetAtt TriggerSyncRole.Arn
+      Environment:
+        Variables:
+          DYNAMODB_TABLE_NAME: !Ref PrivateTestsTable
       Events:
         SyncS3TestsWithEFSEvent:
           Type: S3
@@ -297,6 +314,8 @@ Resources:
                   - Name: suffix      # or prefix
                     Value: zip        # The value to search for in the S3 object key names
 
+  PrivateTestsTable:
+    Type: "AWS::Serverless::SimpleTable"
   SyncS3WithEFS:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     DependsOn: CodeRunnerMountTarget
@@ -316,7 +335,6 @@ Resources:
       FileSystemConfigs:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
-
   EqualityChecker:
     Type: AWS::Serverless::Function
     Properties:
