@@ -8,9 +8,9 @@ from zipfile import ZipFile
 
 import boto3
 from cryptography.fernet import Fernet
-from private_test_logger import PrivateTestLogger
 
 from models import SyncRequest
+from sync.private_test_summarizer import PrivateTestSummarizer
 
 ROOT = Path('/tmp/')
 aws_lambda = boto3.client('lambda')
@@ -41,7 +41,7 @@ def sync_s3_handler(event, context):
     print('invocation result:', res)
 
     dynamodb = boto3.resource('dynamodb')
-    PrivateTestLogger(dynamodb).log(problem, res['tests_truncated'])
+    PrivateTestSummarizer(dynamodb).summarize(problem, res['tests_truncated'])
 
 
 def sync_efs_handler(event, context):
@@ -80,7 +80,7 @@ def sync_efs_handler(event, context):
                     'input': inf.read(),
                     'target': of.read(),
                 })
-    tests_truncated = PrivateTestLogger.truncated_tests(tests)
+    tests_truncated = PrivateTestSummarizer.truncated_tests(tests)
     print('encryption key len:', len(encryption_key))
     fernet = Fernet(encryption_key)
 
