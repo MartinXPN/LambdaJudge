@@ -41,7 +41,7 @@ def sync_s3_handler(event, context):
     print('invocation result:', res)
 
     dynamodb = boto3.resource('dynamodb')
-    PrivateTestSummarizer(dynamodb).write_to_db(problem, res['tests_truncated'])
+    PrivateTestSummarizer(dynamodb).write(problem, res['tests_truncated'])
 
 
 def sync_efs_handler(event, context):

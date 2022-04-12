@@ -15,7 +15,7 @@ class TestPrivateTestSummarizer:
         with pytest.raises(PrivateTestSummarizerException):
             logger = PrivateTestSummarizer()
             logger.table = mock_table
-            logger.write_to_db(problem_id='id', tests=[{'input': 'abc', 'target': 'cba'}])
+            logger.write(problem_id='id', tests=[{'input': 'abc', 'target': 'cba'}])
         mock_table.put_item.assert_called_once()
 
     @classmethod
