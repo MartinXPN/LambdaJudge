@@ -10,6 +10,7 @@ import boto3
 from cryptography.fernet import Fernet
 
 from models import SyncRequest
+from sync.private_test_summarizer import PrivateTestSummarizer
 
 ROOT = Path('/tmp/')
 aws_lambda = boto3.client('lambda')
@@ -38,6 +39,9 @@ def sync_s3_handler(event, context):
     res = res.read().decode('utf-8')
     res = json.loads(res)
     print('invocation result:', res)
+
+    dynamodb = boto3.resource('dynamodb')
+    PrivateTestSummarizer(dynamodb).write(problem, res['tests_truncated'])
 
 
 def sync_efs_handler(event, context):
@@ -76,7 +80,7 @@ def sync_efs_handler(event, context):
                     'input': inf.read(),
                     'target': of.read(),
                 })
-
+    tests_truncated = PrivateTestSummarizer.truncated_tests(tests)
     print('encryption key len:', len(encryption_key))
     fernet = Fernet(encryption_key)
 
@@ -94,6 +98,9 @@ def sync_efs_handler(event, context):
         f.write(tests)
     print(f'{problem_file} size on EFS:', Path(problem_file).stat().st_size)
     zip_path.unlink(missing_ok=True)
+
     return {
-        'status_code': 200
+        'status_code': 200,
+        'test_count': len(tests_truncated),
+        'tests_truncated': tests_truncated,
     }
