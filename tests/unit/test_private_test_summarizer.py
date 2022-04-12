@@ -3,7 +3,7 @@ from unittest import mock
 import pytest
 
 from sync.private_test_summarizer import (PrivateTestSummarizer,
-                                          PrivateTestSummarizerException)
+                                          SummaryWriteError)
 from sync.private_test_truncator import PrivateTestTruncator
 
 
@@ -12,10 +12,10 @@ class TestPrivateTestSummarizer:
     def test_summarize_error(self):
         mock_table = mock.MagicMock()
         mock_table.put_item.return_value = {'ResponseMetadata': {'HTTPStatusCode': 404}}
-        with pytest.raises(PrivateTestSummarizerException):
-            logger = PrivateTestSummarizer()
-            logger.table = mock_table
-            logger.write(problem_id='id', tests=[{'input': 'abc', 'target': 'cba'}])
+        with pytest.raises(SummaryWriteError):
+            summarizer = PrivateTestSummarizer()
+            summarizer.table = mock_table
+            summarizer.write(problem_id='id', tests=[{'input': 'abc', 'target': 'cba'}])
         mock_table.put_item.assert_called_once()
 
     @classmethod
