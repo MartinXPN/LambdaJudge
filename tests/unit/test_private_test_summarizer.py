@@ -1,4 +1,3 @@
-import copy
 from unittest import mock
 
 import pytest
@@ -23,10 +22,10 @@ class TestPrivateTestSummarizer:
     def _get_tests_with_len(cls, char_count: int) -> list[dict[str, str]]:
         data = 'a' * char_count
         test = {'input': data, 'target': data}
-        return [copy.copy(test) for _ in range(3)]
+        return [dict(test) for _ in range(3)]
 
     def test_truncated_tests(self):
         tests = self._get_tests_with_len(120)
-        truncated_tests = self._get_tests_with_len(100)
+        truncated_tests = self._get_tests_with_len(90)
 
-        assert PrivateTestTruncator().truncate(tests) == truncated_tests
+        assert PrivateTestTruncator(char_count=90).truncate(tests) == truncated_tests
