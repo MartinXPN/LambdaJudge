@@ -12,7 +12,6 @@ from private_test_summarizer import PrivateTestSummarizer
 from private_test_truncator import PrivateTestTruncator
 
 from models import SyncRequest
-from sync.private_test_summarizer import PrivateTestSummarizer
 
 ROOT = Path('/tmp/')
 aws_lambda = boto3.client('lambda')
