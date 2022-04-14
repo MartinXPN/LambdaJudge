@@ -12,6 +12,7 @@ from private_test_summarizer import PrivateTestSummarizer
 from private_test_truncator import PrivateTestTruncator
 
 from models import SyncRequest
+from sync.private_test_summarizer import PrivateTestSummarizer
 
 ROOT = Path('/tmp/')
 aws_lambda = boto3.client('lambda')
@@ -81,7 +82,9 @@ def sync_efs_handler(event, context):
                     'input': inf.read(),
                     'target': of.read(),
                 })
+
     tests_truncated = PrivateTestTruncator().truncate(tests)
+
     print('encryption key len:', len(encryption_key))
     fernet = Fernet(encryption_key)
 
