@@ -16,10 +16,10 @@ ROOT = Path('/tmp/')
 
 def compile_code(code: dict[str, str], language: str) -> tuple[Optional[Path], RunResult]:
     # Currently, we only support single-file submissions
-    submission_path = save_code(save_dir=ROOT, code=code)[0]
+    submission_paths = save_code(save_dir=ROOT, code=code)
 
     compiler = Compiler.from_language(language=language)
-    executable_path, compilation = compiler.compile(submission_path=submission_path)
+    executable_path, compilation = compiler.compile(submission_paths=submission_paths)
     if compilation.status == Status.OK and not compilation.errors:
         return executable_path, compilation
 

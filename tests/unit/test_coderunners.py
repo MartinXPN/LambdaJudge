@@ -1,3 +1,4 @@
+import tempfile
 from pathlib import Path
 from unittest import mock
 
@@ -13,11 +14,11 @@ class TestUtil:
 
     @mock.patch('builtins.open', new_callable=mock.mock_open)
     def test_save_code(self, mock_file: mock.MagicMock):
-        save_dir = Path('/tmp/mydir')
         code = {'main.cpp': 'Hello', 'another.cpp': 'World'}
-
-        saved_paths = util.save_code(save_dir, code)
-        assert saved_paths == [Path('/tmp/mydir/main.cpp'), Path('/tmp/mydir/another.cpp')]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            temp_path = Path(temp_dir)
+            saved_paths = util.save_code(temp_path, code)
+        assert saved_paths == [temp_path / 'main.cpp', temp_path / 'another.cpp']
 
         mock_file.return_value.write.assert_has_calls([mock.call('Hello'), mock.call('World')])
 

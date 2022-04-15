@@ -15,6 +15,7 @@ def save_code(save_dir: Path, code: dict[str, str]) -> list[Path]:
     for filename, content in code.items():
         path = save_dir / filename
         saved_paths.append(path)
+        path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, 'w') as f:
             f.write(content)
 
