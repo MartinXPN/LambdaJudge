@@ -11,6 +11,7 @@ def is_float(value: str) -> bool:
 
 
 def save_code(save_dir: Path, code: dict[str, str]) -> list[Path]:
+    # TODO Fix type hints of 'code' to be some kind of file tree structure
     saved_paths: list[Path] = []
     for filename, content in code.items():
         path = save_dir / filename

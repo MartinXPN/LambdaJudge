@@ -14,6 +14,7 @@ class Compiler(ABC):
 
     @classmethod
     def get_only_file(cls, submission_paths: list[Path], lang: str) -> Path:
+        # TODO remove this method when multi-file support is implemented for every langauge
         if len(submission_paths) != 1:
             raise ValueError(f'There should be single file for {lang}')
         return submission_paths[0]
