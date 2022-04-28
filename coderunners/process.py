@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
+from threading import Thread
 from typing import Iterable, Union
 
 import psutil
@@ -21,6 +22,12 @@ def limit_resources(max_bytes: int):
     #   and do not allow to properly handle the memory limit error
     # resource.setrlimit(resource.RLIMIT_DATA, (max_bytes, max_bytes))
     # resource.setrlimit(resource.RLIMIT_AS, (hard_limit, hard_limit))
+
+
+def send_input(process: subprocess.Popen, inputs: str):
+    inputs += '' if inputs.endswith('\n') else '\n'
+    process.stdin.write(inputs)
+    process.stdin.flush()
 
 
 @dataclass
@@ -43,7 +50,7 @@ class Process:
         self.output_limit = int(self.output_limit_mb * 1024 * 1024)
 
     def run(self, program_input: str = '') -> RunResult:
-        outs, errs, status = None, None, Status.OK
+        status = Status.OK
         self.max_vms_memory = 0
         self.max_rss_memory = 0
         self.start_time = time.time()
@@ -61,9 +68,9 @@ class Process:
             fcntl.fcntl(self.p.stderr, 1031, 1024 * 1024)
             self.execution_state = True
 
-            end = '' if program_input.endswith('\n') else '\n'
-            self.p.stdin.write(program_input + end)
-            self.p.stdin.flush()
+            # Write to stdin in a separate thread to avoid locking the main program
+            input_thread = Thread(target=send_input, args=(self.p, program_input))
+            input_thread.start()
 
             # poll as often as possible; otherwise the subprocess might
             # "sneak" in some extra memory usage while you aren't looking
@@ -72,31 +79,27 @@ class Process:
                 if self.max_rss_memory > self.memory_limit:
                     status = Status.MLE
                     break
-            outs, errs = self.p.communicate(timeout=self.timeout / 100)
-        except subprocess.TimeoutExpired:
-            self.close(kill=True)
-            outs, errs = self.p.communicate(timeout=1)
-            if self.finish_time - self.start_time > self.timeout:
-                status = Status.TLE
+            input_thread.join(timeout=self.timeout / 100)
         except Exception as e:
             print('Program execution resulted in an error:', e)
             status = Status.RUNTIME_ERROR
         finally:
-            if outs is None and errs is None:
-                self.p.stdout.flush()
-                self.p.stderr.flush()
-                outs, errs = self.p.stdout.read(self.output_limit + 1), self.p.stderr.read(self.output_limit + 1)
-            self.close(kill=True)   # make sure that we don't leave the process dangling?
+            self.close(kill=True)   # make sure that we don't leave the process dangling
+            self.p.stdout.flush()
+            self.p.stderr.flush()
+            outs, errs = self.p.stdout.read(self.output_limit + 1), self.p.stderr.read(self.output_limit + 1)
 
-            if self.finish_time - self.start_time > self.timeout:
-                status = Status.TLE
-            if self.p.returncode in {errno.ENOMEM, 137}:            # SIGKILL
-                status = Status.MLE
-            elif self.p.returncode in {139, 143}:                   # SIGSEGV, SIGTERM
-                status = Status.RUNTIME_ERROR
-            elif self.p.returncode != 0 and status == Status.OK:    # Nonzero return code is a runtime error
-                status = Status.RUNTIME_ERROR
+        # Time/Memory limits + Runtime errors
+        if self.finish_time - self.start_time > self.timeout:
+            status = Status.TLE
+        if self.p.returncode in {errno.ENOMEM, 137}:            # SIGKILL
+            status = Status.MLE
+        elif self.p.returncode in {139, 143}:                   # SIGSEGV, SIGTERM
+            status = Status.RUNTIME_ERROR
+        elif self.p.returncode != 0 and status == Status.OK:    # Nonzero return code is a runtime error
+            status = Status.RUNTIME_ERROR
 
+        # Output limits
         if sys.getsizeof(outs) > self.output_limit:
             status = Status.OLE
             outs = outs[:self.output_limit // 2]

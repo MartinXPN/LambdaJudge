@@ -9,7 +9,7 @@ from models import RunResult
 
 class Compiler(ABC):
     @abstractmethod
-    def compile(self, submission_path: Path) -> tuple[Path, RunResult]:
+    def compile(self, submission_paths: list[Path]) -> tuple[Path, RunResult]:
         ...
 
     @classmethod
@@ -20,7 +20,7 @@ class Compiler(ABC):
         return submission_paths[0]
 
     @classmethod
-    def find_main_file_path(self, submission_paths: list[Path], main_file_name: str) -> Path:
+    def find_main_file_path(cls, submission_paths: list[Path], main_file_name: str) -> Path:
         for path in submission_paths:
             if path.name == main_file_name:
                 return path

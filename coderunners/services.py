@@ -74,9 +74,11 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
     )
 
     # Run the first test as a warmup to avoid having big time consumption on the first run
+    print('Running test warmup', end='...')
     Process(
         f'{executable_path}', timeout=time_limit, memory_limit_mb=memory_limit, output_limit_mb=output_limit,
     ).run(test_cases[0].input)
+    print('Done')
 
     # Process all tests
     test_results: list[RunResult] = []
