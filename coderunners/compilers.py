@@ -15,13 +15,6 @@ class Compiler(ABC):
         ...
 
     @classmethod
-    def get_only_file(cls, submission_paths: list[Path], lang: str) -> Path:
-        # TODO remove this method when multi-file support is implemented for every langauge
-        if len(submission_paths) != 1:
-            raise ValueError(f'There should be single file for {lang}')
-        return submission_paths[0]
-
-    @classmethod
     def find_main_file_path(cls, submission_paths: list[Path], main_file_name: str) -> Path:
         for path in submission_paths:
             if path.name == main_file_name:
@@ -134,12 +127,15 @@ class JsCompiler(Compiler):
 class JavaCompiler(Compiler):
     supported_standards = {'java'}
     language_standard: str = 'java'
+    build_dir = Path('/tmp/build')
 
     def compile(self, submission_paths: list[Path]):
-        submission_path = self.get_only_file(submission_paths, self.language_standard)
-        compile_res = Process(f'javac -d /tmp/build {submission_path}', timeout=10, memory_limit_mb=512).run()
-        classname = "Main"
-        print('Compile res:', compile_res, 'Class name:', classname)
+        source_files = ' '.join(str(p) for p in submission_paths if p.suffix == '.java')
+        build_res = Process(f'javac -d {self.build_dir} {source_files}', timeout=10, memory_limit_mb=512).run()
+        print('Build res:', build_res)
 
-        executable_path = f'java -classpath /tmp/build/ {classname}'
+        compile_res = Process(f'cd {self.build_dir} && jar cvf Main.jar *', timeout=10, memory_limit_mb=512).run()
+        print('Compile res:', compile_res)
+
+        executable_path = f'java -cp {self.build_dir / "Main.jar"} Main'
         return executable_path, compile_res
