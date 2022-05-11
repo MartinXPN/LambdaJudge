@@ -2,22 +2,23 @@ from unittest import mock
 
 import pytest
 
-from sync.private_test_summarizer import (PrivateTestSummarizer,
-                                          SummaryWriteError)
-from sync.private_test_truncator import PrivateTestTruncator
+from sync.test_summary import SummaryTable, SummaryWriteError, truncate
 
 
-class TestPrivateTestSummarizer:
-    @mock.patch.object(PrivateTestSummarizer, '__init__', lambda *args, **kwargs: None)
+class TestSummaryTable:
+    @mock.patch.object(SummaryTable, '__init__', lambda *args, **kwargs: None)
     def test_summarize_error(self):
         mock_table = mock.MagicMock()
         mock_table.put_item.return_value = {'ResponseMetadata': {'HTTPStatusCode': 404}}
         with pytest.raises(SummaryWriteError):
-            summarizer = PrivateTestSummarizer()
-            summarizer.table = mock_table
-            summarizer.write(problem_id='id', tests=[{'input': 'abc', 'target': 'cba'}])
+            # noinspection PyArgumentList
+            summary = SummaryTable()
+            summary.table = mock_table
+            summary.write(problem_id='id', tests=[{'input': 'abc', 'target': 'cba'}])
         mock_table.put_item.assert_called_once()
 
+
+class TestTruncation:
     @classmethod
     def _get_tests_with_len(cls, char_count: int) -> list[dict[str, str]]:
         data = 'a' * char_count
@@ -27,5 +28,9 @@ class TestPrivateTestSummarizer:
     def test_truncated_tests(self):
         tests = self._get_tests_with_len(120)
         truncated_tests = self._get_tests_with_len(90)
+        assert truncate(tests, max_len=90) == truncated_tests
 
-        assert PrivateTestTruncator(char_count=90).truncate(tests) == truncated_tests
+    def test_unsupported_type(self):
+        with pytest.raises(ValueError):
+            # noinspection PyTypeChecker
+            truncate(100, 100)

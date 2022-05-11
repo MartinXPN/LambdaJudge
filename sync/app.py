@@ -8,8 +8,7 @@ from zipfile import ZipFile
 
 import boto3
 from cryptography.fernet import Fernet
-from private_test_summarizer import PrivateTestSummarizer
-from private_test_truncator import PrivateTestTruncator
+from test_summary import SummaryTable, truncate
 
 from models import SyncRequest
 
@@ -17,6 +16,7 @@ ROOT = Path('/tmp/')
 aws_lambda = boto3.client('lambda')
 s3 = boto3.client('s3')
 secret_manager = boto3.client('secretsmanager')
+dynamodb = boto3.resource('dynamodb')
 encryption_secret_key_id = 'arn:aws:secretsmanager:us-east-1:370358067229:secret:efs/problem/encryptionKey-xTnJWC'
 
 
@@ -41,8 +41,8 @@ def sync_s3_handler(event, context):
     res = json.loads(res)
     print('invocation result:', res)
 
-    dynamodb = boto3.resource('dynamodb')
-    PrivateTestSummarizer(dynamodb).write(problem, res['tests_truncated'])
+    SummaryTable(dynamodb).write(problem, res['tests_truncated'])
+    print('Wrote to a summary table')
 
 
 def sync_efs_handler(event, context):
@@ -82,7 +82,7 @@ def sync_efs_handler(event, context):
                     'target': of.read(),
                 })
 
-    tests_truncated = PrivateTestTruncator().truncate(tests)
+    tests_truncated = truncate(tests, max_len=100)
 
     print('encryption key len:', len(encryption_key))
     fernet = Fernet(encryption_key)
