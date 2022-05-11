@@ -133,6 +133,7 @@ class JavaCompiler(Compiler):
     build_dir = Path('/tmp/build')
 
     def compile(self, submission_paths: list[Path]):
+        self.build_dir.mkdir(parents=True, exist_ok=True)
         source_files = ' '.join(str(p) for p in submission_paths if p.suffix == '.java')
         build_res = Process(f'javac -d {self.build_dir} {source_files}', timeout=10, memory_limit_mb=512).run()
         print('Build res:', build_res)
