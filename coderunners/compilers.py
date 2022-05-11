@@ -1,3 +1,5 @@
+import os
+import shutil
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
@@ -58,7 +60,6 @@ class CppCompiler(Compiler):
                               f'-std={self.language_standard} {submission_paths_str} '
                               f'-o {executable_path}',
                               timeout=10, memory_limit_mb=512).run()
-
         print('Compile res', compile_res)
         return executable_path, compile_res
 
@@ -78,8 +79,8 @@ class PythonCompiler(Compiler):
         print('Creating python binary at:', binary_paths)
         compile_res = Process(f'{self.language_standard} -m py_compile {submission_paths_str}',
                               timeout=10, memory_limit_mb=512).run()
-
         print('Compile res', compile_res)
+
         for path in binary_paths:
             path.unlink(missing_ok=True)
         return executable_path, compile_res
@@ -91,26 +92,25 @@ class CSharpCompiler(Compiler):
     supported_standards = {'c#'}
 
     dotnet_path = Path('/var/dotnet/dotnet')
-    project_dir = Path('/tmp/program')
-    project_file_path = Path(project_dir, 'program.csproj')
-    code_path = Path(project_dir, 'Program.cs')
     dll_path = Path('/tmp/out/program.dll')
+    project_dir = Path('/tmp/program')
+    project_file_path = project_dir / 'program.csproj'
 
     def compile(self, submission_paths: list[Path]):
-        submission_path = self.get_only_file(submission_paths, self.language_standard)
-
-        create_project_cmd = f'{self.dotnet_path} new console -o {self.project_dir}'
-        copy_source_code_cmd = f'cat {submission_path} > {self.code_path}'
-        project_create_res = Process(' && '.join([create_project_cmd, copy_source_code_cmd]),
+        project_create_res = Process(f'{self.dotnet_path} new console -o {self.project_dir}',
                                      timeout=10, memory_limit_mb=512).run()
         print('Project Create res', project_create_res)
 
+        # Copy files to project directory
+        common = os.path.commonprefix([p.parent for p in submission_paths])
+        for path in submission_paths:
+            shutil.copyfile(path, self.project_dir / path.relative_to(common))
+
         compile_cmd = f'{self.dotnet_path} build {self.project_file_path} -c Release -o {self.dll_path.parent}'
         compile_res = Process(compile_cmd, timeout=10, memory_limit_mb=512).run()
-
         print('Compile res', compile_res)
-        executable_path = f'{self.dotnet_path} run {self.dll_path} --project {self.project_dir}'
 
+        executable_path = f'{self.dotnet_path} run {self.dll_path} --project {self.project_dir}'
         return executable_path, compile_res
 
 
@@ -122,6 +122,7 @@ class JsCompiler(Compiler):
     def compile(self, submission_paths: list[Path]):
         submission_path = self.get_only_file(submission_paths, self.language_standard)
         compile_res = Process(f'node --check {submission_path}', timeout=10, memory_limit_mb=512).run()
+
         print('Compile res', compile_res)
         executable_path = f'node {submission_path}'
 
@@ -138,6 +139,6 @@ class JavaCompiler(Compiler):
         compile_res = Process(f'javac -d /tmp/build {submission_path}', timeout=10, memory_limit_mb=512).run()
         classname = "Main"
         print('Compile res:', compile_res, 'Class name:', classname)
-        executable_path = f'java -classpath /tmp/build/ {classname}'
 
+        executable_path = f'java -classpath /tmp/build/ {classname}'
         return executable_path, compile_res
