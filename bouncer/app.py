@@ -1,8 +1,8 @@
-from bouncer.judges import check_equality
+from bouncer.services import check_equality
 from models import SubmissionRequest
 
 
-def equality_checker_lambda(event, context):
+def bouncer_lambda_handler(event, context):
     """
     Judge lambda that takes a request (as an API request) and returns the results
     after running the code on  run_code_lambda

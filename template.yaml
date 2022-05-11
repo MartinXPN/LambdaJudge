@@ -20,7 +20,7 @@ Resources:
             Resource: '*'
       Roles:
         - Ref: SyncS3WithEFSRole
-        - Ref: EqualityCheckerRole
+        - Ref: BouncerRole
         - Ref: ContestantRole
         - Ref: TriggerSyncRole
   AllowSecretsAccessPolicy:
@@ -37,7 +37,7 @@ Resources:
               - 'secretsmanager:ListSecretVersionIds'
             Resource: '*'
       Roles:
-        - Ref: EqualityCheckerRole
+        - Ref: BouncerRole
         - Ref: TriggerSyncRole
 
   DynamoDBAccessPolicy:
@@ -101,7 +101,7 @@ Resources:
             Resource: '*'
       Roles:
         - Ref: TriggerSyncRole
-        - Ref: EqualityCheckerRole
+        - Ref: BouncerRole
 
   # Execution roles
   TriggerSyncRole:
@@ -140,7 +140,7 @@ Resources:
                   - 'elasticfilesystem:ClientWrite'
                   - 'elasticfilesystem:DescribeMountTargets'
                 Resource: '*'
-  EqualityCheckerRole:
+  BouncerRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
@@ -335,14 +335,14 @@ Resources:
       FileSystemConfigs:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
-  EqualityChecker:
+  Bouncer:
     Type: AWS::Serverless::Function
     Properties:
-      FunctionName: EqualityChecker
+      FunctionName: Bouncer
       Timeout: 300
       MemorySize: 256
       PackageType: Image
-      Role: !GetAtt EqualityCheckerRole.Arn
+      Role: !GetAtt BouncerRole.Arn
       Events:
         Check:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
@@ -352,7 +352,7 @@ Resources:
     Metadata:
       DockerTag: python3.9-v1
       DockerContext: ./
-      Dockerfile: bouncer/bouncer.Dockerfile
+      Dockerfile: bouncer/Dockerfile
 
   CodeRunnerPython:
     Type: AWS::Serverless::Function
@@ -468,11 +468,11 @@ Outputs:
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   Check:
-    Description: 'API Gateway endpoint URL for Prod stage for EqualityChecker function'
+    Description: 'API Gateway endpoint URL for Prod stage for Bouncer function'
     Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/check/'
-  EqualityChecker:
+  Bouncer:
     Description: 'AWS Lambda checker for determining if the output of a code is exactly the same es the target'
-    Value: !GetAtt EqualityChecker.Arn
+    Value: !GetAtt Bouncer.Arn
   CodeRunnerPython:
     Description: 'AWS Lambda for executing a python code and getting the outputs'
     Value: !GetAtt CodeRunnerPython.Arn

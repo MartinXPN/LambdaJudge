@@ -13,8 +13,8 @@ The test cases are kept on EFS (Elastic File System), which is mounted with a re
 LambdaJudge infrastructure is best described in the image below.
 
 ### Checkers and CodeRunners
-* A submission comes through an API gateway, which triggers EqualityChecker Lambda.
-EqualityChecker is not in a VPC, and therefore easily fetches the encryption key from the Secrets Manager.
+* A submission comes through an API gateway, which triggers Bouncer Lambda.
+Bouncer is not in a VPC, and therefore easily fetches the encryption key from the Secrets Manager.
 * Afterward, it triggers the appropriate Lambda specific to the language of submission.
 * The CodeRunner lambda gets the encrypted test cases from the attached EFS mounted in `read` mode.
 * It then decrypts the contents of the appropriate problem test files and keeps the contents in memory.
@@ -29,7 +29,7 @@ EqualityChecker is not in a VPC, and therefore easily fetches the encryption key
 
 
 [//]: # (created with https://app.creately.com/)
-![LambdaJudge Infrastructure](https://i.imgur.com/ZObVxCe.png)
+![LambdaJudge Infrastructure](https://i.imgur.com/AuVHUrq.png)
 
 # Development
 
@@ -65,12 +65,15 @@ sam local invoke <FunctionName> --event events/pythonEcho.json    # Invokes the 
 sam local start-api && curl http://localhost:3000/                # Start and invoke API endpoints locally
 sam deploy --guided                                               # Deploy the serverless application
 sam logs -n <FunctionName> --tail                                 # Print log tail for the deployed function
+
+pre-commit run --all-files                                        # Tidy-up the files before committing
 ```
 
 ### Project structure
 ```markdown
 LambdaJudge
-|-> coderunners (includes checkers and coderunners. checkers forward the request to coderunners in VPC with a private Subnet)
+|-> bouncer (forward the request to coderunners in VPC with a private Subnet)
+|-> coderunners (are in a VPC with a private Subnet - execute code in different languages)
 |-> sync (Lambda function that syncs S3 with EFS in a VPC)
 |-> events (json events that can be used to invoke different functions to test locally)
 |-> tests (include integration and unit tests)

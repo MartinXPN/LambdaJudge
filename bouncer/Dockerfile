@@ -1,9 +1,8 @@
 FROM public.ecr.aws/sam/build-python3.9:latest
 
-## Initial setup
-
+# Initial setup
 RUN pip install --upgrade pip
-RUN pip install "awslambdaric>=2,<3" -t "${LAMBDA_TASK_ROOT}"
+RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"
 
 COPY ./bouncer/requirements.txt ${LAMBDA_TASK_ROOT}/
 
@@ -15,4 +14,4 @@ COPY ./models.py ${LAMBDA_TASK_ROOT}/
 
 # Run the lambda function handler
 ENTRYPOINT [ "python", "-m", "awslambdaric" ]
-CMD [ "bouncer.app.equality_checker_lambda" ]
+CMD [ "bouncer.app.bouncer_lambda_handler" ]
