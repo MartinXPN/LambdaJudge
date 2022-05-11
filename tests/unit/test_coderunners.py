@@ -1,6 +1,7 @@
-import pytest
 from pathlib import Path
 from tempfile import TemporaryDirectory
+
+import pytest
 
 import coderunners.scoring as scoring
 import coderunners.util as util
