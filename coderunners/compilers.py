@@ -116,16 +116,17 @@ class CSharpCompiler(Compiler):
 
 @dataclass
 class JsCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'index.js'
     language_standard: str
     supported_standards = {'js'}
 
     def compile(self, submission_paths: list[Path]):
-        submission_path = self.get_only_file(submission_paths, self.language_standard)
-        compile_res = Process(f'node --check {submission_path}', timeout=10, memory_limit_mb=512).run()
+        main_file_path = self.find_main_file_path(submission_paths, self.MAIN_FILE_NAME)
+        project = main_file_path if len(submission_paths) == 1 else main_file_path.parent
 
+        compile_res = Process(f'node --check {project}', timeout=10, memory_limit_mb=512).run()
         print('Compile res', compile_res)
-        executable_path = f'node {submission_path}'
-
+        executable_path = f'node {project}'
         return executable_path, compile_res
 
 

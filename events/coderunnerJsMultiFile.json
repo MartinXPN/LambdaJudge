@@ -1,0 +1,13 @@
+{
+    "code": {
+        "index.js": "console.log('Hello, World!')",
+        "package.json": "{\n            \"name\": \"hello-world\",\n            \"version\": \"1.0.0\"\n        }"
+    },
+    "testCases": [{"input":"", "target":"Hello, World!"}],
+    "returnOutputs": true,
+    "return_compile_outputs": true,
+    "stopOnFirstFail": false,
+    "language": "js",
+    "timeLimit": 10,
+    "memory_limit": 512
+}
