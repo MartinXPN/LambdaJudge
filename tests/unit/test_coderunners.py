@@ -1,6 +1,6 @@
-import tempfile
+import pytest
 from pathlib import Path
-from unittest import mock
+from tempfile import TemporaryDirectory
 
 import coderunners.scoring as scoring
 import coderunners.util as util
@@ -9,22 +9,48 @@ import models
 
 class TestUtil:
     def test_is_float(self):
-        assert util.is_float("3.4") is True
-        assert util.is_float("not float") is False
+        assert util.is_float('3.4') is True
+        assert util.is_float('not float') is False
+        assert util.is_float('NaN') is True
+        assert util.is_float('4') is True
 
-    @mock.patch('builtins.open', new_callable=mock.mock_open)
-    def test_save_code(self, mock_file: mock.MagicMock):
-        FIRST_FILE = 'main.cpp'
-        SECOND_FILE = 'another.cpp'
-        THIRD_FILE = 'dir/third.cpp'
+    def test_save_code(self):
+        code = {
+            'main.cpp': 'File 1',
+            'another.cpp': 'File 2',
+            'dir': {
+                'third.cpp': 'File 3'
+            }
+        }
+        with TemporaryDirectory() as save_dir:
+            save_dir = Path(save_dir)
+            saved_paths = util.save_code(save_dir, code)
+            assert saved_paths == [save_dir / 'main.cpp', save_dir / 'another.cpp', save_dir / 'dir' / 'third.cpp']
 
-        code = {FIRST_FILE: 'Hello', SECOND_FILE: 'World', THIRD_FILE: 'Here'}
-        with tempfile.TemporaryDirectory() as temp_dir:
-            temp_path = Path(temp_dir)
-            saved_paths = util.save_code(temp_path, code)
-        assert saved_paths == [temp_path / FIRST_FILE, temp_path / SECOND_FILE, temp_path / THIRD_FILE]
+            # Assert the files have been created successfully
+            with open(save_dir / 'main.cpp') as f:
+                assert f.read() == 'File 1'
+            with open(save_dir / 'another.cpp') as f:
+                assert f.read() == 'File 2'
+            with open(save_dir / 'dir' / 'third.cpp') as f:
+                assert f.read() == 'File 3'
 
-        mock_file.return_value.write.assert_has_calls([mock.call('Hello'), mock.call('World')])
+            # Assert that redundant files do not exist
+            assert not (save_dir / 'hello.py').exists()
+            assert not (save_dir / 'main').is_dir()
+            assert (save_dir / 'dir').is_dir()
+
+    def test_save_code_fails(self):
+        """ Anything other than string: string or string: dict should fail """
+        code = {'hello.py': ['something', 'something else']}
+        with pytest.raises(TypeError):
+            with TemporaryDirectory() as save_dir:
+                save_dir = Path(save_dir)
+                # noinspection PyTypeChecker
+                util.save_code(save_dir, code)
+
+    def test_return_code_to_status(self):
+        assert util.return_code2status.get(137) == 'SIGKILL'
 
 
 class TestScoring:

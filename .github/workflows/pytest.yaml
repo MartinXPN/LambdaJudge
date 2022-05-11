@@ -26,4 +26,4 @@ jobs:
 
     - name: Test with pytest
       run: |
-        pytest .
+        pytest --cov=sync --cov=coderunners --cov=bouncer --cov-report term-missing
