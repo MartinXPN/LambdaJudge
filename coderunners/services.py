@@ -9,7 +9,7 @@ from coderunners.compilers import Compiler
 from coderunners.process import Process
 from coderunners.scoring import Scorer
 from coderunners.util import save_code
-from models import RunResult, Status, SubmissionResult, TestCase, SubmissionRequest
+from models import RunResult, Status, SubmissionRequest, SubmissionResult, TestCase
 
 
 class EqualityChecker(SubmissionRequest):
