@@ -5,24 +5,24 @@ from typing import Optional
 from models import RunResult, Status, TestGroup
 
 
-class AbstractScorer(ABC):
+class Scorer(ABC):
     @abstractmethod
     def score(self, test_results: list[RunResult]) -> tuple[float, list[float]]:
         ...
 
     @staticmethod
-    def from_request(test_groups: Optional[list[TestGroup]] = None) -> 'AbstractScorer':
+    def from_request(test_groups: Optional[list[TestGroup]] = None) -> 'Scorer':
         return SubtaskScorer(test_groups=test_groups) if test_groups else PerTestScorer()
 
 
-class PerTestScorer(AbstractScorer):
+class PerTestScorer(Scorer):
     def score(self, test_results: list[RunResult]) -> tuple[float, list[float]]:
         test_scores = [t.score / len(test_results) for t in test_results]
         return sum(test_scores), test_scores
 
 
 @dataclass
-class SubtaskScorer(AbstractScorer):
+class SubtaskScorer(Scorer):
     test_groups: list[TestGroup]
 
     def score(self, test_results: list[RunResult]) -> tuple[float, list[float]]:

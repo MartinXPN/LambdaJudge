@@ -7,7 +7,7 @@ from cryptography.fernet import Fernet
 from coderunners.checkers import Checker
 from coderunners.compilers import Compiler
 from coderunners.process import Process
-from coderunners.scoring import AbstractScorer
+from coderunners.scoring import Scorer
 from coderunners.util import save_code
 from models import RunResult, Status, SubmissionResult, TestCase, TestGroup
 
@@ -105,7 +105,7 @@ def check_code(code: dict[str, str], language: str, memory_limit: int, time_limi
     assert len(test_results) == len(test_cases)
 
     # Scoring
-    scorer = AbstractScorer.from_request(test_groups)
+    scorer = Scorer.from_request(test_groups)
     total, per_test = scorer.score(test_results)
     print('Total score:', total, 'Score per test:', per_test)
     for r, score in zip(test_results, per_test):
