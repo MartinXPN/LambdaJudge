@@ -44,15 +44,18 @@ class Compiler(ABC):
 
 @dataclass
 class CppCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.cpp'
     language_standard: str
     supported_standards = {'c++11', 'c++14', 'c++17', 'c++20'}
 
     def compile(self, submission_paths: list[Path]):
-        submission_path = self.get_only_file(submission_paths, self.language_standard)
-        executable_path = submission_path.with_suffix('.o')
+        submission_paths_str = ' '.join([str(path) for path in submission_paths])
+        main_file_path = self.find_main_file_path(submission_paths, self.MAIN_FILE_NAME)
+        executable_path = main_file_path.with_suffix('.o')
+
         print('Creating executable at:', executable_path)
         compile_res = Process(f'g++ -O3 -Wno-write-strings '
-                              f'-std={self.language_standard} {submission_path} '
+                              f'-std={self.language_standard} {submission_paths_str} '
                               f'-o {executable_path}',
                               timeout=10, memory_limit_mb=512).run()
 
@@ -63,13 +66,15 @@ class CppCompiler(Compiler):
 @dataclass
 class PythonCompiler(Compiler):
     MAIN_FILE_NAME: ClassVar[str] = 'main.py'
-
     language_standard: str
     supported_standards = {'python', 'python3'}
 
     def compile(self, submission_paths: list[Path]):
         binary_paths = [path.with_suffix('.pyc') for path in submission_paths]
         submission_paths_str = ' '.join([str(path) for path in submission_paths])
+        main_file_path = self.find_main_file_path(submission_paths, self.MAIN_FILE_NAME)
+        executable_path = f'{self.language_standard} {main_file_path}'
+
         print('Creating python binary at:', binary_paths)
         compile_res = Process(f'{self.language_standard} -m py_compile {submission_paths_str}',
                               timeout=10, memory_limit_mb=512).run()
@@ -77,9 +82,6 @@ class PythonCompiler(Compiler):
         print('Compile res', compile_res)
         for path in binary_paths:
             path.unlink(missing_ok=True)
-
-        main_file_path = self.find_main_file_path(submission_paths, self.MAIN_FILE_NAME)
-        executable_path = f'{self.language_standard} {main_file_path}'
         return executable_path, compile_res
 
 
