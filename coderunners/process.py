@@ -115,7 +115,7 @@ class Process:
             outputs=outs, errors=errs,
         )
 
-    def poll(self):
+    def poll(self) -> bool:
         if not self.check_execution_state():
             return False
 
@@ -149,10 +149,10 @@ class Process:
 
         return self.check_execution_state()
 
-    def is_running(self):
+    def is_running(self) -> bool:
         return psutil.pid_exists(self.p.pid) and self.p.poll() is None
 
-    def check_execution_state(self):
+    def check_execution_state(self) -> bool:
         if not self.execution_state:
             return False
         if self.is_running():
@@ -162,7 +162,7 @@ class Process:
         self.finish_time = time.time()
         return False
 
-    def close(self, kill=False):
+    def close(self, kill=False) -> None:
         try:
             pp = psutil.Process(self.p.pid)
             if kill:

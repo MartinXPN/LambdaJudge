@@ -1,5 +1,5 @@
-from coderunners.services import check_code
-from models import SubmissionRequest, SubmissionResult
+from coderunners.services import EqualityChecker
+from models import SubmissionResult
 
 
 def run_code_lambda(event, context):
@@ -10,8 +10,8 @@ def run_code_lambda(event, context):
     """
     print('Event:', type(event), event)
     print('Context:', context)
-    request = SubmissionRequest.from_dict(event)
-    print('ALl the params:', request)
+    checker = EqualityChecker.from_dict(event)
+    print('Checker:', checker)
 
-    results: SubmissionResult = check_code(**request.__dict__)
+    results: SubmissionResult = checker.check()
     return results.to_json()
