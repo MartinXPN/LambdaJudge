@@ -32,19 +32,11 @@ def truncate(test: dict[str, str], max_len: int) -> dict[str, str]:
     ...
 
 
-@overload
-def truncate(value: str, max_len: int) -> str:
-    ...
-
-
 def truncate(x, max_len: int = 100):
-    if isinstance(x, str):
-        return x[: max_len]
-
     if isinstance(x, dict):
         return {
-            'input': truncate(x['input'], max_len),
-            'target': truncate(x['target'], max_len),
+            'input': x['input'][: max_len],
+            'target': x['target'][: max_len],
         }
 
     if isinstance(x, list):
