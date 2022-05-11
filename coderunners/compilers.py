@@ -92,12 +92,15 @@ class CSharpCompiler(Compiler):
     def compile(self, submission_paths: list[Path]):
         project_create_res = Process(f'{self.dotnet_path} new console -o {self.project_dir}',
                                      timeout=10, memory_limit_mb=512).run()
+        (self.project_dir / 'Program.cs').unlink()   # Remove the default file created by dotnet
         print('Project Create res', project_create_res)
 
         # Copy files to project directory
         common = os.path.commonprefix([p.parent for p in submission_paths])
         for path in submission_paths:
-            shutil.copyfile(path, self.project_dir / path.relative_to(common))
+            destination = self.project_dir / path.relative_to(common)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(path, destination)
 
         compile_cmd = f'{self.dotnet_path} build {self.project_file_path} -c Release -o {self.dll_path.parent}'
         compile_res = Process(compile_cmd, timeout=10, memory_limit_mb=512).run()
