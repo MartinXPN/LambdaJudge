@@ -10,12 +10,12 @@ class TestMemoryLimit:
 
     def test_exceeds(self):
         request = SubmissionRequest(test_cases=self.test_cases, language='python', memory_limit=256, code={
-            'main.py': dedent("""
+            'main.py': dedent('''
                 a = []
                 for i in range(1000000):
                     a.append(bytearray(37159444))
                 print('Watch the limits!')
-            """),
+            '''),
         })
 
         res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
@@ -26,12 +26,12 @@ class TestMemoryLimit:
 
     def test_ok(self):
         request = SubmissionRequest(test_cases=self.test_cases, language='python', memory_limit=256, code={
-            'main.py': dedent("""
-            a = []
-            for i in range(2):
-                a.append(bytearray(37159444))
-            print('Watch the limits!')
-            """),
+            'main.py': dedent('''
+                a = []
+                for i in range(2):
+                    a.append(bytearray(37159444))
+                print('Watch the limits!')
+            '''),
         })
 
         res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
