@@ -1,5 +1,5 @@
 from bouncer.coderunners import CodeRunner
-from models import SubmissionRequest, TestCase, Status
+from models import Status, SubmissionRequest, TestCase
 from tests.integration.config import lambda_client
 
 

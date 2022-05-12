@@ -1,7 +1,7 @@
 from textwrap import dedent
 
 from bouncer.coderunners import CodeRunner
-from models import SubmissionRequest, TestCase, Status, SubmissionResult
+from models import Status, SubmissionRequest, SubmissionResult, TestCase
 from tests.integration.config import lambda_client
 
 
