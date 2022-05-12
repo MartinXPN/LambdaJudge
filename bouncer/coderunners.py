@@ -1,14 +1,16 @@
 import json
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 
 from models import SubmissionRequest, SubmissionResult
 
 
-class CodeRunner:
+class CodeRunner(ABC):
     @property
+    @abstractmethod
     def name(self) -> str:
         """ The name defined here should match the name in the SAM template.yaml """
-        raise NotImplementedError
+        ...
 
     @staticmethod
     def from_language(language: str) -> 'CodeRunner':
