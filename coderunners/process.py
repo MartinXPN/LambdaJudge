@@ -172,8 +172,3 @@ class Process:
                 pp.terminate()
         except psutil.NoSuchProcess:
             ...
-
-
-if __name__ == '__main__':
-    res = Process('sleep 7', timeout=5, memory_limit_mb=512).run()
-    print(res)
