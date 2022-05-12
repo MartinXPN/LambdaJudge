@@ -27,7 +27,7 @@ class TestHelloWorld:
         }))
 
     def test_js(self):
-        self.run_test(SubmissionRequest(test_cases=self.test_cases, language='js', time_limit=5, code={
+        self.run_test(SubmissionRequest(test_cases=self.test_cases, language='js', code={
             'main.js': 'console.log(\'Hello World!\')',
         }))
 
@@ -37,7 +37,7 @@ class TestHelloWorld:
         }))
 
     def test_java(self):
-        self.run_test(SubmissionRequest(test_cases=self.test_cases, language='Java', time_limit=5, code={
+        self.run_test(SubmissionRequest(test_cases=self.test_cases, language='Java', time_limit=2, code={
             'main.java': dedent('''
                 class Main {
                     public static void main(String[] args) {

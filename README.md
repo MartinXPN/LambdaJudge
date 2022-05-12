@@ -76,7 +76,6 @@ LambdaJudge
 |-> bouncer (forward the request to coderunners in VPC with a private Subnet)
 |-> coderunners (are in a VPC with a private Subnet - execute code in different languages)
 |-> sync (Lambda function that syncs S3 with EFS in a VPC)
-|-> events (json events that can be used to invoke different functions to test locally)
 |-> tests (include integration and unit tests)
 |
 |-> samconfig.toml (includes the default configurations for SAM CLI)
