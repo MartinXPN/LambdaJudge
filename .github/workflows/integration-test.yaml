@@ -1,4 +1,4 @@
-name: tests
+name: integration-tests
 
 on:
   push:
@@ -21,9 +21,13 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements-dev.txt
-        pip install -r bouncer/requirements.txt
-        pip install -r coderunners/requirements.txt
+    - uses: aws-actions/setup-sam@v2
+    - run: sam build --use-container
 
-    - name: Test with pytest
+    - name: Start the project locally (and detach)
       run: |
-        pytest tests/unit --cov=sync --cov=coderunners --cov=bouncer --cov-report term-missing
+        sam local start-lambda &
+
+    - name: Run integration tests with SAM
+      run: |
+        pytest tests/integration

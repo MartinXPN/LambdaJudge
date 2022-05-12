@@ -1,6 +1,11 @@
 import boto3
 import botocore
 
+from models import TestCase, TestGroup
+
+TestCase.__test__ = False
+TestGroup.__test__ = False
+
 lambda_client = boto3.client(
     'lambda',
     region_name='us-east-1',
