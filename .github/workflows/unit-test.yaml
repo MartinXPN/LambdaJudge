@@ -1,0 +1,29 @@
+name: unit-tests
+
+on:
+  push:
+    branches: [ '*' ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: Set up Python 3.9
+      uses: actions/setup-python@v3
+      with:
+        python-version: "3.9"
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements-dev.txt
+        pip install -r bouncer/requirements.txt
+        pip install -r coderunners/requirements.txt
+
+    - name: Test with pytest
+      run: |
+        pytest tests/unit --cov=sync --cov=coderunners --cov=bouncer --cov-report term-missing
