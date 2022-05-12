@@ -55,6 +55,7 @@ Here is the list of plugins for each IDE:
 ### Prerequisites:
 * SAM CLI - [Install the SAM CLI](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
 * [Python 3 installed](https://www.python.org/downloads/)
+* [pre-commit installed](https://pre-commit.com/)
 * Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
 
 
