@@ -350,7 +350,7 @@ Resources:
             Path: /check
             Method: post
     Metadata:
-      DockerTag: python3.9-v1
+      DockerTag: bouncer-v1
       DockerContext: ./
       Dockerfile: bouncer/Dockerfile
 
@@ -394,7 +394,7 @@ Resources:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
     Metadata:
-      DockerTag: python3.9-v1
+      DockerTag: cpp-v1
       DockerContext: ./
       Dockerfile: coderunners/lang/cpp.Dockerfile
 
@@ -416,7 +416,7 @@ Resources:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
     Metadata:
-      DockerTag: python3.9-v1
+      DockerTag: csharp-v1
       DockerContext: ./
       Dockerfile: coderunners/lang/csharp.Dockerfile
 
@@ -438,7 +438,7 @@ Resources:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
     Metadata:
-      DockerTag: python3.9-v1
+      DockerTag: js-v1
       DockerContext: ./
       Dockerfile: coderunners/lang/js.Dockerfile
   CodeRunnerJava:
@@ -459,7 +459,7 @@ Resources:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
     Metadata:
-      DockerTag: python3.9-v1
+      DockerTag: java-v1
       DockerContext: ./
       Dockerfile: coderunners/lang/java.Dockerfile
 

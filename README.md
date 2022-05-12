@@ -63,6 +63,7 @@ Here is the list of plugins for each IDE:
 sam build --use-container                                         # Builds the project
 sam local invoke <FunctionName> --event events/pythonEcho.json    # Invokes the lambda function locally
 sam local start-api && curl http://localhost:3000/                # Start and invoke API endpoints locally
+sam local start-lambda                                            # Start all the functions (you can invoke them with boto3, have a look at integration tests)
 sam deploy --guided                                               # Deploy the serverless application
 sam logs -n <FunctionName> --tail                                 # Print log tail for the deployed function
 
