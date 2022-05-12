@@ -13,7 +13,7 @@ class TestInternetIsolation:
     @pytest.mark.skip('This will be only viable when deployed in a VPC in a private Subnet - not locally')
     def test_no_internet_access(self):
         request = SubmissionRequest(test_cases=self.test_cases, language='python', time_limit=5, code={
-            'main.py': dedent("""
+            'main.py': dedent('''
                 import json
                 import urllib.request
                 base_url = 'http://httpbin.org/post'
@@ -22,7 +22,7 @@ class TestInternetIsolation:
                 req = urllib.request.Request(base_url, data=params, headers={'content-type':'application/json'})
                 response = urllib.request.urlopen(req)
                 print(response.read().decode('utf8'))
-            """)
+            ''')
         })
 
         res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
