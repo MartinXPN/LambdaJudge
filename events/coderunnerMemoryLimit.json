@@ -1,9 +1,0 @@
-{
-  "code": {
-    "main.py": "a = []\nfor i in range(1000000): a.append(bytearray(37159444)); print('Hi, I am starting to learn Machine Learning!')"
-  },
-  "programInputs": ["nothing"],
-  "language": "python",
-  "timeLimit": 15,
-  "memory_limit": 64
-}
