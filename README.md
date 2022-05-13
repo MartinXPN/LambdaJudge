@@ -2,6 +2,11 @@
 
 Serverless Online Judge for automated solution checking written in Python.
 
+![linting](https://github.com/MartinXPN/LambdaJudge/actions/workflows/pre-commit.yaml/badge.svg)
+![unit-tests](https://github.com/MartinXPN/LambdaJudge/actions/workflows/unit-test.yaml/badge.svg)
+![integration-tests](https://github.com/MartinXPN/LambdaJudge/actions/workflows/integration-test.yaml/badge.svg)
+
+
 LambdaJudge compiles and executes code in several languages and returns the results stating if the code passed given tests or resulted in an error.
 The judge supports several languages including `C++`, `Python3`, `C#`, `JavaScript (Node.js)`.
 The whole execution happens in an AWS Lambda which does not have internet access (is in a VPC inside a private subnet) and does not have access outside the container.
