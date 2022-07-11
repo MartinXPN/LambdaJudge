@@ -74,7 +74,7 @@ class TestCustomChecker:
                 target_data = tgt.read()
             #
             if output_data.strip() == target_data.strip():
-                print('Solved\\n100\\nGood job!\\n')
+                print('Solved\\n90\\nGood job!\\n')
             else:
                 print('Wrong answer\\n0\\nTry again...\\n')
             print(input_data)
@@ -102,4 +102,5 @@ class TestCustomChecker:
                 assert res.compile_result.status == Status.OK
             else:
                 assert res.overall.status == Status.OK
+                assert res.overall.score == 90
                 assert res.compile_result.status == Status.OK
