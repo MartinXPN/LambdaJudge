@@ -58,8 +58,7 @@ class EqualityChecker(SubmissionRequest):
         # Prepare the checker
         checker_executable_path = None
         if self.comparison_mode == 'custom':
-            checker_executable_path, checker_compilation_result = self.compile_code(self.checker_code,
-                                                                                    self.checker_language)
+            checker_executable_path, checker_compilation_result = self.compile(self.checker_code, self.checker_language)
             if checker_executable_path is None:
                 checker_compilation_result.message = 'Checker compilation failed'
                 return SubmissionResult(overall=checker_compilation_result, compile_result=checker_compilation_result)

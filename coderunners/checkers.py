@@ -73,17 +73,19 @@ class CustomChecker(Checker):
     executable_path: Path
 
     def check(self, inputs: str, output: str, target: str, code: dict[str, str]) -> tuple[Status, float, Optional[str]]:
-        with NamedTemporaryFile('rw') as inf, \
-                NamedTemporaryFile('rw') as ouf, \
-                NamedTemporaryFile('rw') as tg, \
+        with NamedTemporaryFile('w') as inf, NamedTemporaryFile('w') as ouf, NamedTemporaryFile('w') as tg, \
                 TemporaryDirectory() as code_dir:
+            code_dir = Path(code_dir)
             save_code(save_dir=code_dir, code=code)
             inf.write(inputs)
             ouf.write(output)
             tg.write(target)
+            inf.flush()
+            ouf.flush()
+            tg.flush()
 
             res = Process(
-                f'{self.executable_path} {inf.name} {ouf.name} {tg.name} {code_dir}',
+                f'{self.executable_path} {inf.name} {ouf.name} {tg.name} {code_dir.resolve()}',
                 timeout=1, memory_limit_mb=512, output_limit_mb=1,
             ).run()
 
@@ -95,8 +97,7 @@ class CustomChecker(Checker):
             return (Status.RUNTIME_ERROR, 0,
                     'Checker failed to produce status and score (each should be on separate lines)')
         if len(outputs) == 2:
-            status, score = outputs
-            message = None
+            status, score, message = outputs[0], outputs[1], None
         else:
             status, score, message = outputs
 
