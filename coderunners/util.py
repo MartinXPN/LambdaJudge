@@ -11,18 +11,31 @@ def is_float(value: str) -> bool:
         return False
 
 
-def save_code(save_dir: Path, code: dict[str, Union[str, dict[str, str]]]) -> list[Path]:
+def save_code(
+        save_dir: Path,
+        code: Union[list[dict],
+                    dict[str, Union[str, list[dict], dict[str, str]]]]
+) -> list[Path]:
     saved_paths: list[Path] = []
     save_dir.mkdir(parents=True, exist_ok=True)
-    for filename, content in code.items():
-        if isinstance(content, str):
-            saved_paths.append(save_dir / filename)
-            with open(save_dir / filename, 'w') as f:
-                f.write(content)
-        elif isinstance(content, dict):
-            saved_paths += save_code(save_dir / filename, content)
-        else:
-            raise TypeError(f'Unsupported type for content {type(content)}')
+
+    if isinstance(code, list):
+        for content in code:
+            saved_paths += save_code(save_dir, content)
+
+    elif isinstance(code, dict):
+        for filename, content in code.items():
+            if isinstance(content, str):
+                saved_paths.append(save_dir / filename)
+                with open(save_dir / filename, 'w') as f:
+                    f.write(content)
+            elif isinstance(content, (list, dict)):
+                saved_paths += save_code(save_dir / filename, content)
+            else:
+                raise TypeError(f'Unsupported type for content {type(content)}')
+    else:
+        raise TypeError(f'Unsupported type for code {type(code)}')
+
     return saved_paths
 
 
