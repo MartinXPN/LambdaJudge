@@ -14,14 +14,15 @@ def is_float(value: str) -> bool:
 def save_code(
         save_dir: Path,
         code: Union[list[dict],
-                    dict[str, Union[str, list[dict], dict[str, str]]]]
+                    dict[str, Union[str, list[dict, None], dict[str, str]]]]
 ) -> list[Path]:
     saved_paths: list[Path] = []
     save_dir.mkdir(parents=True, exist_ok=True)
 
     if isinstance(code, list):
         for content in code:
-            saved_paths += save_code(save_dir, content)
+            if content:
+                saved_paths += save_code(save_dir, content)
 
     elif isinstance(code, dict):
         for filename, content in code.items():
