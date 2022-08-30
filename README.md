@@ -76,6 +76,13 @@ sam logs -n <FunctionName> --tail                                 # Print log ta
 pre-commit run --all-files                                        # Tidy-up the files before committing
 ```
 
+### Running tests (coverage is not reported for integration tests)
+```shell
+sam build --use-container                                         # Builds the project
+sam local start-lambda                                            # Start all the functions locally
+pytest --cov=sync --cov=coderunners --cov=bouncer --cov-report term-missing
+```
+
 ### Project structure
 ```markdown
 LambdaJudge
