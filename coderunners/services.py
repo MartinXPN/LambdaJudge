@@ -97,7 +97,7 @@ class EqualityChecker(SubmissionRequest):
 
             if self.stop_on_first_fail and r.status != Status.OK:
                 test_results += [
-                    RunResult(status=Status.WA, memory=0, time=0, return_code=0)
+                    RunResult(status=Status.SKIPPED, memory=0, time=0, return_code=0)
                 ] * (len(self.test_cases) - i - 1)
                 break
         print('test_results:', test_results)

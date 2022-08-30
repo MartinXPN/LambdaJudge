@@ -13,6 +13,7 @@ class Status(Enum):
     OLE = 'Output limit exceeded'
     RUNTIME_ERROR = 'Runtime error'
     COMPILATION_ERROR = 'Compilation error'
+    SKIPPED = 'Skipped'
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
@@ -20,6 +21,8 @@ class Status(Enum):
 class TestCase:
     input: str
     target: str
+    input_files: Optional[list[tuple[str, str]]] = None         # list of (filename, content)
+    target_files: Optional[list[tuple[str, str]]] = None        # list of (filename, content)
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)

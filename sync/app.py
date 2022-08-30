@@ -75,6 +75,7 @@ def sync_efs_handler(event, context):
 
         tests = []
         for ins, outs in zip(inputs, targets):
+            # TODO: support files
             with open(ins) as inf, open(outs) as of:
                 print(ins, outs)
                 tests.append({
