@@ -5,7 +5,7 @@ import boto3
 from services import encrypt_tests, zip2tests
 from test_summary import SummaryTable, truncate
 
-from models import SyncRequest
+from models import SyncRequest, TestCase
 
 ROOT = Path('/tmp/')
 aws_lambda = boto3.client('lambda')
@@ -36,7 +36,7 @@ def sync_s3_handler(event, context):
     res = json.loads(res)
     print('invocation result:', res)
 
-    SummaryTable(dynamodb).write(problem, res['tests_truncated'])
+    SummaryTable(dynamodb).write(problem, TestCase.schema().load(res['tests_truncated'], many=True))
     print('Wrote to a summary table')
 
 
@@ -67,5 +67,5 @@ def sync_efs_handler(event, context):
     return {
         'status_code': 200,
         'test_count': len(tests_truncated),
-        'tests_truncated': tests_truncated,
+        'tests_truncated': [t.to_dict() for t in tests_truncated],
     }
