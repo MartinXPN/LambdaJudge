@@ -21,8 +21,8 @@ class Status(Enum):
 class TestCase:
     input: str
     target: str
-    input_files: Optional[list[tuple[str, str]]] = None         # list of (filename, content)
-    target_files: Optional[list[tuple[str, str]]] = None        # list of (filename, content)
+    input_files: Optional[dict[str, str]] = None        # list of (filename, content)
+    target_files: Optional[dict[str, str]] = None       # list of (filename, content)
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)

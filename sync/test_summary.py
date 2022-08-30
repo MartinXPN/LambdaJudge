@@ -1,43 +1,53 @@
 import os
 from typing import overload
 
+from models import TestCase
+
 
 class SummaryWriteError(Exception):
     pass
 
 
 class SummaryTable:
-    TABLENAME = os.getenv('DYNAMODB_TABLE_NAME', 'private-tests')
+    TABLE_NAME = os.getenv('DYNAMODB_TABLE_NAME', 'private-tests')
 
     def __init__(self, dynamodb):
-        self.table = dynamodb.Table(self.TABLENAME)
+        self.table = dynamodb.Table(self.TABLE_NAME)
 
-    def write(self, problem_id: str, tests: list[dict[str, str]]) -> None:
+    def write(self, problem_id: str, tests: list[TestCase]) -> None:
         response = self.table.put_item(Item={
             'id': problem_id,
             'count': len(tests),
-            'tests': tests,
+            'tests': [t.to_dict() for t in tests],
         })
         if response['ResponseMetadata']['HTTPStatusCode'] not in range(200, 300):
-            raise SummaryWriteError('Cannot summarize item', response)
+            self.table.put_item(Item={
+                'id': problem_id,
+                'message': 'Could not summarize the tests',
+            })
+            raise SummaryWriteError('Could not summarize the tests', response)
 
 
 @overload
-def truncate(tests: list[dict[str, str]], max_len: int) -> list[dict[str, str]]:
+def truncate(tests: list[TestCase], max_len: int) -> list[TestCase]:
     ...
 
 
 @overload
-def truncate(test: dict[str, str], max_len: int) -> dict[str, str]:
+def truncate(test: TestCase, max_len: int) -> TestCase:
     ...
 
 
 def truncate(x, max_len: int = 100):
-    if isinstance(x, dict):
-        return {
-            'input': x['input'][: max_len],
-            'target': x['target'][: max_len],
-        }
+    if isinstance(x, TestCase):
+        return TestCase(
+            input=x.input[: max_len],
+            target=x.target[: max_len],
+            input_files={filename: content[: max_len] for filename, content in x.input_files.items()}
+            if x.input_files is not None else None,
+            target_files={filename: content[: max_len] for filename, content in x.target_files.items()}
+            if x.input_files is not None else None,
+        )
 
     if isinstance(x, list):
         return [truncate(t, max_len) for t in x]
