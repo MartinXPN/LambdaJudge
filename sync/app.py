@@ -3,7 +3,7 @@ from pathlib import Path
 
 import boto3
 from services import encrypt_tests, zip2tests
-from test_summary import SummaryTable, truncate
+from summary import SummaryTable, truncate
 
 from models import SyncRequest, TestCase
 

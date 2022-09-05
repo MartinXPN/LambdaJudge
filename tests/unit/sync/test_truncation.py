@@ -1,7 +1,7 @@
 import pytest
 
 from models import TestCase
-from sync.test_summary import truncate
+from sync.summary import truncate
 
 
 class TestTruncation:

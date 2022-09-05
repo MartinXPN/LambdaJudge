@@ -3,7 +3,7 @@ from unittest import mock
 import pytest
 
 from models import TestCase
-from sync.test_summary import SummaryTable, SummaryWriteError
+from sync.summary import SummaryTable, SummaryWriteError
 
 
 class TestSummaryTable:
