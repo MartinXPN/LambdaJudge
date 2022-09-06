@@ -80,20 +80,35 @@ class EqualityChecker(SubmissionRequest):
         test_results: list[RunResult] = []
         for i, test in enumerate(self.test_cases):
             print(f'Running test {i}', end='...')
+
+            # Crete input files
+            for filename, content in (test.input_files or {}).items():
+                print('Creating file at:', self.ROOT / filename)
+                (self.ROOT / filename).write_text(content)
             r = Process(
                 f'{executable_path}',
                 timeout=self.time_limit, memory_limit_mb=self.memory_limit, output_limit_mb=self.output_limit,
             ).run(test.input)
 
+            output_files = {filename: (self.ROOT / filename).read_text() if (self.ROOT / filename).exists() else ''
+                            for filename in (test.target_files or {}).keys()}
+
             (r.status, r.score, r.message) = checker.check(
-                inputs=test.input, output=r.outputs, target=test.target, code=self.code
+                inputs=test.input, output=r.outputs, target=test.target,
+                code=self.code,
+                input_files=test.input_files, output_files=output_files, target_files=test.target_files,
             ) if r.status == Status.OK else (r.status, 0, r.message)
             print(f'Test {i} res: {r.status} => {r.score}')
 
+            r.output_files = output_files
             test_results.append(r)
             if not self.return_outputs:
                 test_results[-1].outputs = None
                 test_results[-1].errors = None
+                test_results[-1].output_files = None
+            else:
+                # TODO: limit outputs to 64kb: https://github.com/MartinXPN/LambdaJudge/issues/70
+                pass
 
             if self.stop_on_first_fail and r.status != Status.OK:
                 test_results += [

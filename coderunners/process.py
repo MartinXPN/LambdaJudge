@@ -5,6 +5,7 @@ import subprocess
 import sys
 import time
 from dataclasses import dataclass, field
+from pathlib import Path
 from threading import Thread
 from typing import Iterable, Union
 
@@ -36,6 +37,7 @@ class Process:
     timeout: float
     memory_limit_mb: int
     output_limit_mb: float = 1
+    cwd: Path = Path('/tmp/')
     p: subprocess.Popen = None
     execution_state: bool = False
     max_vms_memory: float = 0
@@ -59,7 +61,7 @@ class Process:
             self.p = subprocess.Popen(
                 self.command, shell=True,
                 stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit),
+                preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit), cwd=self.cwd,
             )
             # TODO: Update this to pipesize=1024*1024 when upgrading to Python 3.10
             #  Ref: https://github.com/MartinXPN/LambdaJudge/issues/50#issuecomment-1080488293

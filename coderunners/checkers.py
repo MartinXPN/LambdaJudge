@@ -12,12 +12,21 @@ from models import Status
 
 class Checker(ABC):
     @abstractmethod
-    def check(self, inputs: str, output: str, target: str, code: dict[str, str]) -> tuple[Status, float, Optional[str]]:
+    def check(
+        self, inputs: str, output: str, target: str,
+        code: dict[str, str],
+        input_files: Optional[dict[str, str]] = None,
+        output_files: Optional[dict[str, str]] = None,
+        target_files: Optional[dict[str, str]] = None,
+    ) -> tuple[Status, float, Optional[str]]:
         """
         Check if the program behaved correctly and return the verdict
         :param inputs: all the input of the program
         :param output: the output of the submitted program
         :param target: what the output should be according to the precalculated test
+        :param input_files: files generated before running the program
+        :param output_files: files created by the program (with their content)
+        :param target_files: expected files with their content by the end of the program working
         :param code: mapping {filename: content} of the submitted code
         :return: [verdict: Status, score: float 0 to 100, message: str]
         """
@@ -39,8 +48,12 @@ class Checker(ABC):
 
 
 class WholeEquality(Checker):
-    def check(self, inputs: str, output: str, target: str, code: dict[str, str]) -> tuple[Status, float, Optional[str]]:
-        return (Status.OK, 100, None) if output.strip() == target.strip() else (Status.WA, 0, None)
+    def check(self, inputs, output, target, code, input_files=None, output_files=None, target_files=None):
+        files_match = [output_files[file].strip() == target_files[file].strip()
+                       if file in output_files else False
+                       for file in (target_files or {}).keys()]
+
+        return (Status.OK, 100, None) if output.strip() == target.strip() and all(files_match) else (Status.WA, 0, None)
 
 
 @dataclass
@@ -64,15 +77,20 @@ class TokenEquality(Checker):
 
         return True
 
-    def check(self, inputs: str, output: str, target: str, code: dict[str, str]) -> tuple[Status, float, Optional[str]]:
-        return (Status.OK, 100, None) if self.is_correct(output, target) else (Status.WA, 0, None)
+    def check(self, inputs, output, target, code, input_files=None, output_files=None, target_files=None):
+        files_match = [self.is_correct(output_files[file], target_files[file])
+                       if file in output_files else False
+                       for file in (target_files or {}).keys()]
+
+        return (Status.OK, 100, None) if self.is_correct(output, target) and all(files_match) else (Status.WA, 0, None)
 
 
 @dataclass
 class CustomChecker(Checker):
     executable_path: Path
 
-    def check(self, inputs: str, output: str, target: str, code: dict[str, str]) -> tuple[Status, float, Optional[str]]:
+    def check(self, inputs, output, target, code, input_files=None, output_files=None, target_files=None):
+        # TODO: How to support files for custom checkers?
         with NamedTemporaryFile('w') as inf, NamedTemporaryFile('w') as ouf, NamedTemporaryFile('w') as tg, \
                 TemporaryDirectory() as code_dir:
             code_dir = Path(code_dir)

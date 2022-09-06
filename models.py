@@ -85,6 +85,7 @@ class RunResult:
     message: Optional[str] = None
     outputs: Optional[str] = None
     errors: Optional[str] = None
+    output_files: Optional[dict[str, str]] = None
 
 
 @dataclass_json(letter_case=LetterCase.CAMEL)
