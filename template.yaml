@@ -294,7 +294,7 @@ Resources:
     Properties:
       FunctionName: TriggerSyncS3
       MemorySize: 256
-      Timeout: 60  # 1 min
+      Timeout: 300  # 5 min
       Runtime: python3.9
       CodeUri: sync/
       Handler: app.sync_s3_handler
@@ -322,7 +322,7 @@ Resources:
     Properties:
       FunctionName: SyncS3WithEFS
       MemorySize: 1769
-      Timeout: 60  # 1 min
+      Timeout: 300  # 5 min
       Runtime: python3.9
       CodeUri: sync/
       Handler: app.sync_efs_handler

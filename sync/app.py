@@ -2,13 +2,16 @@ import json
 from pathlib import Path
 
 import boto3
+import botocore
+
 from services import encrypt_tests, zip2tests
 from summary import SummaryTable, truncate
 
 from models import SyncRequest, TestCase
 
 ROOT = Path('/tmp/')
-aws_lambda = boto3.client('lambda')
+cfg = botocore.config.Config(retries={'max_attempts': 0}, read_timeout=300, connect_timeout=300)
+aws_lambda = boto3.client('lambda', config=cfg)
 s3 = boto3.client('s3')
 secret_manager = boto3.client('secretsmanager')
 dynamodb = boto3.resource('dynamodb')
