@@ -100,15 +100,18 @@ class EqualityChecker(SubmissionRequest):
             ) if r.status == Status.OK else (r.status, 0, r.message)
             print(f'Test {i} res: {r.status} => {r.score}')
 
-            r.output_files = output_files
             test_results.append(r)
             if not self.return_outputs:
                 test_results[-1].outputs = None
                 test_results[-1].errors = None
                 test_results[-1].output_files = None
             else:
-                # TODO: limit outputs to 64kb: https://github.com/MartinXPN/LambdaJudge/issues/70
-                pass
+                max_len = 32000     # limit each item to 64KB (2 bytes per character)
+                test_results[-1].outputs = r.outputs[:max_len] if r.outputs else None
+                test_results[-1].errors = r.errors[:max_len] if r.errors else None
+                test_results[-1].output_files = {
+                    filename: content[:max_len] for filename, content in r.output_files.items()
+                } if r.output_files else None
 
             if self.stop_on_first_fail and r.status != Status.OK:
                 test_results += [
