@@ -8,7 +8,7 @@ class TestTruncation:
     @classmethod
     def _get_tests_with_len(cls, char_count: int) -> list[TestCase]:
         data = 'a' * char_count
-        test = TestCase(input=data, target=data)
+        test = TestCase(input=data, target=data, input_files={'test.txt': data}, target_files={'res-test.txt': data})
         return [test for _ in range(3)]
 
     def test_truncated_tests(self):

@@ -44,6 +44,8 @@ class TestTruncation:
                 f.write('First file input')
             with open(f'{tests_dir}/00.out.yoyo.txt', 'w') as f:  # We should have another `yoyo.txt` in the end
                 f.write('First file target')
+            with open(f'{tests_dir}/00.out.bik.txt', 'w') as f:
+                f.write('Second file target')
 
             shutil.make_archive(f'{tests_dir}/res', 'zip', tests_dir)
             tests = zip2tests(Path(tests_dir) / 'res.zip')
@@ -53,3 +55,4 @@ class TestTruncation:
             assert test.target == 'First target'
             assert test.input_files['yoyo.txt'] == 'First file input'
             assert test.target_files['yoyo.txt'] == 'First file target'
+            assert test.target_files['bik.txt'] == 'Second file target'

@@ -46,7 +46,7 @@ def truncate(x, max_len: int = 100):
             input_files={filename: content[: max_len] for filename, content in x.input_files.items()}
             if x.input_files is not None else None,
             target_files={filename: content[: max_len] for filename, content in x.target_files.items()}
-            if x.input_files is not None else None,
+            if x.target_files is not None else None,
         )
 
     if isinstance(x, list):
