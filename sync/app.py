@@ -3,7 +3,6 @@ from pathlib import Path
 
 import boto3
 import botocore
-
 from services import encrypt_tests, zip2tests
 from summary import SummaryTable, truncate
 
