@@ -111,7 +111,7 @@ class EqualityChecker(SubmissionRequest):
                 test_results[-1].errors = r.errors[:max_len] if r.errors else None
                 test_results[-1].output_files = {
                     filename: content[:max_len] for filename, content in output_files.items()
-                } if r.output_files else None
+                } if output_files else None
 
             if self.stop_on_first_fail and r.status != Status.OK:
                 test_results += [
