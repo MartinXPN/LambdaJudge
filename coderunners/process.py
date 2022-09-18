@@ -14,6 +14,12 @@ import psutil
 from models import RunResult, Status
 
 
+@dataclass
+class Outputs:
+    stdout: str = ''
+    stderr: str = ''
+
+
 def limit_resources(max_bytes: int):
     max_vm_bytes = 1500 * 1024 * 1024  # 1500 MB
     hard_limit = min(2 * max_vm_bytes, max_vm_bytes)
@@ -25,10 +31,30 @@ def limit_resources(max_bytes: int):
     # resource.setrlimit(resource.RLIMIT_AS, (hard_limit, hard_limit))
 
 
-def send_input(process: subprocess.Popen, inputs: str):
+def send_input(process: subprocess.Popen, inputs: str) -> None:
     inputs += '' if inputs.endswith('\n') else '\n'
+    if inputs.strip() == '':
+        return
     process.stdin.write(inputs)
     process.stdin.flush()
+
+
+def read_stdout(process: subprocess.Popen, res: Outputs) -> None:
+    while True:
+        process.stdout.flush()
+        chunk = process.stdout.read(1024)
+        if chunk == '' and process.poll() is not None:
+            break
+        res.stdout += chunk
+
+
+def read_stderr(process: subprocess.Popen, res: Outputs) -> None:
+    while True:
+        process.stderr.flush()
+        chunk = process.stderr.read(1024)
+        if chunk == '' and process.poll() is not None:
+            break
+        res.stderr += chunk
 
 
 @dataclass
@@ -56,6 +82,7 @@ class Process:
         self.max_vms_memory = 0
         self.max_rss_memory = 0
         self.start_time = time.time()
+        outputs = Outputs()
 
         try:
             self.p = subprocess.Popen(
@@ -70,9 +97,13 @@ class Process:
             fcntl.fcntl(self.p.stderr, 1031, 1024 * 1024)
             self.execution_state = True
 
-            # Write to stdin in a separate thread to avoid locking the main program
+            # Read/write to stdin/stdout/stderr in a separate thread to avoid locking the main program
             input_thread = Thread(target=send_input, args=(self.p, program_input))
+            stdout_thread = Thread(target=read_stdout, args=(self.p, outputs))
+            stderr_thread = Thread(target=read_stderr, args=(self.p, outputs))
             input_thread.start()
+            stdout_thread.start()
+            stderr_thread.start()
 
             # poll as often as possible; otherwise the subprocess might
             # "sneak" in some extra memory usage while you aren't looking
@@ -82,14 +113,13 @@ class Process:
                     status = Status.MLE
                     break
             input_thread.join(timeout=self.timeout / 100)
+            stdout_thread.join(timeout=self.timeout / 100)
+            stderr_thread.join(timeout=self.timeout / 100)
         except Exception as e:
             print('Program execution resulted in an error:', e)
             status = Status.RUNTIME_ERROR
         finally:
             self.close(kill=True)   # make sure that we don't leave the process dangling
-            self.p.stdout.flush()
-            self.p.stderr.flush()
-            outs, errs = self.p.stdout.read(self.output_limit + 1), self.p.stderr.read(self.output_limit + 1)
 
         # Time/Memory limits + Runtime errors
         if self.finish_time - self.start_time > self.timeout:
@@ -102,6 +132,7 @@ class Process:
             status = Status.RUNTIME_ERROR
 
         # Output limits
+        outs, errs = outputs.stdout, outputs.stderr
         if sys.getsizeof(outs) > self.output_limit:
             status = Status.OLE
             outs = outs[:self.output_limit // 2]
