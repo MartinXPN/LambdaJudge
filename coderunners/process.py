@@ -53,7 +53,7 @@ def read_stdout(process: subprocess.Popen, res: Outputs) -> None:
 
 def read_stderr(process: subprocess.Popen, res: Outputs) -> None:
     while True:
-        process.stdout.flush()
+        process.stderr.flush()
         chunk = process.stderr.read(CHUNK_SIZE)
         if chunk == '' and process.poll() is not None:
             break
