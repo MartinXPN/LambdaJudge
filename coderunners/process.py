@@ -39,9 +39,12 @@ def send_input(process: subprocess.Popen, inputs: str) -> None:
     process.stdin.flush()
 
 
+CHUNK_SIZE = 2 ** 16  # Make sure we don't read slower than the program prints
+
+
 def read_stdout(process: subprocess.Popen, res: Outputs) -> None:
     while True:
-        chunk = process.stdout.read(8192)   # Make sure we don't read slower than the program prints
+        chunk = process.stdout.read(CHUNK_SIZE)
         if chunk == '' and process.poll() is not None:
             break
         res.stdout += chunk
@@ -49,7 +52,7 @@ def read_stdout(process: subprocess.Popen, res: Outputs) -> None:
 
 def read_stderr(process: subprocess.Popen, res: Outputs) -> None:
     while True:
-        chunk = process.stderr.read(8192)   # Make sure we don't read slower than the program prints
+        chunk = process.stderr.read(CHUNK_SIZE)
         if chunk == '' and process.poll() is not None:
             break
         res.stderr += chunk
