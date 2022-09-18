@@ -44,6 +44,7 @@ CHUNK_SIZE = 2 ** 16  # Make sure we don't read slower than the program prints
 
 def read_stdout(process: subprocess.Popen, res: Outputs) -> None:
     while True:
+        process.stdout.flush()
         chunk = process.stdout.read(CHUNK_SIZE)
         if chunk == '' and process.poll() is not None:
             break
@@ -52,6 +53,7 @@ def read_stdout(process: subprocess.Popen, res: Outputs) -> None:
 
 def read_stderr(process: subprocess.Popen, res: Outputs) -> None:
     while True:
+        process.stdout.flush()
         chunk = process.stderr.read(CHUNK_SIZE)
         if chunk == '' and process.poll() is not None:
             break
@@ -115,8 +117,6 @@ class Process:
                     break
 
             # Cleanup and read the final results
-            self.p.stdout.flush()
-            self.p.stderr.flush()
             input_thread.join(timeout=self.timeout / 100)
             stdout_thread.join(timeout=self.timeout / 100)
             stderr_thread.join(timeout=self.timeout / 100)
