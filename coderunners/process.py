@@ -41,8 +41,7 @@ def send_input(process: subprocess.Popen, inputs: str) -> None:
 
 def read_stdout(process: subprocess.Popen, res: Outputs) -> None:
     while True:
-        process.stdout.flush()
-        chunk = process.stdout.read(1024)
+        chunk = process.stdout.read(8192)   # Make sure we don't read slower than the program prints
         if chunk == '' and process.poll() is not None:
             break
         res.stdout += chunk
@@ -50,8 +49,7 @@ def read_stdout(process: subprocess.Popen, res: Outputs) -> None:
 
 def read_stderr(process: subprocess.Popen, res: Outputs) -> None:
     while True:
-        process.stderr.flush()
-        chunk = process.stderr.read(1024)
+        chunk = process.stderr.read(8192)   # Make sure we don't read slower than the program prints
         if chunk == '' and process.poll() is not None:
             break
         res.stderr += chunk
@@ -112,6 +110,10 @@ class Process:
                 if self.max_rss_memory > self.memory_limit:
                     status = Status.MLE
                     break
+
+            # Cleanup and read the final results
+            self.p.stdout.flush()
+            self.p.stderr.flush()
             input_thread.join(timeout=self.timeout / 100)
             stdout_thread.join(timeout=self.timeout / 100)
             stderr_thread.join(timeout=self.timeout / 100)
