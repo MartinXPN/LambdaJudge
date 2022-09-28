@@ -39,7 +39,7 @@ def send_input(process: subprocess.Popen, inputs: str) -> None:
     process.stdin.flush()
 
 
-CHUNK_SIZE = 2 ** 16  # Make sure we don't read slower than the program prints
+CHUNK_SIZE = 2 ** 16 * 4  # Make sure we don't read slower than the program prints
 
 
 def read_stdout(process: subprocess.Popen, res: Outputs) -> None:

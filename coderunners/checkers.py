@@ -65,14 +65,19 @@ class TokenEquality(Checker):
         output = output.strip().split(self.delimiter)
         target = target.strip().split(self.delimiter)
         if len(output) != len(target):
+            print(f'Lengths different: out({len(output)}) target({len(target)})')
             return False
 
-        for o, t in zip(output, target):
+        for i, (o, t) in enumerate(zip(output, target)):
+            if o.strip().lower() == t.strip().lower() and o.strip().lower() in {'nan', 'inf'}:
+                continue
             if is_float(o) and is_float(t):
                 diff = abs(float(o) - float(t))
                 if math.isnan(diff) or diff > self.float_precision:
+                    print(f'#{i} Numbers different: out({o}) target({t}) => {diff}')
                     return False
             elif o.strip() != t.strip():
+                print(f'#{i} Not equal: out({o}) target({t})')
                 return False
 
         return True
