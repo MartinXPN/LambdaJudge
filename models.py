@@ -2,7 +2,7 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
-from dataclasses_json import config, DataClassJsonMixin, LetterCase, Undefined
+from dataclasses_json import DataClassJsonMixin, LetterCase, Undefined, config
 
 
 class DataClassJsonCamelMixIn(DataClassJsonMixin):
