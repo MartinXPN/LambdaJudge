@@ -2,7 +2,11 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import Optional
 
-from dataclasses_json import LetterCase, dataclass_json
+from dataclasses_json import config, DataClassJsonMixin, LetterCase, Undefined
+
+
+class DataClassJsonCamelMixIn(DataClassJsonMixin):
+    dataclass_json_config = config(letter_case=LetterCase.CAMEL, undefined=Undefined.EXCLUDE)['dataclasses_json']
 
 
 class Status(Enum):
@@ -16,18 +20,16 @@ class Status(Enum):
     SKIPPED = 'Skipped'
 
 
-@dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
-class TestCase:
+class TestCase(DataClassJsonCamelMixIn):
     input: str
     target: str
     input_files: Optional[dict[str, str]] = None        # list of (filename, content)
     target_files: Optional[dict[str, str]] = None       # list of (filename, content)
 
 
-@dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
-class TestGroup:
+class TestGroup(DataClassJsonCamelMixIn):
     points: float
     points_per_test: float
     count: int
@@ -37,9 +39,8 @@ class TestGroup:
             raise ValueError('Both points and points_per_test values are nonzero')
 
 
-@dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
-class SubmissionRequest:
+class SubmissionRequest(DataClassJsonCamelMixIn):
     # Code is a mapping from filename.extension -> content (Http requests have 2MB limit)
     code: dict[str, str]
     language: str
@@ -74,9 +75,8 @@ class SubmissionRequest:
             assert self.checker_code is not None and self.checker_language is not None
 
 
-@dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
-class RunResult:
+class RunResult(DataClassJsonCamelMixIn):
     status: Status
     memory: float
     time: float
@@ -88,9 +88,8 @@ class RunResult:
     output_files: Optional[dict[str, str]] = None
 
 
-@dataclass_json(letter_case=LetterCase.CAMEL)
 @dataclass
-class SubmissionResult:
+class SubmissionResult(DataClassJsonCamelMixIn):
     overall: RunResult
     compile_result: RunResult
     test_results: Optional[list[RunResult]] = None
