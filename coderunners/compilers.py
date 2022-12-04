@@ -54,6 +54,7 @@ class CppCompiler(Compiler):
                               f'-o {executable_path}',
                               timeout=10, memory_limit_mb=512).run()
         print('Compile res', compile_res)
+        executable_path = f'ASAN_OPTIONS=detect_leaks=1 LSAN_OPTIONS=detect_leaks=0 {executable_path}'
         return executable_path, compile_res
 
 
