@@ -49,7 +49,7 @@ class CppCompiler(Compiler):
         executable_path = main_file_path.with_suffix('.o')
 
         print('Creating executable at:', executable_path)
-        compile_res = Process(f'g++ -O3 -Wno-write-strings '
+        compile_res = Process(f'g++ -O3 -Wno-write-strings -fsanitize=address '
                               f'-std={self.language_standard} {submission_paths_str} '
                               f'-o {executable_path}',
                               timeout=10, memory_limit_mb=512).run()
