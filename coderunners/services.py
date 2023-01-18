@@ -34,7 +34,7 @@ class EqualityChecker(SubmissionRequest):
         compilation.score = 0
         return None, compilation
 
-    # noinspection TaskProblemsInspection
+    # flake8: noqa: C901
     def check(self) -> SubmissionResult:
         Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
         code_paths = save_code(save_dir=self.ROOT, code=self.code)
