@@ -17,6 +17,7 @@ class Status(Enum):
     OLE = 'Output limit exceeded'
     RUNTIME_ERROR = 'Runtime error'
     COMPILATION_ERROR = 'Compilation error'
+    LINTING_ERROR = 'Linting error'
     SKIPPED = 'Skipped'
 
 
@@ -56,6 +57,7 @@ class SubmissionRequest(DataClassJsonCamelMixIn):
 
     return_outputs: bool = False
     stop_on_first_fail: bool = True
+    lint: bool = False
 
     # Checker parameters
     comparison_mode: str = 'whole'    # whole | token | custom
@@ -92,4 +94,5 @@ class RunResult(DataClassJsonCamelMixIn):
 class SubmissionResult(DataClassJsonCamelMixIn):
     overall: RunResult
     compile_result: RunResult
+    linting_result: Optional[RunResult] = None
     test_results: Optional[list[RunResult]] = None
