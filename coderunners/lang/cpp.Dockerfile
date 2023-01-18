@@ -1,7 +1,7 @@
 FROM public.ecr.aws/sam/build-python3.9:latest
 
 # Initial setup
-RUN yum install -y gcc-c++
+RUN yum install -y gcc-c++ epel-release centos-release-scl clang-tools-extra
 
 RUN pip install --upgrade pip
 RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"

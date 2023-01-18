@@ -6,6 +6,7 @@ from cryptography.fernet import Fernet
 
 from coderunners.checkers import Checker
 from coderunners.compilers import Compiler
+from coderunners.linters import Linter
 from coderunners.process import Process
 from coderunners.scoring import Scorer
 from coderunners.util import save_code
@@ -15,12 +16,10 @@ from models import RunResult, Status, SubmissionRequest, SubmissionResult, TestC
 class EqualityChecker(SubmissionRequest):
     ROOT: Path = Path('/tmp/')
 
-    def compile(self, code: dict[str, str], language: str) -> tuple[Optional[Path], RunResult]:
+    def compile(self, code_paths: list[Path], language: str) -> tuple[Optional[Path], RunResult]:
         """ Compiles and returns (executable path | None, compilation result) """
-        submission_paths = save_code(save_dir=self.ROOT, code=code)
-
         compiler = Compiler.from_language(language=language)
-        executable_path, compilation = compiler.compile(submission_paths=submission_paths)
+        executable_path, compilation = compiler.compile(submission_paths=code_paths)
         if compilation.status == Status.OK and not compilation.errors:
             return executable_path, compilation
 
@@ -35,12 +34,22 @@ class EqualityChecker(SubmissionRequest):
         compilation.score = 0
         return None, compilation
 
+    # flake8: noqa: C901
     def check(self) -> SubmissionResult:
         Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
+        code_paths = save_code(save_dir=self.ROOT, code=self.code)
 
-        executable_path, compilation_result = self.compile(self.code, self.language)
+        executable_path, compile_result = self.compile(code_paths, self.language)
         if executable_path is None:
-            return SubmissionResult(overall=compilation_result, compile_result=compilation_result)
+            return SubmissionResult(overall=compile_result, compile_result=compile_result)
+
+        # Lint the code
+        lint_result = None
+        if self.lint:
+            linter = Linter.from_language(language=self.language)
+            lint_result = linter.lint(code_paths)
+            if lint_result.status != Status.OK:
+                return SubmissionResult(overall=lint_result, compile_result=compile_result, linting_result=lint_result)
 
         if self.problem:
             # Compress:   (1) json.dumps   (2) .encode('utf-8')   (3) gzip.compress()   (4) encrypt
@@ -58,10 +67,11 @@ class EqualityChecker(SubmissionRequest):
         # Prepare the checker
         checker_executable_path = None
         if self.comparison_mode == 'custom':
-            checker_executable_path, checker_compilation_result = self.compile(self.checker_code, self.checker_language)
+            checker_code_paths = save_code(save_dir=self.ROOT, code=self.checker_code)
+            checker_executable_path, checker_compile_result = self.compile(checker_code_paths, self.checker_language)
             if checker_executable_path is None:
-                checker_compilation_result.message = 'Checker compilation failed'
-                return SubmissionResult(overall=checker_compilation_result, compile_result=checker_compilation_result)
+                checker_compile_result.message = 'Checker compilation failed'
+                return SubmissionResult(overall=checker_compile_result, compile_result=checker_compile_result)
 
         checker = Checker.from_mode(
             mode=self.comparison_mode,
@@ -138,6 +148,8 @@ class EqualityChecker(SubmissionRequest):
             score=total,
         )
 
-        res = SubmissionResult(overall=overall, compile_result=compilation_result, test_results=test_results)
+        res = SubmissionResult(
+            overall=overall, compile_result=compile_result, linting_result=lint_result, test_results=test_results
+        )
         print('submission result:', res)
         return res
