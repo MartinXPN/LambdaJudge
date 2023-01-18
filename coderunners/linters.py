@@ -179,7 +179,7 @@ class CppLinter(Linter):
         lint_res = Process(f'clang-tidy -warnings-as-errors=* '
                            f'-checks=-*,{check_flags} '
                            f'{submission_paths_str} -- -std={self.language_standard}',
-                           timeout=10, memory_limit_mb=512).run()
+                           timeout=100, memory_limit_mb=512).run()
 
         # Remove standard clang-tidy "System warnings removed" message
         warning_message = 'Use -system-headers to display errors from system headers as well.\n'
