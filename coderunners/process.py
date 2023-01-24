@@ -204,9 +204,13 @@ class Process:
         try:
             pp = psutil.Process(self.p.pid)
             if kill:
+                for child in pp.children(recursive=True):
+                    child.kill()
                 pp.kill()
                 self.p.kill()
             else:
+                for child in pp.children(recursive=True):
+                    child.terminate()
                 pp.terminate()
         except psutil.NoSuchProcess:
             ...
