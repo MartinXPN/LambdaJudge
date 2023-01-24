@@ -75,7 +75,6 @@ class Process:
     finish_time: float = time.time()
     memory_limit: int = field(init=False)
     output_limit: int = field(init=False)
-    children: dict[int, psutil.Process] = field(init=False, default_factory=dict)
 
     def __post_init__(self):
         self.memory_limit = self.memory_limit_mb * 1024 * 1024
@@ -113,7 +112,6 @@ class Process:
             # "sneak" in some extra memory usage while you aren't looking
             while self.finish_time - self.start_time < self.timeout and self.poll():
                 time.sleep(self.timeout / 500)
-                self.poll_child_processes()
                 if self.max_rss_memory > self.memory_limit:
                     status = Status.MLE
                     break
@@ -202,19 +200,10 @@ class Process:
         self.finish_time = time.time()
         return False
 
-    def poll_child_processes(self) -> None:
+    def close(self) -> None:
         try:
             root = psutil.Process(self.p.pid)
-            self.children[root.pid] = root
-            for child in root.children(recursive=True):
-                self.children[child.pid] = child
+            root.kill()
+            self.p.kill()
         except psutil.NoSuchProcess:
             ...
-
-    def close(self) -> None:
-        print(f'Closing {len(self.children)} processes')
-        for process in self.children.values():
-            try:
-                process.kill()
-            except psutil.NoSuchProcess:
-                ...
