@@ -19,6 +19,8 @@ class CodeRunner(ABC):
             return CppRunner()
         if language in PythonRunner.supported_standards:
             return PythonRunner()
+        if language in PythonMLRunner.supported_standards:
+            return PythonMLRunner()
         if language in CSharpRunner.supported_standards:
             return CSharpRunner()
         if language in JsRunner.supported_standards:
@@ -51,6 +53,15 @@ class PythonRunner(CodeRunner):
     @property
     def name(self) -> str:
         return 'CodeRunnerPython'
+
+
+@dataclass
+class PythonMLRunner(CodeRunner):
+    supported_standards = {'pythonml'}
+
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerPythonML'
 
 
 @dataclass

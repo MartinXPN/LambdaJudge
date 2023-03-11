@@ -21,6 +21,11 @@ class TestHelloWorld:
             'main.py': 'print("Hello World!")',
         }))
 
+    def test_python_ml(self):
+        self.run_test(SubmissionRequest(test_cases=self.test_cases, language='pythonml', code={
+            'main.py': 'import numpy as np\nprint("Hello World!")',
+        }))
+
     def test_cpp(self):
         self.run_test(SubmissionRequest(test_cases=self.test_cases, language='C++17', code={
             'main.cpp': '#include <iostream>\nint main() { std::cout << "Hello World!"; return 0; }',

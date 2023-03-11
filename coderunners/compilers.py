@@ -28,6 +28,8 @@ class Compiler(ABC):
             return CppCompiler(language_standard=language)
         if language in PythonCompiler.supported_standards:
             return PythonCompiler(language_standard=language)
+        if language in PythonMLCompiler.supported_standards:
+            return PythonMLCompiler()
         if language in CSharpCompiler.supported_standards:
             return CSharpCompiler(language_standard=language)
         if language in JsCompiler.supported_standards:
@@ -73,6 +75,26 @@ class PythonCompiler(Compiler):
         print('Creating python binary at:', binary_paths)
         compile_res = Process(f'{self.language_standard} -m py_compile {submission_paths_str}',
                               timeout=10, memory_limit_mb=512).run()
+        print('Compile res', compile_res)
+
+        for path in binary_paths:
+            path.unlink(missing_ok=True)
+        return executable_path, compile_res
+
+
+@dataclass
+class PythonMLCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.py'
+    supported_standards = {'pythonml'}
+
+    def compile(self, submission_paths: list[Path]):
+        binary_paths = [path.with_suffix('.pyc') for path in submission_paths]
+        submission_paths_str = ' '.join([str(path) for path in submission_paths])
+        main_file_path = self.find_main_file_path(submission_paths, self.MAIN_FILE_NAME)
+        executable_path = f'python {main_file_path}'
+
+        print('Creating python binary at:', binary_paths)
+        compile_res = Process(f'python -m py_compile {submission_paths_str}', timeout=10, memory_limit_mb=512).run()
         print('Compile res', compile_res)
 
         for path in binary_paths:
