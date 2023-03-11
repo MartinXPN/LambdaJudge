@@ -4,10 +4,11 @@ import resource
 import subprocess
 import sys
 import time
+from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Thread
-from typing import Iterable, Union
+from typing import Union
 
 import psutil
 
