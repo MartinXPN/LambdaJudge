@@ -1,4 +1,4 @@
-FROM public.ecr.aws/sam/build-python3.9:latest
+FROM public.ecr.aws/lambda/python:3.10
 
 # Initial setup
 RUN yum install -y gcc-c++ epel-release centos-release-scl clang-tools-extra

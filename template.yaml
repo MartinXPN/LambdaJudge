@@ -372,7 +372,7 @@ Resources:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
     Metadata:
-      DockerTag: python3.9-v1
+      DockerTag: python3.10-v1
       DockerContext: ./
       Dockerfile: coderunners/lang/python.Dockerfile
 

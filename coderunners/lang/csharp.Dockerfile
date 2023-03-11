@@ -1,8 +1,9 @@
-FROM public.ecr.aws/sam/build-python3.9:latest
+FROM public.ecr.aws/lambda/python:3.10
 
 # Initial setup
+RUN yum install -y tar gzip
 ADD https://dot.net/v1/dotnet-install.sh ./dotnet-install.sh
-RUN sh dotnet-install.sh -c 6.0
+RUN sh dotnet-install.sh --channel LTS
 RUN mv /root/.dotnet /var/dotnet
 
 ENV \
