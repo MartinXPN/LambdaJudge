@@ -19,10 +19,10 @@ Resources:
               - 'logs:PutLogEvents'
             Resource: '*'
       Roles:
-        - Ref: SyncS3WithEFSRole
         - Ref: BouncerRole
         - Ref: ContestantRole
         - Ref: TriggerSyncRole
+        - Ref: SyncS3WithEFSRole
   AllowSecretsAccessPolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -289,15 +289,14 @@ Resources:
       RouteTableId: !Ref PrivateRouteTable
 
   # Lambda Functions
+  # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
   SyncS3Trigger:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     Properties:
       FunctionName: TriggerSyncS3
-      MemorySize: 256
       Timeout: 300  # 5 min
-      Runtime: python3.9
-      CodeUri: sync/
-      Handler: app.sync_s3_handler
+      MemorySize: 256
+      PackageType: Image
       Role: !GetAtt TriggerSyncRole.Arn
       Environment:
         Variables:
@@ -313,19 +312,21 @@ Resources:
                 Rules:
                   - Name: suffix      # or prefix
                     Value: zip        # The value to search for in the S3 object key names
+    Metadata:
+      DockerTag: sync-trigger-v1
+      DockerContext: ./
+      Dockerfile: sync/trigger.Dockerfile
 
   PrivateTestsTable:
     Type: "AWS::Serverless::SimpleTable"
   SyncS3WithEFS:
-    Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+    Type: AWS::Serverless::Function
     DependsOn: CodeRunnerMountTarget
     Properties:
       FunctionName: SyncS3WithEFS
+      Timeout: 300
       MemorySize: 1769
-      Timeout: 300  # 5 min
-      Runtime: python3.9
-      CodeUri: sync/
-      Handler: app.sync_efs_handler
+      PackageType: Image
       Role: !GetAtt SyncS3WithEFSRole.Arn
       VpcConfig:
         SecurityGroupIds:
@@ -335,6 +336,11 @@ Resources:
       FileSystemConfigs:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
+    Metadata:
+      DockerTag: sync-efs-v1
+      DockerContext: ./
+      Dockerfile: sync/sync.Dockerfile
+
   Bouncer:
     Type: AWS::Serverless::Function
     Properties:
@@ -510,10 +516,10 @@ Outputs:
   CodeRunnerJs:
     Description: 'AWS Lambda for executing a JS code and getting the outputs'
     Value: !GetAtt CodeRunnerJs.Arn
-
   CodeRunnerJava:
     Description: 'AWS Lambda for executing a Java code and getting the outputs'
     Value: !GetAtt CodeRunnerJava.Arn
+
   SyncS3WithEFSName:
     Description: 'AWS Lambda for syncing S3 bucket for test cases with EFS'
     Value: !GetAtt SyncS3WithEFS.Arn

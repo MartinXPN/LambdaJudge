@@ -3,8 +3,8 @@ from pathlib import Path
 
 import boto3
 import botocore
-from services import encrypt_tests, zip2tests
-from summary import SummaryTable, truncate
+from sync.services import encrypt_tests, zip2tests
+from sync.summary import SummaryTable, truncate
 
 from models import SyncRequest, TestCase
 
@@ -17,7 +17,7 @@ dynamodb = boto3.resource('dynamodb')
 encryption_secret_key_id = 'arn:aws:secretsmanager:us-east-1:370358067229:secret:efs/problem/encryptionKey-xTnJWC'
 
 
-def sync_s3_handler(event, context):
+def trigger_sync_s3_handler(event, context):
     print('Event:', type(event), event)
     print('Context:', context)
 
