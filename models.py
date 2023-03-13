@@ -71,6 +71,9 @@ class SubmissionRequest(DataClassJsonCamelMixIn):
 
     def __post_init__(self):
         self.language = self.language.lower()
+        if self.checker_language:
+            self.checker_language = self.checker_language.lower()
+
         assert self.problem is not None and self.test_cases is None or \
             self.problem is None and self.test_cases is not None
         if self.comparison_mode == 'custom':
@@ -96,3 +99,10 @@ class SubmissionResult(DataClassJsonCamelMixIn):
     compile_result: RunResult
     linting_result: Optional[RunResult] = None
     test_results: Optional[list[RunResult]] = None
+
+
+@dataclass
+class SyncRequest(DataClassJsonCamelMixIn):
+    bucket: str
+    key: str
+    encryption_key: str
