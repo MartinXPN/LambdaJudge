@@ -1,5 +1,4 @@
 import errno
-import fcntl
 import resource
 import subprocess
 import sys
@@ -91,14 +90,9 @@ class Process:
         try:
             self.p = subprocess.Popen(
                 self.command, shell=True,
-                stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                pipesize=1024 * 1024, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                 preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit), cwd=self.cwd,
             )
-            # TODO: Update this to pipesize=1024*1024 when upgrading to Python 3.10
-            #  Ref: https://github.com/MartinXPN/LambdaJudge/issues/50#issuecomment-1080488293
-            fcntl.fcntl(self.p.stdin, 1031, 1024 * 1024)
-            fcntl.fcntl(self.p.stdout, 1031, 1024 * 1024)
-            fcntl.fcntl(self.p.stderr, 1031, 1024 * 1024)
             self.execution_state = True
 
             # Read/write to stdin/stdout/stderr in a separate thread to avoid locking the main program
