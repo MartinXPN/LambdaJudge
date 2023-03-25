@@ -27,6 +27,7 @@ class CppLinter(Linter):
     def lint(self, submission_paths: list[Path]) -> RunResult:
         submission_paths_str = ' '.join([str(path) for path in submission_paths])
 
+        # Clang Tidy checks
         check_flags = [
             'bugprone-argument-comment',
             'bugprone-assert-side-effect',
@@ -176,10 +177,11 @@ class CppLinter(Linter):
         check_flags = ','.join(check_flags)
 
         print(f'Linting {len(submission_paths)} files...')
-        lint_res = Process(f'clang-tidy -warnings-as-errors=* '
-                           f'-checks=-*,{check_flags} '
-                           f'{submission_paths_str} -- -std={self.language_standard}',
-                           timeout=100, memory_limit_mb=512).run()
+        lint_res = Process(
+            f'clang-tidy -warnings-as-errors=* -checks=-*,{check_flags} '
+            f'{submission_paths_str} -- -std={self.language_standard}',
+            timeout=100, memory_limit_mb=512
+        ).run()
 
         # Remove standard clang-tidy "System warnings removed" message
         warning_message = 'Use -system-headers to display errors from system headers as well.\n'
@@ -188,5 +190,18 @@ class CppLinter(Linter):
 
         if lint_res.errors:
             lint_res.status = Status.LINTING_ERROR
-        print('Linting res', lint_res)
+        print('Clang tidy res:', lint_res)
+        if lint_res.status != Status.OK:
+            return lint_res
+
+        # Clang Format checks
+        style = '{BasedOnStyle: llvm, IndentWidth: 4}'
+        lint_res = Process(
+            f'clang-format --style="{style}" --dry-run --Werror {submission_paths_str}',
+            timeout=100, memory_limit_mb=512
+        ).run()
+        if lint_res.errors:
+            lint_res.status = Status.LINTING_ERROR
+
+        print('Clang format res:', lint_res)
         return lint_res

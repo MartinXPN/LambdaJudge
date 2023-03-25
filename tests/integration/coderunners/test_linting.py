@@ -12,17 +12,28 @@ class TestLinting:
         request = SubmissionRequest(test_cases=self.test_cases, language='c++17', code={
             'main.cpp': dedent('''
                 #include <iostream>
-                \n
-                int string_to_int(const char *num) {
-                    return std::atoi(num);
-                }
-                \n
                 int main() {
-                    std::cout << "hello";
-                    std::cerr << string_to_int("21345");
+                    std::cout << "hello" << std::endl;
+                    std::cerr << std::atoi("21345") << std::endl;
                     return 0;
                 }
-            '''),
+            ''').strip(),
+        }, lint=True)
+
+        res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
+        print(res)
+        assert res.overall.status == Status.LINTING_ERROR
+        assert res.linting_result.status == Status.LINTING_ERROR
+
+    def test_cpp_format_error(self):
+        request = SubmissionRequest(test_cases=self.test_cases, language='c++17', code={
+            'main.cpp': dedent('''
+                #include <iostream>
+                int main() {
+                     std::cout << "hello" << std::endl;
+                    return 0;
+                }
+            ''').strip(),
         }, lint=True)
 
         res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
@@ -34,12 +45,11 @@ class TestLinting:
         request = SubmissionRequest(test_cases=self.test_cases, language='c++17', code={
             'main.cpp': dedent('''
                 #include <iostream>
-                \n
                 int main() {
                     std::cout << "hello";
                     return 0;
                 }
-            '''),
+            ''').strip(),
         }, lint=True)
 
         res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
