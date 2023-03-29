@@ -192,7 +192,7 @@ class CppLinter(Linter):
             return lint_res
 
         # Clang Format checks
-        style = '{BasedOnStyle: llvm, IndentWidth: 4}'
+        style = '{BasedOnStyle: llvm, IndentWidth: 4, SortIncludes: false}'
         lint_res = Process(
             f'clang-format --style="{style}" --dry-run --Werror {submission_paths_str}',
             timeout=100, memory_limit_mb=512
