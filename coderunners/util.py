@@ -4,6 +4,8 @@ from typing import Union
 
 
 def is_float(value: str) -> bool:
+    if len(value) > 100:
+        return False
     try:
         float(value)
         return True

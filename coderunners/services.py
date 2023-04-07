@@ -51,17 +51,17 @@ class EqualityChecker(SubmissionRequest):
             if lint_result.status != Status.OK:
                 return SubmissionResult(overall=lint_result, compile_result=compile_result, linting_result=lint_result)
 
-        if self.problem:
+        problem_file = Path(f'/mnt/efs/{self.problem}.gz.fer')
+        if self.problem and problem_file.exists():
             # Compress:   (1) json.dumps   (2) .encode('utf-8')   (3) gzip.compress()   (4) encrypt
             # Decompress: (1) decrypt      (2) gzip.decompress()  (3) .decode('utf-8')  (4) json.loads()
-            problem_file = f'/mnt/efs/{self.problem}.gz.fer'
             print('getting test cases from the storage: ', problem_file)
             fernet = Fernet(self.encryption_key.encode())
             with open(problem_file, 'rb') as f:
                 data = fernet.decrypt(f.read())
                 data = gzip.decompress(data)
                 data = data.decode('utf-8')
-                self.test_cases = TestCase.schema().loads(data, many=True)
+                self.test_cases += TestCase.schema().loads(data, many=True)
         print(f'There are: {len(self.test_cases)} test cases')
 
         # Prepare the checker

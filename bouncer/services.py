@@ -19,7 +19,7 @@ def check_equality(request: SubmissionRequest) -> SubmissionResult:
     request.callback_url = None
 
     if request.problem:
-        # If it's not a test run => we'll need an encryption key to decrypt the problem on EFS
+        # If problem is provided => we'll need an encryption key to decrypt the problem on EFS
         get_secret_value_response = secret_manager.get_secret_value(SecretId=encryption_secret_key_id)
         secrets = json.loads(get_secret_value_response['SecretString'])
         request.encryption_key = secrets['EFS_PROBLEMS_ENCRYPTION_KEY']

@@ -49,10 +49,9 @@ class SubmissionRequest(DataClassJsonCamelMixIn):
     time_limit: int = 5         # seconds
     output_limit: float = 1     # MB
 
-    # Provide either problem (which is used to find the test cases in the EFS)
-    # Or provide the test cases as a list of TestCases directly
-    problem: Optional[str] = None
-    test_cases: Optional[list[TestCase]] = None
+    # In case of both problem and test_cases being provided, tests = test_cases + problem.tests
+    problem: Optional[str] = None                   # used to find the test cases in the EFS
+    test_cases: Optional[list[TestCase]] = None     # list of test cases
     test_groups: Optional[list[TestGroup]] = None
 
     return_outputs: bool = False
@@ -74,8 +73,9 @@ class SubmissionRequest(DataClassJsonCamelMixIn):
         if self.checker_language:
             self.checker_language = self.checker_language.lower()
 
-        assert self.problem is not None and self.test_cases is None or \
-            self.problem is None and self.test_cases is not None
+        if self.test_cases is None:
+            self.test_cases = []
+
         if self.comparison_mode == 'custom':
             assert self.checker_code is not None and self.checker_language is not None
 
