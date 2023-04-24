@@ -20,12 +20,11 @@ class TestUtil:
             'dir': {
                 'third.cpp': 'File 3'
             },
-            'dir2': [{
-                'four.txt': 'File 4'
-            }, {
+            'dir2': {
+                'four.txt': 'File 4',
                 'five.txt': 'File 5',
                 'six.txt': 'File 6',
-            }],
+            },
         }
         with TemporaryDirectory() as save_dir:
             save_dir = Path(save_dir)
