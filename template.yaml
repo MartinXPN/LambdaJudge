@@ -325,7 +325,9 @@ Resources:
     Properties:
       FunctionName: SyncS3WithEFS
       Timeout: 300
-      MemorySize: 1769
+      MemorySize: 10240   # maximum RAM               - for fast processing and to avoid memory errors
+      EphemeralStorage:   # maximum temporary storage - for fast processing and to avoid memory errors
+        Size: 10240
       PackageType: Image
       Role: !GetAtt SyncS3WithEFSRole.Arn
       VpcConfig:
