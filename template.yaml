@@ -3,6 +3,14 @@ Transform: AWS::Serverless-2016-10-31
 Description: SAM Template for LambdaJudge
 
 
+Globals:
+  Function:
+    Timeout: 300        # 5 min
+    MemorySize: 1769    # 1769 MB RAM
+    EphemeralStorage:   # Temporary storage - for fast processing and to avoid memory errors
+      Size: 1769        # 1769 MB SSD
+
+
 Resources:
   # Policies
   AllowLoggingPolicy:
@@ -294,7 +302,6 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: TriggerSyncS3
-      Timeout: 300  # 5 min
       MemorySize: 256
       PackageType: Image
       Role: !GetAtt TriggerSyncRole.Arn
@@ -324,9 +331,8 @@ Resources:
     DependsOn: CodeRunnerMountTarget
     Properties:
       FunctionName: SyncS3WithEFS
-      Timeout: 300
-      MemorySize: 10240   # maximum RAM               - for fast processing and to avoid memory errors
-      EphemeralStorage:   # maximum temporary storage - for fast processing and to avoid memory errors
+      MemorySize: 10240   # maximum RAM - for fast processing and to avoid memory errors
+      EphemeralStorage:   # maximum SSD - for fast processing and to avoid memory errors
         Size: 10240
       PackageType: Image
       Role: !GetAtt SyncS3WithEFSRole.Arn
@@ -347,7 +353,6 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: Bouncer
-      Timeout: 300
       MemorySize: 256
       PackageType: Image
       Role: !GetAtt BouncerRole.Arn
@@ -367,8 +372,6 @@ Resources:
     DependsOn: CodeRunnerMountTarget
     Properties:
       FunctionName: CodeRunnerPython
-      Timeout: 300
-      MemorySize: 1769
       PackageType: Image
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
@@ -389,8 +392,6 @@ Resources:
     DependsOn: CodeRunnerMountTarget
     Properties:
       FunctionName: CodeRunnerPythonML
-      Timeout: 300
-      MemorySize: 1769
       PackageType: Image
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
@@ -411,8 +412,6 @@ Resources:
     DependsOn: CodeRunnerMountTarget
     Properties:
       FunctionName: CodeRunnerCpp
-      Timeout: 300
-      MemorySize: 1769
       PackageType: Image
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
@@ -433,8 +432,6 @@ Resources:
     DependsOn: CodeRunnerMountTarget
     Properties:
       FunctionName: CodeRunnerCSharp
-      Timeout: 300
-      MemorySize: 1769
       PackageType: Image
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
@@ -455,8 +452,6 @@ Resources:
     DependsOn: CodeRunnerMountTarget
     Properties:
       FunctionName: CodeRunnerJs
-      Timeout: 300
-      MemorySize: 1769
       PackageType: Image
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
@@ -476,8 +471,6 @@ Resources:
     DependsOn: CodeRunnerMountTarget
     Properties:
       FunctionName: CodeRunnerJava
-      Timeout: 300
-      MemorySize: 1769
       PackageType: Image
       Role: !GetAtt ContestantRole.Arn
       VpcConfig:
@@ -503,6 +496,7 @@ Outputs:
   Bouncer:
     Description: 'AWS Lambda checker for determining if the output of a code is exactly the same es the target'
     Value: !GetAtt Bouncer.Arn
+
   CodeRunnerPython:
     Description: 'AWS Lambda for executing a python code and getting the outputs'
     Value: !GetAtt CodeRunnerPython.Arn
