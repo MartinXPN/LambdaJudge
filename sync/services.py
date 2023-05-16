@@ -11,7 +11,7 @@ from cryptography.fernet import Fernet
 from models import TestCase
 
 
-def read_files(paths: list[Path], remove_prefix: str, mode: str = 'r') -> dict[str, str]:
+def read_files(paths: list[Path], mode: str = 'r', remove_prefix: str = '') -> dict[str, str]:
     contents = {}
     for path in paths:
         with open(path, mode) as f:
@@ -57,8 +57,8 @@ def zip2tests(zip_path: Path) -> list[TestCase]:
 
             input_files = read_files([Path(f) for f in input_files], remove_prefix=in_prefix)
             target_files = read_files([Path(f) for f in target_files], remove_prefix=out_prefix)
-            input_assets = read_files([Path(f) for f in input_assets], remove_prefix=f'{in_prefix}.asset.', mode='rb')
-            target_assets = read_files([Path(f) for f in target_assets], remove_prefix=f'{out_prefix}.asset.', mode='rb')
+            input_assets = read_files([Path(f) for f in input_assets], 'rb', remove_prefix=f'{in_prefix}.asset.')
+            target_assets = read_files([Path(f) for f in target_assets], 'rb', remove_prefix=f'{out_prefix}.asset.')
 
             with open(ins) as inf, open(outs) as of:
                 print(ins, outs)
