@@ -25,8 +25,10 @@ class Status(Enum):
 class TestCase(DataClassJsonCamelMixIn):
     input: str
     target: str
-    input_files: Optional[dict[str, str]] = None        # list of (filename, content)
-    target_files: Optional[dict[str, str]] = None       # list of (filename, content)
+    input_files: Optional[dict[str, str]] = None        # list of (filename, textual content)
+    target_files: Optional[dict[str, str]] = None       # list of (filename, textual content)
+    input_assets: Optional[dict[str, str]] = None       # list of (filename, binary base64 encoded content)
+    target_assets: Optional[dict[str, str]] = None      # list of (filename, binary base64 encoded content)
 
 
 @dataclass

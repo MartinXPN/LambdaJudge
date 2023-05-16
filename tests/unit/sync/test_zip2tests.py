@@ -1,3 +1,4 @@
+import base64
 import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -56,3 +57,37 @@ class TestTruncation:
             assert test.input_files['yoyo.txt'] == 'First file input'
             assert test.target_files['yoyo.txt'] == 'First file target'
             assert test.target_files['bik.txt'] == 'Second file target'
+
+    def test_assets(self):
+        with TemporaryDirectory() as tests_dir:
+            # stdin / stdout
+            with open(f'{tests_dir}/00.in.txt', 'w') as f:
+                f.write('First input')
+            with open(f'{tests_dir}/00.out.txt', 'w') as f:
+                f.write('First target')
+
+            # Files
+            with open(f'{tests_dir}/00.in.yoyo.txt', 'w') as f:   # We should have a `yoyo.txt` when the program starts
+                f.write('First file input')
+            with open(f'{tests_dir}/00.out.yoyo.txt', 'w') as f:  # We should have another `yoyo.txt` in the end
+                f.write('First file target')
+            with open(f'{tests_dir}/00.out.bik.txt', 'w') as f:
+                f.write('Second file target')
+
+            # Assets
+            with open(f'{tests_dir}/00.in.asset.start.bin', 'wb') as f:
+                f.write(b'Hello')
+            with open(f'{tests_dir}/00.out.asset.finish.bin', 'wb') as f:
+                f.write(b'World')
+
+            shutil.make_archive(f'{tests_dir}/res', 'zip', tests_dir)
+            tests = zip2tests(Path(tests_dir) / 'res.zip')
+            test = tests[0]
+            print(test)
+            assert test.input == 'First input'
+            assert test.target == 'First target'
+            assert test.input_files['yoyo.txt'] == 'First file input'
+            assert test.target_files['yoyo.txt'] == 'First file target'
+            assert test.target_files['bik.txt'] == 'Second file target'
+            assert base64.b64decode(test.input_assets['start.bin'].encode('utf-8')) == b'Hello'
+            assert base64.b64decode(test.target_assets['finish.bin'].encode('utf-8')) == b'World'
