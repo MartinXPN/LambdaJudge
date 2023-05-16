@@ -27,8 +27,8 @@ class TestCase(DataClassJsonCamelMixIn):
     target: str
     input_files: Optional[dict[str, str]] = None        # list of (filename, textual content)
     target_files: Optional[dict[str, str]] = None       # list of (filename, textual content)
-    input_assets: Optional[dict[str, str]] = None       # list of (filename, binary base64 encoded content)
-    target_assets: Optional[dict[str, str]] = None      # list of (filename, binary base64 encoded content)
+    input_assets: Optional[dict[str, str]] = None       # list of (filename, base64 encoded string)
+    target_assets: Optional[dict[str, str]] = None      # list of (filename, base64 encoded string)
 
 
 @dataclass
@@ -93,6 +93,7 @@ class RunResult(DataClassJsonCamelMixIn):
     outputs: Optional[str] = None
     errors: Optional[str] = None
     output_files: Optional[dict[str, str]] = None
+    output_assets: Optional[dict[str, str]] = None
 
 
 @dataclass

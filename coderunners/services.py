@@ -1,3 +1,4 @@
+import base64
 import gzip
 from pathlib import Path
 from typing import Optional
@@ -91,10 +92,20 @@ class EqualityChecker(SubmissionRequest):
         for i, test in enumerate(self.test_cases):
             print(f'Running test {i}', end='...')
 
-            # Crete input files
+            # Convert asset files to bytes from base64 strings
+            input_assets: dict[str, bytes] = {filename: base64.b64decode(content.encode('utf-8'))
+                                              for filename, content in (test.input_assets or {}).items()}
+            target_assets: dict[str, bytes] = {filename: base64.b64decode(content.encode('utf-8'))
+                                               for filename, content in (test.target_assets or {}).items()}
+
+            # Crete input files and input assets
             for filename, content in (test.input_files or {}).items():
                 print('Creating file at:', self.ROOT / filename)
                 (self.ROOT / filename).write_text(content)
+            for filename, content in input_assets.items():
+                print('Creating asset at:', self.ROOT / filename)
+                (self.ROOT / filename).write_bytes(content)
+
             r = Process(
                 f'{executable_path}',
                 timeout=self.time_limit, memory_limit_mb=self.memory_limit, output_limit_mb=self.output_limit,
@@ -102,14 +113,26 @@ class EqualityChecker(SubmissionRequest):
 
             output_files = {filename: (self.ROOT / filename).read_text() if (self.ROOT / filename).exists() else ''
                             for filename in (test.target_files or {}).keys()}
+            output_assets = {filename: (self.ROOT / filename).read_bytes() if (self.ROOT / filename).exists() else b''
+                             for filename in target_assets.keys()}
 
             (r.status, r.score, r.message) = checker.check(
                 inputs=test.input, output=r.outputs, target=test.target,
                 code=self.code,
                 input_files=test.input_files, output_files=output_files, target_files=test.target_files,
+                input_assets=input_assets, output_assets=output_assets, target_assets=target_assets,
             ) if r.status == Status.OK else (r.status, 0, r.message)
             print(f'Test {i} res: {r.status} => {r.score}')
 
+            # Clean up
+            cleanup_files = (test.input_files or {}).keys() | (test.target_files or {}).keys() | \
+                            (test.input_assets or {}).keys() | (test.target_assets or {}).keys()
+            for filename in cleanup_files:
+                if (self.ROOT / filename).exists():
+                    print('Removing file at:', self.ROOT / filename)
+                    (self.ROOT / filename).unlink()
+
+            # Report the result
             test_results.append(r)
             if not self.return_outputs:
                 test_results[-1].outputs = None
@@ -120,10 +143,15 @@ class EqualityChecker(SubmissionRequest):
                 test_results[-1].outputs = r.outputs[:max_len] if r.outputs else None
                 test_results[-1].errors = r.errors[:max_len] if r.errors else None
                 test_results[-1].output_files = {
-                    filename: content[:max_len] for filename, content in output_files.items()
+                    filename: content[:max_len]
+                    for filename, content in output_files.items()
                 } if output_files else None
+                test_results[-1].output_assets = {
+                    filename: base64.b64encode(content[:max_len]).decode('utf-8')
+                    for filename, content in output_assets.items()
+                } if output_assets else None
 
-            if self.stop_on_first_fail and r.status != Status.OK:
+            if self.stop_on_first_fail and test_results[-1].status != Status.OK:
                 test_results += [
                     RunResult(status=Status.SKIPPED, memory=0, time=0, return_code=0)
                 ] * (len(self.test_cases) - i - 1)

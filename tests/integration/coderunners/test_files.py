@@ -1,3 +1,4 @@
+import base64
 from textwrap import dedent
 
 from bouncer.coderunners import CodeRunner
@@ -10,6 +11,10 @@ class TestFiles:
         TestCase(input='1', target='2', input_files={'hello.txt': 'hello'}, target_files={'hello.txt': 'hello'}),
         TestCase(input='2', target='4', input_files={'hello.txt': 'hello'}, target_files={'hello.txt': 'hello'}),
         TestCase(input='3', target='4', input_files={'hello.txt': 'hello'}, target_files={'res.txt': 'heyhey'}),
+        TestCase(input='4', target='5', input_files={'hello.txt': 'hello'}, target_files={'res.txt': 'heyhey'},
+                 # Assets should be encoded into base64 strings
+                 input_assets={'img.bmp': base64.b64encode(b'image!').decode('utf-8')},
+                 target_assets={'res.bmp': base64.b64encode(b'Result!!!').decode('utf-8')}),
     ]
 
     def test_no_file(self):
@@ -22,10 +27,11 @@ class TestFiles:
         res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
         print(res)
         assert res.overall.status == Status.WA
-        assert len(res.test_results) == 3
+        assert len(res.test_results) == 4
         assert res.test_results[0].status == Status.OK
         assert res.test_results[1].status == Status.WA
         assert res.test_results[2].status == Status.WA
+        assert res.test_results[3].status == Status.WA
 
     def test_with_file(self):
         request = SubmissionRequest(test_cases=self.test_cases, stop_on_first_fail=False, language='python', code={
@@ -41,7 +47,28 @@ class TestFiles:
         res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
         print(res)
         assert res.overall.status == Status.WA
-        assert len(res.test_results) == 3
+        assert len(res.test_results) == 4
         assert res.test_results[0].status == Status.OK
         assert res.test_results[1].status == Status.WA
         assert res.test_results[2].status == Status.OK
+        assert res.test_results[3].status == Status.WA
+
+    def test_with_assets(self):
+        request = SubmissionRequest(test_cases=self.test_cases, stop_on_first_fail=False, language='python', code={
+            'main.py': dedent('''
+                n = int(input())
+                print(n + 1)
+                with open('res.txt', 'w') as f:
+                    f.write('heyhey')
+                with open('res.bmp', 'wb') as f:
+                    f.write(b'Result!!!')
+            '''),
+        }, return_outputs=True)
+        res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
+        print(res)
+        assert res.overall.status == Status.WA
+        assert len(res.test_results) == 4
+        assert res.test_results[0].status == Status.OK
+        assert res.test_results[1].status == Status.WA
+        assert res.test_results[2].status == Status.OK
+        assert res.test_results[3].status == Status.OK
