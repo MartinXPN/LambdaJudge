@@ -65,6 +65,11 @@ class EqualityChecker(SubmissionRequest):
                 self.test_cases += TestCase.schema().loads(data, many=True)
         print(f'There are: {len(self.test_cases)} test cases')
 
+        # If there are no test cases => run the program and return OK as the result (no comparisons)
+        if not self.test_cases:
+            self.test_cases = [TestCase(input='', target='')]
+            self.comparison_mode = 'ok'
+
         # Prepare the checker
         checker_executable_path = None
         if self.comparison_mode == 'custom':

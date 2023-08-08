@@ -42,6 +42,8 @@ class Checker(ABC):
     def from_mode(mode: str,
                   float_precision: Optional[float] = None, delimiter: Optional[str] = None,
                   executable_path: Optional[Path] = None) -> 'Checker':
+        if mode == 'ok':
+            return OkChecker()
         if mode == 'whole':
             return WholeEquality()
         if mode == 'token':
@@ -51,6 +53,16 @@ class Checker(ABC):
             assert executable_path is not None
             return CustomChecker(executable_path=executable_path)
         raise ValueError(f'{mode} comparison mode is not implemented yet')
+
+
+class OkChecker(Checker):
+    def check(
+            self, inputs: str, output: str, target: str, code: dict[str, str],
+            input_files: Optional[dict[str, str]] = None, output_files: Optional[dict[str, str]] = None,
+            target_files: Optional[dict[str, str]] = None, input_assets: Optional[dict[str, bytes]] = None,
+            output_assets: Optional[dict[str, bytes]] = None, target_assets: Optional[dict[str, bytes]] = None,
+    ) -> tuple[Status, float, Optional[str]]:
+        return Status.OK, 100, None
 
 
 class WholeEquality(Checker):
