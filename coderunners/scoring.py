@@ -5,7 +5,6 @@ from typing import Optional
 
 from models import RunResult, Status, TestGroup
 
-
 # Setting the precision
 precision = 50
 getcontext().prec = precision
