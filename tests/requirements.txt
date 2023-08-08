@@ -1,10 +1,10 @@
-boto3>=1.22.10
+boto3>=1.28.21
 
-pytest>=7.1.1
-pytest-mock>=3.7.0
-pytest-cov>=3.0.0
+pytest>=7.4.0
+pytest-mock>=3.11.1
+pytest-cov>=4.1.0
 
-dataclasses-json>=0.5.7
-psutil>=5.8.0
-requests>=2.26.0
-cryptography>=39.0.2
+dataclasses-json>=0.5.14
+psutil>=5.9.5
+requests>=2.31.0
+cryptography>=41.0.3

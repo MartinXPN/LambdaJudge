@@ -1,4 +1,4 @@
-FROM public.ecr.aws/lambda/python:3.10
+FROM public.ecr.aws/lambda/python:3.11
 
 # Initial setup
 RUN curl -sL https://rpm.nodesource.com/setup_16.x | bash -
