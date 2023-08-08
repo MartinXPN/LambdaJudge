@@ -38,8 +38,8 @@ class SubtaskScorer(Scorer):
         for test_group in self.test_groups:
             oks = [int(test_result.status == Status.OK) for test_result in results[:test_group.count]]
             points_per_test = (
-                    Decimal(test_group.points_per_test) or
-                    Decimal(min(oks)) * (Decimal(test_group.points) / test_group.count)
+                Decimal(test_group.points_per_test) or
+                Decimal(min(oks)) * (Decimal(test_group.points) / test_group.count)
             )
             scores += [float(points_per_test * ok) for ok in oks]
             del results[:test_group.count]
