@@ -1,3 +1,6 @@
+import random
+import string
+
 import math
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -143,23 +146,31 @@ class CustomChecker(Checker):
             ouf.flush()
             tg.flush()
 
+            random_status_string = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
             res = Process(
                 f'{self.executable_path} {inf.name} {ouf.name} {tg.name} {code_dir.resolve()}',
                 timeout=5, memory_limit_mb=512, output_limit_mb=1,
-            ).run()
+            ).run(program_input=random_status_string)
 
         if res.status != Status.OK:
             return res.status, 0, f'Checker failed with: {res.message}, having errors: {res.errors}'
 
-        outputs = res.outputs.split('\n', maxsplit=2)
-        if len(outputs) < 2:
+        status_outputs = [out for out in res.outputs.split('\n') if out.startswith(random_status_string)]
+        outputs = [out for out in res.outputs.split('\n') if not out.startswith(random_status_string)]
+
+        if len(status_outputs) == 0:
+            status_outputs = outputs
+
+        if len(status_outputs) < 2:
             return (Status.RUNTIME_ERROR, 0,
                     'Checker failed to produce status and score (each should be on separate lines)')
-        if len(outputs) == 2:
-            status, score, message = outputs[0], outputs[1], None
-        else:
-            status, score, message = outputs
 
+        status, score, message = status_outputs[0], status_outputs[1], '\n'.join(status_outputs[2:] + outputs)
+        status = status.replace(random_status_string, '').strip()
+        score = score.replace(random_status_string, '').strip()
+        message = message.replace(random_status_string, '').strip()
+
+        # Validate the status and score types
         if not is_float(score):
             return Status.RUNTIME_ERROR, 0, 'Checker did not produce a valid score value'
         score = float(score)

@@ -104,3 +104,50 @@ class TestCustomChecker:
                 assert res.overall.status == Status.OK
                 assert res.overall.score == 90
                 assert res.compile_result.status == Status.OK
+
+    def test_with_status_string(self):
+        checker_code = dedent("""
+            import sys
+            executable_path, input_file, output_file, target_file, submission_dir = sys.argv
+            status = input()
+            #
+            with open(input_file, 'r') as fin, open(output_file, 'r') as fout, open(target_file, 'r') as tgt:
+                input_data = fin.read()
+                output_data = fout.read()
+                target_data = tgt.read()
+            #
+            if output_data.strip() == target_data.strip():
+                print(f'{status} Solved')
+                print(f'{status} 90')
+                print('Good job!')
+            else:
+                print(f'{status} Wrong answer')
+                print(f'{status} 0')
+                print('Try again...')
+            print(input_data)
+            print(output_data)
+            print(target_data)
+            print(sys.argv)
+            """).strip()
+        requests = [
+            SubmissionRequest(test_cases=self.test_cases, language='python', code={
+                'main.py': 'print("hello world")',
+            }, comparison_mode='custom', checker_language='python', checker_code={'checker.py': checker_code}),
+            SubmissionRequest(test_cases=self.test_cases, language='python', code={
+                'main.py': 'print("hello")',
+            }, comparison_mode='custom', checker_language='python', checker_code={'checker.py': checker_code}),
+            SubmissionRequest(test_cases=self.test_cases, language='C++17', code={
+                'main.cpp': '#include <iostream>\nint main() { std::cout << "hello"; return 0; }',
+            }, comparison_mode='custom', checker_language='python', checker_code={'checker.py': checker_code}),
+        ]
+
+        for i, request in enumerate(requests):
+            res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
+            print(res)
+            if i == 0:
+                assert res.overall.status == Status.WA
+                assert res.compile_result.status == Status.OK
+            else:
+                assert res.overall.status == Status.OK
+                assert res.overall.score == 90
+                assert res.compile_result.status == Status.OK
