@@ -158,6 +158,7 @@ class CustomChecker(Checker):
         status_outputs = [out for out in res.outputs.split('\n') if out.startswith(random_status_string)]
         outputs = [out for out in res.outputs.split('\n') if not out.startswith(random_status_string)]
 
+        # We don't enforce the status to be with the random string (for compatibility)
         if len(status_outputs) == 0:
             status_outputs = outputs
 
