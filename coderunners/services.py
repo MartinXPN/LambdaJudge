@@ -156,10 +156,13 @@ class EqualityChecker(SubmissionRequest):
                     for filename, content in output_assets.items()
                 } if output_assets else None
 
+            # Stop on failure
             if self.stop_on_first_fail and test_results[-1].status != Status.OK:
                 test_results += [
                     RunResult(status=Status.SKIPPED, memory=0, time=0, return_code=0)
                 ] * (len(self.test_cases) - i - 1)
+                print('Expected:', test.target, test.target_files)
+                print('Actual:', test_results[-1].outputs, test_results[-1].output_files)
                 break
         print('test_results:', test_results)
         assert len(test_results) == len(self.test_cases)
