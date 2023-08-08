@@ -145,7 +145,7 @@ class CustomChecker(Checker):
 
             res = Process(
                 f'{self.executable_path} {inf.name} {ouf.name} {tg.name} {code_dir.resolve()}',
-                timeout=1, memory_limit_mb=512, output_limit_mb=1,
+                timeout=5, memory_limit_mb=512, output_limit_mb=1,
             ).run()
 
         if res.status != Status.OK:

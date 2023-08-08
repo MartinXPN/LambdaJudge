@@ -59,7 +59,7 @@ class TestMultiFile:
         }))
 
     def test_csharp(self):
-        self.run_test(SubmissionRequest(test_cases=self.test_cases, language='C#', time_limit=5, code={
+        self.run_test(SubmissionRequest(test_cases=self.test_cases, language='C#', time_limit=10, code={
             'main.cs': dedent('''
                 namespace HelloWorld {
                     class Hello {
