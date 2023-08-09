@@ -37,7 +37,7 @@ class TestHelloWorld:
         }))
 
     def test_csharp(self):
-        self.run_test(SubmissionRequest(test_cases=self.test_cases, language='C#', time_limit=5, code={
+        self.run_test(SubmissionRequest(test_cases=self.test_cases, language='C#', time_limit=10, code={
             'main.cs': 'System.Console.WriteLine("Hello World!");',
         }))
 

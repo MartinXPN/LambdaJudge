@@ -48,7 +48,7 @@ class SubmissionRequest(DataClassJsonCamelMixIn):
     code: dict[str, str]
     language: str
     memory_limit: int = 512     # MB
-    time_limit: int = 5         # seconds
+    time_limit: float = 5       # seconds
     output_limit: float = 1     # MB
 
     # In case of both problem and test_cases being provided, tests = test_cases + problem.tests
