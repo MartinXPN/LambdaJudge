@@ -1,3 +1,5 @@
+import base64
+
 import pytest
 
 from models import TestCase
@@ -8,8 +10,14 @@ class TestTruncation:
     @classmethod
     def _get_tests_with_len(cls, char_count: int) -> list[TestCase]:
         data = 'a' * char_count
-        test = TestCase(input=data, target=data, input_files={'test.txt': data}, target_files={'res-test.txt': data})
-        return [test for _ in range(3)]
+        binary = base64.b64encode(b'a' * char_count)
+        binary = binary.decode('utf-8')[: char_count]
+
+        return [TestCase(
+            input=data, target=data,
+            input_files={'test.txt': data}, target_files={'res-test.txt': data},
+            input_assets={'test.bin': binary}, target_assets={'res-test.bin': binary},
+        ) for _ in range(3)]
 
     def test_truncated_tests(self):
         tests = self._get_tests_with_len(120)
