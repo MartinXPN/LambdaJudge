@@ -1,6 +1,5 @@
 import errno
 from pathlib import Path
-from typing import Union
 
 
 def is_float(value: str) -> bool:
@@ -13,7 +12,7 @@ def is_float(value: str) -> bool:
         return False
 
 
-def save_code(save_dir: Path, code: dict[str, Union[str, dict[str, str]]]) -> list[Path]:
+def save_code(save_dir: Path, code: dict[str, str | dict[str, str]]) -> list[Path]:
     saved_paths: list[Path] = []
     save_dir.mkdir(parents=True, exist_ok=True)
 

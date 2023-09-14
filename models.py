@@ -1,6 +1,5 @@
 from dataclasses import dataclass
 from enum import Enum
-from typing import Optional
 
 from dataclasses_json import DataClassJsonMixin, LetterCase, Undefined, config
 
@@ -25,10 +24,10 @@ class Status(Enum):
 class TestCase(DataClassJsonCamelMixIn):
     input: str
     target: str
-    input_files: Optional[dict[str, str]] = None        # list of (filename, textual content)
-    target_files: Optional[dict[str, str]] = None       # list of (filename, textual content)
-    input_assets: Optional[dict[str, str]] = None       # list of (filename, base64 encoded string)
-    target_assets: Optional[dict[str, str]] = None      # list of (filename, base64 encoded string)
+    input_files: dict[str, str] | None = None        # list of (filename, textual content)
+    target_files: dict[str, str] | None = None       # list of (filename, textual content)
+    input_assets: dict[str, str] | None = None       # list of (filename, base64 encoded string)
+    target_assets: dict[str, str] | None = None      # list of (filename, base64 encoded string)
 
 
 @dataclass
@@ -52,9 +51,9 @@ class SubmissionRequest(DataClassJsonCamelMixIn):
     output_limit: float = 1     # MB
 
     # In case of both problem and test_cases being provided, tests = test_cases + problem.tests
-    problem: Optional[str] = None                   # used to find the test cases in the EFS
-    test_cases: Optional[list[TestCase]] = None     # list of test cases
-    test_groups: Optional[list[TestGroup]] = None
+    problem: str | None = None                   # used to find the test cases in the EFS
+    test_cases: list[TestCase] | None = None     # list of test cases
+    test_groups: list[TestGroup] | None = None
 
     return_outputs: bool = False
     stop_on_first_fail: bool = True
@@ -63,12 +62,12 @@ class SubmissionRequest(DataClassJsonCamelMixIn):
     # Checker parameters
     comparison_mode: str = 'whole'    # whole | token | custom
     float_precision: float = 1e-5     # Floating point precision
-    delimiter: Optional[str] = None
-    checker_code: Optional[dict[str, str]] = None
-    checker_language: Optional[str] = None
+    delimiter: str | None = None
+    checker_code: dict[str, str] | None = None
+    checker_language: str | None = None
 
-    callback_url: Optional[str] = None  # Where to send the results when they're ready
-    encryption_key: Optional[str] = None
+    callback_url: str | None = None  # Where to send the results when they're ready
+    encryption_key: str | None = None
 
     def __post_init__(self):
         self.language = self.language.lower()
@@ -89,19 +88,19 @@ class RunResult(DataClassJsonCamelMixIn):
     time: float
     return_code: int
     score: float = 0
-    message: Optional[str] = None
-    outputs: Optional[str] = None
-    errors: Optional[str] = None
-    output_files: Optional[dict[str, str]] = None
-    output_assets: Optional[dict[str, str]] = None
+    message: str | None = None
+    outputs: str | None = None
+    errors: str | None = None
+    output_files: dict[str, str] | None = None
+    output_assets: dict[str, str] | None = None
 
 
 @dataclass
 class SubmissionResult(DataClassJsonCamelMixIn):
     overall: RunResult
     compile_result: RunResult
-    linting_result: Optional[RunResult] = None
-    test_results: Optional[list[RunResult]] = None
+    linting_result: RunResult | None = None
+    test_results: list[RunResult] | None = None
 
 
 @dataclass

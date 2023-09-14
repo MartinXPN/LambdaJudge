@@ -5,7 +5,6 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
-from typing import Optional
 
 from coderunners.process import Process
 from coderunners.util import is_float, save_code
@@ -17,13 +16,13 @@ class Checker(ABC):
     def check(
         self, inputs: str, output: str, target: str,
         code: dict[str, str],
-        input_files: Optional[dict[str, str]] = None,
-        output_files: Optional[dict[str, str]] = None,
-        target_files: Optional[dict[str, str]] = None,
-        input_assets: Optional[dict[str, bytes]] = None,
-        output_assets: Optional[dict[str, bytes]] = None,
-        target_assets: Optional[dict[str, bytes]] = None,
-    ) -> tuple[Status, float, Optional[str]]:
+        input_files: dict[str, str] | None = None,
+        output_files: dict[str, str] | None = None,
+        target_files: dict[str, str] | None = None,
+        input_assets: dict[str, bytes] | None = None,
+        output_assets: dict[str, bytes] | None = None,
+        target_assets: dict[str, bytes] | None = None,
+    ) -> tuple[Status, float, str | None]:
         """
         Check if the program behaved correctly and return the verdict
         :param inputs: all the input of the program
@@ -42,8 +41,8 @@ class Checker(ABC):
 
     @staticmethod
     def from_mode(mode: str,
-                  float_precision: Optional[float] = None, delimiter: Optional[str] = None,
-                  executable_path: Optional[Path] = None) -> 'Checker':
+                  float_precision: float | None = None, delimiter: str | None = None,
+                  executable_path: Path | None = None) -> 'Checker':
         if mode == 'ok':
             return OkChecker()
         if mode == 'whole':
@@ -60,10 +59,10 @@ class Checker(ABC):
 class OkChecker(Checker):
     def check(
             self, inputs: str, output: str, target: str, code: dict[str, str],
-            input_files: Optional[dict[str, str]] = None, output_files: Optional[dict[str, str]] = None,
-            target_files: Optional[dict[str, str]] = None, input_assets: Optional[dict[str, bytes]] = None,
-            output_assets: Optional[dict[str, bytes]] = None, target_assets: Optional[dict[str, bytes]] = None,
-    ) -> tuple[Status, float, Optional[str]]:
+            input_files: dict[str, str] | None = None, output_files: dict[str, str] | None = None,
+            target_files: dict[str, str] | None = None, input_assets: dict[str, bytes] | None = None,
+            output_assets: dict[str, bytes] | None = None, target_assets: dict[str, bytes] | None = None,
+    ) -> tuple[Status, float, str | None]:
         return Status.OK, 100, None
 
 
@@ -72,7 +71,7 @@ class WholeEquality(Checker):
         self, inputs, output, target, code,
         input_files=None, output_files=None, target_files=None,
         input_assets=None, output_assets=None, target_assets=None,
-    ) -> tuple[Status, float, Optional[str]]:
+    ) -> tuple[Status, float, str | None]:
         files_match = [output_files[file].strip() == target_files[file].strip()
                        if file in output_files else False
                        for file in (target_files or {}).keys()]
@@ -86,7 +85,7 @@ class WholeEquality(Checker):
 @dataclass
 class TokenEquality(Checker):
     float_precision: float = 1e-5
-    delimiter: Optional[str] = None
+    delimiter: str | None = None
 
     def is_correct(self, output: str, target: str) -> bool:
         output = output.strip().split(self.delimiter)
@@ -113,7 +112,7 @@ class TokenEquality(Checker):
         self, inputs, output, target, code,
         input_files=None, output_files=None, target_files=None,
         input_assets=None, output_assets=None, target_assets=None,
-    ) -> tuple[Status, float, Optional[str]]:
+    ) -> tuple[Status, float, str | None]:
         files_match = [self.is_correct(output_files[file], target_files[file])
                        if file in output_files else False
                        for file in (target_files or {}).keys()]
@@ -132,7 +131,7 @@ class CustomChecker(Checker):
         self, inputs, output, target, code,
         input_files=None, output_files=None, target_files=None,
         input_assets=None, output_assets=None, target_assets=None,
-    ) -> tuple[Status, float, Optional[str]]:
+    ) -> tuple[Status, float, str | None]:
         # TODO: How to support files and assets for custom checkers?
         with NamedTemporaryFile('w') as inf, NamedTemporaryFile('w') as ouf, NamedTemporaryFile('w') as tg, \
                 TemporaryDirectory() as code_dir:

@@ -1,7 +1,6 @@
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from decimal import Decimal, getcontext
-from typing import Optional
 
 from models import RunResult, Status, TestGroup
 
@@ -16,7 +15,7 @@ class Scorer(ABC):
         ...
 
     @staticmethod
-    def from_request(test_groups: Optional[list[TestGroup]] = None) -> 'Scorer':
+    def from_request(test_groups: list[TestGroup] | None = None) -> 'Scorer':
         return SubtaskScorer(test_groups=test_groups) if test_groups else PerTestScorer()
 
 

@@ -7,7 +7,6 @@ from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Thread
-from typing import Union
 
 import psutil
 
@@ -62,7 +61,7 @@ def read_stderr(process: subprocess.Popen, res: Outputs) -> None:
 
 @dataclass
 class Process:
-    command: Union[str, Iterable[str]]
+    command: str | Iterable[str]
     timeout: float
     memory_limit_mb: int
     output_limit_mb: float = 1

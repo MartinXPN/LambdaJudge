@@ -17,7 +17,7 @@ from models import RunResult, Status, SubmissionRequest, SubmissionResult, TestC
 class EqualityChecker(SubmissionRequest):
     ROOT: Path = Path('/tmp/')
 
-    def compile(self, code_paths: list[Path], language: str) -> tuple[Optional[Path], RunResult]:
+    def compile(self, code_paths: list[Path], language: str) -> tuple[Path | None, RunResult]:
         """ Compiles and returns (executable path | None, compilation result) """
         compiler = Compiler.from_language(language=language)
         executable_path, compilation = compiler.compile(submission_paths=code_paths)
