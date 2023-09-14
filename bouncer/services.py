@@ -1,5 +1,7 @@
 import copy
 import json
+import random
+import time
 
 import boto3
 import botocore
@@ -30,6 +32,19 @@ def check_equality(request: SubmissionRequest) -> SubmissionResult:
 
     if callback_url is not None:
         print('Sending results to the callback url:\n', res.to_dict(encode_json=True))
-        r = requests.post(callback_url, json=res.to_dict(encode_json=True))
-        print('callback:', r.status_code, r.reason)
+        for attempt in range(8):
+            try:
+                r = requests.post(callback_url, json=res.to_dict(encode_json=True))
+                print('Callback response:', r.status_code, r.reason)
+                if r.status_code == 200:
+                    break
+            except requests.RequestException as e:
+                print('Failed callback attempt:', attempt, e)
+
+            # Calculate the delay using exponential backoff with jitter.
+            base_delay = 2
+            delay = min(base_delay * (2 ** attempt) + (random.randint(0, 1000) / 1000), 20)
+            print(f'Waiting for {delay:.2f} seconds before retrying...')
+            time.sleep(delay)
+
     return res
