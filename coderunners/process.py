@@ -31,11 +31,9 @@ def limit_resources(max_bytes: int):
 
 
 def send_input(process: subprocess.Popen, inputs: str) -> None:
-    inputs += '' if inputs.endswith('\n') else '\n'
-    if inputs.strip() == '':
-        return
     process.stdin.write(inputs)
     process.stdin.flush()
+    process.stdin.close()
 
 
 CHUNK_SIZE = 2 ** 20  # Make sure we don't read slower than the program prints
