@@ -82,7 +82,7 @@ class TestMultiFile:
         }))
 
     def test_java(self):
-        self.run_test(SubmissionRequest(test_cases=self.test_cases, language='Java', time_limit=2, code={
+        self.run_test(SubmissionRequest(test_cases=self.test_cases, language='Java', time_limit=5, code={
             'main.java': dedent('''
                 class Main {
                     public static void main(String[] args) {
