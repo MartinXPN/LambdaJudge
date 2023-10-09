@@ -16,6 +16,11 @@ class TestHelloWorld:
         assert len(res.test_results) == 1 and res.test_results[0].status == Status.OK
         return res
 
+    def test_txt(self):
+        self.run_test(SubmissionRequest(test_cases=self.test_cases, language='txt', code={
+            'main.txt': 'Hello World!',
+        }))
+
     def test_python(self):
         self.run_test(SubmissionRequest(test_cases=self.test_cases, language='python', code={
             'main.py': 'print("Hello World!")',

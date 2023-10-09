@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import ClassVar
 
 from coderunners.process import Process
-from models import RunResult
+from models import RunResult, Status
 
 
 class Compiler(ABC):
@@ -24,6 +24,8 @@ class Compiler(ABC):
     @staticmethod
     def from_language(language: str) -> 'Compiler':
         language = language.lower()
+        if language in TxtCompiler.supported_standards:
+            return TxtCompiler()
         if language in CppCompiler.supported_standards:
             return CppCompiler(language_standard=language)
         if language in PythonCompiler.supported_standards:
@@ -37,6 +39,20 @@ class Compiler(ABC):
         if language in JavaCompiler.supported_standards:
             return JavaCompiler()
         raise ValueError(f'{language} does not have a compiler yet')
+
+
+@dataclass
+class TxtCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.txt'
+    supported_standards = {'txt', 'text'}
+
+    def compile(self, submission_paths: list[Path]):
+        if len(submission_paths) != 1:
+            raise ValueError('Only one file is allowed for txt submissions')
+
+        executable_path = f'cat {submission_paths[0]}'
+        compile_res = RunResult(status=Status.OK, memory=0, time=0, return_code=0, outputs=None, errors=None)
+        return executable_path, compile_res
 
 
 @dataclass

@@ -15,6 +15,8 @@ class CodeRunner(ABC):
     @staticmethod
     def from_language(language: str) -> 'CodeRunner':
         language = language.lower()
+        if language in TxtRunner.supported_standards:
+            return TxtRunner()
         if language in CppRunner.supported_standards:
             return CppRunner()
         if language in PythonRunner.supported_standards:
@@ -35,6 +37,15 @@ class CodeRunner(ABC):
         res = json.loads(res)
         print('invocation result:', res)
         return SubmissionResult.from_json(res)
+
+
+@dataclass
+class TxtRunner(CodeRunner):
+    supported_standards = {'txt', 'text'}
+
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerTxt'
 
 
 @dataclass
