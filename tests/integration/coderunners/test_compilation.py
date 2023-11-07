@@ -1,3 +1,5 @@
+from textwrap import dedent
+
 from bouncer.coderunners import CodeRunner
 from models import Status, SubmissionRequest, TestCase
 from tests.integration.config import lambda_client
@@ -13,6 +15,15 @@ class TestCompileError:
             }),
             SubmissionRequest(test_cases=self.test_cases, language='C++17', code={
                 'main.cpp': 'int main() { cout << "hello"; return 0; }',
+            }),
+            SubmissionRequest(test_cases=self.test_cases, language='Java', time_limit=2, code={
+                'main.java': dedent('''
+                    class Main {
+                        public static void main(String[] args) {
+                            System.out.println("hello")
+                        }
+                    }
+                ''')
             }),
         ]
 
@@ -30,6 +41,15 @@ class TestCompileError:
             }),
             SubmissionRequest(test_cases=self.test_cases, language='C++17', code={
                 'main.cpp': '#include <iostream>\nint main() { std::cout << "hello"; return 0; }',
+            }),
+            SubmissionRequest(test_cases=self.test_cases, language='Java', time_limit=2, code={
+                'main.java': dedent('''
+                class Main {
+                    public static void main(String[] args) {
+                        System.out.println("hello");
+                    }
+                }
+            ''')
             }),
         ]
 

@@ -177,8 +177,10 @@ class JavaCompiler(Compiler):
         build_res = Process(f'javac -d {self.build_dir} {source_files}', timeout=10, memory_limit_mb=512).run()
         print('Build res:', build_res)
 
+        executable_path = f'java -cp {self.build_dir / "Main.jar"} Main'
+        if build_res.status != Status.OK:
+            return executable_path, build_res
+
         compile_res = Process(f'cd {self.build_dir} && jar cvf Main.jar *', timeout=10, memory_limit_mb=512).run()
         print('Compile res:', compile_res)
-
-        executable_path = f'java -cp {self.build_dir / "Main.jar"} Main'
         return executable_path, compile_res
