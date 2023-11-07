@@ -13,9 +13,9 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - name: Set up Python 3.11
-      uses: actions/setup-python@v3
+      uses: actions/setup-python@v4
       with:
         python-version: "3.11"
     - name: Install dependencies
@@ -26,6 +26,5 @@ jobs:
         pip install -r coderunners/requirements.txt
         pip install -r sync/requirements.txt
 
-    - name: Test with pytest
-      run: |
-        pytest tests/unit --cov=sync --cov=coderunners --cov=bouncer --cov-report term-missing
+    - name: Run unit tests with pytest
+      run: pytest tests/unit --cov=sync --cov=coderunners --cov=bouncer --cov-report term-missing
