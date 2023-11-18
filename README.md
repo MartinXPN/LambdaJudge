@@ -14,7 +14,11 @@ All the test cases are encrypted and the executor process does not have the key.
 Therefore, the arbitrary code cannot read the answers for the test cases.
 The test cases are kept on EFS (Elastic File System), which is mounted with a read access.
 
-# Infrastructure
+IMPORTANT: The tests do not run properly on Apple Silicon (due to consuming way too much memory per code execution).
+A simple hello world program in C++ consumes more than 1GB of RAM.
+
+
+## Infrastructure
 LambdaJudge infrastructure is best described in the image below.
 
 ### Checkers and CodeRunners
@@ -36,7 +40,7 @@ Bouncer is not in a VPC, and therefore easily fetches the encryption key from th
 [//]: # (created with https://app.creately.com/)
 ![LambdaJudge Infrastructure](https://i.imgur.com/AuVHUrq.png)
 
-# Development
+## Development
 
 This project uses [AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
 to define the serverless architecture and deploy it.
@@ -81,6 +85,7 @@ pre-commit run --all-files                                        # Tidy-up the 
 ```shell
 sam build --use-container                                         # Builds the project
 sam local start-lambda                                            # Start all the functions locally
+cd tests                                                          # Change the current directory to tests
 pytest --cov=sync --cov=coderunners --cov=bouncer --cov-report term-missing
 ```
 

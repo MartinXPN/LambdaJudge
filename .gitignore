@@ -1,6 +1,8 @@
 ### Project Specific ###
 .aws-sam
 .idea
+aws-sam-cli-linux-*.zip
+sam-installation
 
 ### Linux ###
 *~
