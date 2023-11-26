@@ -350,6 +350,27 @@ Resources:
       Name: 'BouncerApiAccessKey'
       Value: !Ref APIAccessKeyValue
 
+  BouncerUsagePlan:
+    Type: AWS::ApiGateway::UsagePlan
+    Properties:
+      Description: 'Usage plan for Bouncer API'
+      ApiStages:
+        - ApiId: !Ref ServerlessRestApi  # Replace with your RestApi Resource ID if different
+          Stage: Prod
+      Throttle:
+        BurstLimit: 10000
+        RateLimit: 10000
+      Quota:
+        Limit: 100000000
+        Period: MONTH
+
+  BouncerUsagePlanKey:
+    Type: AWS::ApiGateway::UsagePlanKey
+    Properties:
+      KeyId: !Ref BouncerApiAccessKey
+      KeyType: 'API_KEY'
+      UsagePlanId: !Ref BouncerUsagePlan
+
   Bouncer:
     Type: AWS::Serverless::Function
     Properties:
