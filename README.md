@@ -40,7 +40,7 @@ Bouncer is not in a VPC, and therefore easily fetches the encryption key from th
 [//]: # (created with https://app.creately.com/)
 ![LambdaJudge Infrastructure](https://i.imgur.com/AuVHUrq.png)
 
-## Development
+# Development
 
 This project uses [AWS SAM](https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/serverless-sam-cli-install.html)
 to define the serverless architecture and deploy it.
@@ -69,6 +69,36 @@ Here is the list of plugins for each IDE:
 * `pip install -r tests/requirements.txt` to run tests
 
 
+### Setting up the environment:
+
+Create an `.env.json` (for local development) file in the root of the project with the following content:
+```json
+{
+    "Parameters": {
+        "EFS_PROBLEMS_ENCRYPTION_KEY": "...",
+        "API_ACCESS_KEY": "..."
+    }
+}
+```
+
+Create a `samconfig.toml` (for deployment) file in the root of the project with the following content:
+```toml
+version=0.1
+
+[default.deploy.parameters]
+stack_name = "LambdaJudge"
+s3_bucket = "..."
+image_repository = "....amazonaws.com/lambda-judge-ecr"
+region = "..."
+confirm_changeset = false
+capabilities = ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"]
+parameter_overrides = """
+    EFS_PROBLEMS_ENCRYPTION_KEY='...'
+    API_ACCESS_KEY='...'
+    """
+```
+
+
 ### Running the project (need to have docker up and running):
 ```shell
 sam build --use-container                                         # Builds the project
@@ -84,7 +114,7 @@ pre-commit run --all-files                                        # Tidy-up the 
 ### Running tests (coverage is not reported for integration tests)
 ```shell
 sam build --use-container                                         # Builds the project
-sam local start-lambda                                            # Start all the functions locally
+sam local start-lambda --env-vars .env.json                       # Start all the functions locally
 cd tests                                                          # Change the current directory to tests
 pytest --cov=sync --cov=coderunners --cov=bouncer --cov-report term-missing
 ```

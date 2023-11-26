@@ -1,6 +1,8 @@
 ### Project Specific ###
 .aws-sam
 .idea
+.env.json
+samconfig.toml
 aws-sam-cli-linux-*.zip
 sam-installation
 

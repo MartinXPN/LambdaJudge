@@ -25,8 +25,15 @@ jobs:
     - uses: aws-actions/setup-sam@v2
     - run: sam build --use-container
 
+    - name: Create env.json for SAM
+      env:
+        EFS_PROBLEMS_ENCRYPTION_KEY: ${{ secrets.EFS_PROBLEMS_ENCRYPTION_KEY }}
+        API_ACCESS_KEY: ${{ secrets.API_ACCESS_KEY }}
+      run: |
+        echo '{"Parameters": {"EFS_PROBLEMS_ENCRYPTION_KEY": "'"$EFS_PROBLEMS_ENCRYPTION_KEY"'", "API_ACCESS_KEY": "'"$API_ACCESS_KEY"'"}}' > env.json
+
     - name: Start the project locally (and detach)
-      run: sam local start-lambda &
+      run: sam local start-lambda --env-vars env.json &
 
     - name: Run integration tests with SAM
       run: pytest tests/integration
