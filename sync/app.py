@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 
 import boto3
@@ -12,9 +13,7 @@ ROOT = Path('/tmp/')
 cfg = botocore.config.Config(retries={'max_attempts': 0}, read_timeout=300, connect_timeout=300)
 aws_lambda = boto3.client('lambda', config=cfg)
 s3 = boto3.client('s3')
-secret_manager = boto3.client('secretsmanager')
 dynamodb = boto3.resource('dynamodb')
-encryption_secret_key_id = 'arn:aws:secretsmanager:us-east-1:370358067229:secret:efs/problem/encryptionKey-xTnJWC'
 
 
 def trigger_sync_s3_handler(event, context):
@@ -26,9 +25,7 @@ def trigger_sync_s3_handler(event, context):
     problem = key.split('.')[0]
     print('bucket:', bucket, 'key:', key, 'problem:', problem)
 
-    get_secret_value_response = secret_manager.get_secret_value(SecretId=encryption_secret_key_id)
-    secrets = json.loads(get_secret_value_response['SecretString'])
-    encryption_key = secrets['EFS_PROBLEMS_ENCRYPTION_KEY']
+    encryption_key = os.environ.get('EFS_PROBLEMS_ENCRYPTION_KEY', '')
     print('encryption key len:', len(encryption_key))
 
     request = SyncRequest(bucket=bucket, key=key, encryption_key=encryption_key)

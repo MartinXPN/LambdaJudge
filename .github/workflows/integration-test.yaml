@@ -30,7 +30,7 @@ jobs:
         EFS_PROBLEMS_ENCRYPTION_KEY: ${{ secrets.EFS_PROBLEMS_ENCRYPTION_KEY }}
         API_ACCESS_KEY: ${{ secrets.API_ACCESS_KEY }}
       run: |
-        echo '{"Parameters": {"EFS_PROBLEMS_ENCRYPTION_KEY": "'"$EFS_PROBLEMS_ENCRYPTION_KEY"'", "API_ACCESS_KEY": "'"$API_ACCESS_KEY"'"}}' > env.json
+        echo '{"Parameters": {"EFSProblemsEncryptionKey": "'"$EFS_PROBLEMS_ENCRYPTION_KEY"'", "APIAccessKeyValue": "'"$API_ACCESS_KEY"'"}}' > env.json
 
     - name: Start the project locally (and detach)
       run: sam local start-lambda --env-vars env.json &

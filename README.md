@@ -75,8 +75,8 @@ Create an `.env.json` (for local development) file in the root of the project wi
 ```json
 {
     "Parameters": {
-        "EFS_PROBLEMS_ENCRYPTION_KEY": "...",
-        "API_ACCESS_KEY": "..."
+        "EFSProblemsEncryptionKey": "...",
+        "APIAccessKeyValue": "..."
     }
 }
 ```
@@ -93,8 +93,8 @@ region = "..."
 confirm_changeset = false
 capabilities = ["CAPABILITY_IAM", "CAPABILITY_NAMED_IAM"]
 parameter_overrides = """
-    EFS_PROBLEMS_ENCRYPTION_KEY='...'
-    API_ACCESS_KEY='...'
+    EFSProblemsEncryptionKey='...'
+    APIAccessKeyValue='...'
     """
 ```
 
@@ -104,8 +104,8 @@ parameter_overrides = """
 sam build --use-container                                         # Builds the project
 sam local invoke <FunctionName> --event events/pythonEcho.json    # Invokes the lambda function locally
 sam local start-api && curl http://localhost:3000/                # Start and invoke API endpoints locally
-sam local start-lambda                                            # Start all the functions (you can invoke them with boto3, have a look at integration tests)
-sam deploy --guided                                               # Deploy the serverless application
+sam local start-lambda --env-vars .env.json                       # Start all the functions (you can invoke them with boto3, have a look at integration tests)
+sam deploy --config-file samconfig.toml                           # Deploy with options loaded from `samconfig.toml`
 sam logs -n <FunctionName> --tail                                 # Print log tail for the deployed function
 
 pre-commit run --all-files                                        # Tidy-up the files before committing
@@ -115,6 +115,7 @@ pre-commit run --all-files                                        # Tidy-up the 
 ```shell
 sam build --use-container                                         # Builds the project
 sam local start-lambda --env-vars .env.json                       # Start all the functions locally
+# In another terminal tab run the following
 cd tests                                                          # Change the current directory to tests
 pytest --cov=sync --cov=coderunners --cov=bouncer --cov-report term-missing
 ```

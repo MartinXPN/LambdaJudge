@@ -3,6 +3,15 @@ Transform: AWS::Serverless-2016-10-31
 Description: SAM Template for LambdaJudge
 
 
+Parameters:
+  APIAccessKeyValue:
+    Type: String
+    Description: The API Key value to access the API Gateway
+  EFSProblemsEncryptionKey:
+    Type: String
+    Description: The encryption key for the problems store on EFS
+
+
 Globals:
   Function:
     Timeout: 300        # 5 min
@@ -31,22 +40,6 @@ Resources:
         - Ref: ContestantRole
         - Ref: TriggerSyncRole
         - Ref: SyncS3WithEFSRole
-  AllowSecretsAccessPolicy:
-    Type: AWS::IAM::Policy
-    Properties:
-      PolicyName: AllowSecretsAccessPolicy
-      PolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Action:
-              - 'secretsmanager:GetSecretValue'
-              - 'secretsmanager:DescribeSecret'
-              - 'secretsmanager:ListSecretVersionIds'
-            Resource: '*'
-      Roles:
-        - Ref: BouncerRole
-        - Ref: TriggerSyncRole
 
   DynamoDBAccessPolicy:
     Type: AWS::IAM::Policy
@@ -308,6 +301,7 @@ Resources:
       Environment:
         Variables:
           DYNAMODB_TABLE_NAME: !Ref PrivateTestsTable
+          EFS_PROBLEMS_ENCRYPTION_KEY: !Ref EFSProblemsEncryptionKey
       Events:
         SyncS3TestsWithEFSEvent:
           Type: S3
@@ -349,6 +343,13 @@ Resources:
       DockerContext: ./
       Dockerfile: sync/sync.Dockerfile
 
+  BouncerApiAccessKey:
+    Type: AWS::ApiGateway::ApiKey
+    Properties:
+      Enabled: true
+      Name: 'BouncerApiAccessKey'
+      Value: !Ref APIAccessKeyValue
+
   Bouncer:
     Type: AWS::Serverless::Function
     Properties:
@@ -356,12 +357,18 @@ Resources:
       MemorySize: 256
       PackageType: Image
       Role: !GetAtt BouncerRole.Arn
+      Environment:
+        Variables:
+          EFS_PROBLEMS_ENCRYPTION_KEY: !Ref EFSProblemsEncryptionKey
       Events:
         Check:
           Type: Api # More info about API Event Source: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#api
           Properties:
             Path: /check
             Method: post
+            RestApiId: !Ref ServerlessRestApi
+            Auth:
+              ApiKeyRequired: true
     Metadata:
       DockerTag: bouncer-v1
       DockerContext: ./
@@ -516,6 +523,9 @@ Outputs:
   Bouncer:
     Description: 'AWS Lambda checker for determining if the output of a code is exactly the same es the target'
     Value: !GetAtt Bouncer.Arn
+  BouncerApiAccessKey:
+    Description: "API Access Key for the Bouncer lambda function"
+    Value: !Ref BouncerApiAccessKey
 
   CodeRunnerTxt:
     Description: 'AWS Lambda for checking textual outputs'
