@@ -1,8 +1,8 @@
-FROM public.ecr.aws/lambda/python:3.11
+FROM public.ecr.aws/lambda/python:3.12
 
 # Initial setup
-RUN yum install https://rpm.nodesource.com/pub_16.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm -y
-RUN yum install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1
+RUN rpm -ivh https://rpm.nodesource.com/pub_16.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm
+RUN dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1
 
 RUN pip install --upgrade pip
 RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"

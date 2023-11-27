@@ -1,7 +1,7 @@
-FROM public.ecr.aws/lambda/python:3.11
+FROM public.ecr.aws/lambda/python:3.12
 
 # Initial setup
-RUN yum install -y gcc-c++ epel-release centos-release-scl clang-tools-extra
+RUN dnf install -y gcc-c++ clang-tools-extra libasan
 
 RUN pip install --upgrade pip
 RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"

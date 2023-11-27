@@ -1,9 +1,9 @@
-FROM public.ecr.aws/lambda/python:3.11
+FROM public.ecr.aws/lambda/python:3.12
 
 # Initial setup
-RUN yum install -y tar gzip
+RUN dnf install -y tar gzip findutils libicu
 ADD https://dot.net/v1/dotnet-install.sh ./dotnet-install.sh
-RUN sh dotnet-install.sh --channel LTS
+RUN sh dotnet-install.sh --version latest
 RUN mv /root/.dotnet /var/dotnet
 
 ENV \

@@ -1,4 +1,4 @@
-FROM public.ecr.aws/lambda/python:3.11
+FROM public.ecr.aws/lambda/python:3.12
 
 # Initial setup
 RUN pip install --upgrade pip

@@ -131,7 +131,8 @@ class CSharpCompiler(Compiler):
     def compile(self, submission_paths: list[Path]):
         project_create_res = Process(f'{self.dotnet_path} new console -o {self.project_dir}',
                                      timeout=20, memory_limit_mb=512).run()
-        (self.project_dir / 'Program.cs').unlink()   # Remove the default file created by dotnet
+        (self.project_dir / 'Program.cs').unlink(missing_ok=True)   # Remove the default file created by .Net
+        print('All files in project dir:', list(self.project_dir.iterdir()))
         print('Project Create res', project_create_res)
 
         # Copy files to project directory
