@@ -26,3 +26,9 @@ pip-delete-this-directory.txt
 pip-log.txt
 tests
 venv
+sam-installation
+.idea
+.env.json
+samconfig.toml
+aws-sam-cli-linux-*.zip
+sam-installation

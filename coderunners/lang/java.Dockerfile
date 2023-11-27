@@ -1,7 +1,7 @@
 FROM public.ecr.aws/lambda/python:3.12
 
 # Initial setup
-RUN dnf install -y java-17-amazon-corretto-devel
+RUN dnf install -y java-21-amazon-corretto-devel
 
 RUN pip install --upgrade pip
 RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"
