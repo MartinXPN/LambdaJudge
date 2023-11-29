@@ -1,3 +1,4 @@
+import base64
 import json
 import os
 from pathlib import Path
@@ -56,6 +57,16 @@ def sync_efs_handler(event, context):
 
     tests = zip2tests(zip_path)
     tests_truncated = truncate(tests, max_len=100)
+    # Convert asset files to base64 strings
+    for test in tests_truncated:
+        test.input_assets = {
+            filename: base64.b64encode(content).decode('utf-8')
+            for filename, content in test.input_assets.items()
+        } if test.input_assets else None
+        test.target_assets = {
+            filename: base64.b64encode(content).decode('utf-8')
+            for filename, content in test.target_assets.items()
+        } if test.target_assets else None
     tests = encrypt_tests(tests, encryption_key=encryption_key)
 
     with open(problem_file, 'wb') as f:
