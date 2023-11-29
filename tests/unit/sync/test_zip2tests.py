@@ -1,4 +1,3 @@
-import base64
 import shutil
 from pathlib import Path
 from tempfile import TemporaryDirectory
@@ -89,5 +88,5 @@ class TestTruncation:
             assert test.input_files['yoyo.txt'] == 'First file input'
             assert test.target_files['yoyo.txt'] == 'First file target'
             assert test.target_files['bik.txt'] == 'Second file target'
-            assert base64.b64decode(test.input_assets['start.bin'].encode('utf-8')) == b'Hello'
-            assert base64.b64decode(test.target_assets['finish.bin'].encode('utf-8')) == b'World'
+            assert test.input_assets['start.bin'] == b'Hello'
+            assert test.target_assets['finish.bin'] == b'World'

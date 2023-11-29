@@ -1,5 +1,3 @@
-import base64
-
 import pytest
 
 from models import TestCase
@@ -10,8 +8,7 @@ class TestTruncation:
     @classmethod
     def _get_tests_with_len(cls, char_count: int) -> list[TestCase]:
         data = 'a' * char_count
-        binary = base64.b64encode(b'a' * char_count)
-        binary = binary.decode('utf-8')[: char_count]
+        binary = b'a' * char_count
 
         return [TestCase(
             input=data, target=data,

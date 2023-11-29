@@ -1,3 +1,4 @@
+import base64
 from dataclasses import dataclass
 from enum import Enum
 
@@ -24,10 +25,27 @@ class Status(Enum):
 class TestCase(DataClassJsonCamelMixIn):
     input: str
     target: str
-    input_files: dict[str, str] | None = None        # list of (filename, textual content)
-    target_files: dict[str, str] | None = None       # list of (filename, textual content)
-    input_assets: dict[str, str] | None = None       # list of (filename, base64 encoded string)
-    target_assets: dict[str, str] | None = None      # list of (filename, base64 encoded string)
+    input_files: dict[str, str] | None = None               # mapping filename -> textual content
+    target_files: dict[str, str] | None = None              # mapping filename -> textual content
+    input_assets: dict[str, str | bytes] | None = None      # mapping filename -> base64 encoded string or bytes
+    target_assets: dict[str, str | bytes] | None = None     # mapping filename -> base64 encoded string or bytes
+
+    def __post_init__(self):
+        """
+        Make sure that if input_assets or target_assets are provided (as base64 encoded strings), convert them to bytes
+        """
+        if self.input_assets is not None and all(isinstance(content, str) for content in self.input_assets.values()):
+            print('Converting input assets to bytes', self.input_assets)
+            self.input_assets = {
+                filename: base64.b64decode(content.encode('utf-8'))
+                for filename, content in self.input_assets.items()
+            }
+            print('Converted input assets to bytes', self.input_assets)
+        if self.target_assets is not None and all(isinstance(content, str) for content in self.target_assets.values()):
+            self.target_assets = {
+                filename: base64.b64decode(content.encode('utf-8'))
+                for filename, content in self.target_assets.items()
+            }
 
 
 @dataclass

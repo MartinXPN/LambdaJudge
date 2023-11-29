@@ -11,11 +11,11 @@ class TestFiles:
         TestCase(input='1', target='2', input_files={'hello.txt': 'hello'}, target_files={'hello.txt': 'hello'}),
         TestCase(input='2', target='4', input_files={'hello.txt': 'hello'}, target_files={'hello.txt': 'hello'}),
         TestCase(input='3', target='4', input_files={'hello.txt': 'hello'}, target_files={'res.txt': 'heyhey'}),
-        TestCase(input='4', target='5', input_files={'hello.txt': 'hello'}, target_files={'res.txt': 'heyhey'},
-                 # Assets should be encoded into base64 strings
-                 input_assets={'img.bmp': base64.b64encode(b'image!').decode('utf-8')},
-                 target_assets={'res.bmp': base64.b64encode(b'Result!!!').decode('utf-8')}),
+        TestCase(input='4', target='5', input_files={'hello.txt': 'hello'}, target_files={'res.txt': 'heyhey'}),
     ]
+    # Assets should be encoded into base64 strings
+    test_cases[-1].input_assets = {'img.bmp': base64.b64encode(b'image!').decode('utf-8')}
+    test_cases[-1].target_assets = {'res.bmp': base64.b64encode(b'Result!!!').decode('utf-8')}
 
     def test_no_file(self):
         request = SubmissionRequest(test_cases=self.test_cases, stop_on_first_fail=False, language='python', code={

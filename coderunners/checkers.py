@@ -6,9 +6,9 @@ from dataclasses import dataclass
 from pathlib import Path
 from tempfile import NamedTemporaryFile, TemporaryDirectory
 
-from coderunners.process import Process
+from coderunners.executors import Executor
 from coderunners.util import is_float, save_code
-from models import Status
+from models import Status, TestCase
 
 
 class Checker(ABC):
@@ -42,7 +42,7 @@ class Checker(ABC):
     @staticmethod
     def from_mode(mode: str,
                   float_precision: float | None = None, delimiter: str | None = None,
-                  executable_path: Path | None = None) -> 'Checker':
+                  executor: Executor | None = None) -> 'Checker':
         if mode == 'ok':
             return OkChecker()
         if mode == 'whole':
@@ -51,8 +51,8 @@ class Checker(ABC):
             assert float_precision is not None
             return TokenEquality(float_precision=float_precision, delimiter=delimiter)
         if mode == 'custom':
-            assert executable_path is not None
-            return CustomChecker(executable_path=executable_path)
+            assert executor is not None
+            return CustomChecker(executor=executor)
         raise ValueError(f'{mode} comparison mode is not implemented yet')
 
 
@@ -125,7 +125,7 @@ class TokenEquality(Checker):
 
 @dataclass
 class CustomChecker(Checker):
-    executable_path: Path
+    executor: Executor
 
     def check(
         self, inputs, output, target, code,
@@ -145,10 +145,13 @@ class CustomChecker(Checker):
             tg.flush()
 
             random_status_string = ''.join(random.choices(string.ascii_letters + string.digits, k=10))
-            res = Process(
-                f'{self.executable_path} {inf.name} {ouf.name} {tg.name} {code_dir.resolve()}',
-                timeout=5, memory_limit_mb=512, output_limit_mb=1,
-            ).run(program_input=random_status_string)
+            command_line_args = f' {inf.name} {ouf.name} {tg.name} {code_dir.resolve()}'
+            self.executor.command += command_line_args
+            res = self.executor.run(
+                test=TestCase(input=random_status_string, target=''),
+                time_limit=5, memory_limit_mb=512, output_limit_mb=1,
+            )
+            self.executor.command = self.executor.command.replace(command_line_args, '')
 
         if res.status != Status.OK:
             return res.status, 0, f'Checker failed with: {res.message}, having errors: {res.errors}'

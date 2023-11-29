@@ -5,13 +5,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar
 
+from coderunners.executors import Executor, ProcessExecutor
 from coderunners.process import Process
 from models import RunResult, Status
 
 
 class Compiler(ABC):
     @abstractmethod
-    def compile(self, submission_paths: list[Path]) -> tuple[Path, RunResult]:
+    def compile(self, submission_paths: list[Path]) -> tuple[Executor, RunResult]:
         ...
 
     @classmethod
@@ -50,9 +51,9 @@ class TxtCompiler(Compiler):
         if len(submission_paths) != 1:
             raise ValueError('Only one file is allowed for txt submissions')
 
-        executable_path = f'cat {submission_paths[0]}'
+        command = f'cat {submission_paths[0]}'
         compile_res = RunResult(status=Status.OK, memory=0, time=0, return_code=0, outputs=None, errors=None)
-        return executable_path, compile_res
+        return ProcessExecutor(command=command), compile_res
 
 
 @dataclass
@@ -72,8 +73,8 @@ class CppCompiler(Compiler):
                               f'-o {executable_path}',
                               timeout=10, memory_limit_mb=512).run()
         print('Compile res', compile_res)
-        executable_path = f'ASAN_OPTIONS=detect_leaks=1 LSAN_OPTIONS=detect_leaks=0 {executable_path}'
-        return executable_path, compile_res
+        command = f'ASAN_OPTIONS=detect_leaks=1 LSAN_OPTIONS=detect_leaks=0 {executable_path}'
+        return ProcessExecutor(command=command), compile_res
 
 
 @dataclass
@@ -86,7 +87,7 @@ class PythonCompiler(Compiler):
         binary_paths = [path.with_suffix('.pyc') for path in submission_paths]
         submission_paths_str = ' '.join([str(path) for path in submission_paths])
         main_file_path = self.find_main_file_path(submission_paths, self.MAIN_FILE_NAME)
-        executable_path = f'{self.language_standard} {main_file_path}'
+        command = f'{self.language_standard} {main_file_path}'
 
         print('Creating python binary at:', binary_paths)
         compile_res = Process(f'{self.language_standard} -m py_compile {submission_paths_str}',
@@ -95,7 +96,7 @@ class PythonCompiler(Compiler):
 
         for path in binary_paths:
             path.unlink(missing_ok=True)
-        return executable_path, compile_res
+        return ProcessExecutor(command=command), compile_res
 
 
 @dataclass
@@ -107,7 +108,7 @@ class PythonMLCompiler(Compiler):
         binary_paths = [path.with_suffix('.pyc') for path in submission_paths]
         submission_paths_str = ' '.join([str(path) for path in submission_paths])
         main_file_path = self.find_main_file_path(submission_paths, self.MAIN_FILE_NAME)
-        executable_path = f'python {main_file_path}'
+        command = f'python {main_file_path}'
 
         print('Creating python binary at:', binary_paths)
         compile_res = Process(f'python -m py_compile {submission_paths_str}', timeout=10, memory_limit_mb=512).run()
@@ -115,7 +116,7 @@ class PythonMLCompiler(Compiler):
 
         for path in binary_paths:
             path.unlink(missing_ok=True)
-        return executable_path, compile_res
+        return ProcessExecutor(command=command), compile_res
 
 
 @dataclass
@@ -146,8 +147,8 @@ class CSharpCompiler(Compiler):
         compile_res = Process(compile_cmd, timeout=20, memory_limit_mb=512).run()
         print('Compile res', compile_res)
 
-        executable_path = f'{self.dotnet_path} run {self.dll_path} --project {self.project_dir}'
-        return executable_path, compile_res
+        command = f'{self.dotnet_path} run {self.dll_path} --project {self.project_dir}'
+        return ProcessExecutor(command=command), compile_res
 
 
 @dataclass
@@ -162,8 +163,8 @@ class JsCompiler(Compiler):
 
         compile_res = Process(f'node --check {project}', timeout=10, memory_limit_mb=512).run()
         print('Compile res', compile_res)
-        executable_path = f'node {project}'
-        return executable_path, compile_res
+        command = f'node {project}'
+        return ProcessExecutor(command=command), compile_res
 
 
 @dataclass
@@ -178,10 +179,10 @@ class JavaCompiler(Compiler):
         build_res = Process(f'javac -d {self.build_dir} {source_files}', timeout=10, memory_limit_mb=512).run()
         print('Build res:', build_res)
 
-        executable_path = f'java -cp {self.build_dir / "Main.jar"} Main'
+        command = f'java -cp {self.build_dir / "Main.jar"} Main'
         if build_res.status != Status.OK:
-            return executable_path, build_res
+            return ProcessExecutor(command=command), build_res
 
         compile_res = Process(f'cd {self.build_dir} && jar cvf Main.jar *', timeout=10, memory_limit_mb=512).run()
         print('Compile res:', compile_res)
-        return executable_path, compile_res
+        return ProcessExecutor(command=command), compile_res

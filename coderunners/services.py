@@ -6,6 +6,7 @@ from cryptography.fernet import Fernet
 
 from coderunners.checkers import Checker
 from coderunners.compilers import Compiler
+from coderunners.executors import Executor
 from coderunners.linters import Linter
 from coderunners.process import Process
 from coderunners.scoring import Scorer
@@ -17,12 +18,12 @@ class EqualityChecker(SubmissionRequest):
     ROOT: Path = Path('/tmp/')
 
     @staticmethod
-    def compile(code_paths: list[Path], language: str) -> tuple[Path | None, RunResult]:
+    def compile(code_paths: list[Path], language: str) -> tuple[Executor | None, RunResult]:
         """ Compiles and returns (executable path | None, compilation result) """
         compiler = Compiler.from_language(language=language)
-        executable_path, compilation = compiler.compile(submission_paths=code_paths)
+        executor, compilation = compiler.compile(submission_paths=code_paths)
         if compilation.status == Status.OK and not compilation.errors:
-            return executable_path, compilation
+            return executor, compilation
 
         # Compile error
         print('Compile error:', compilation)
@@ -40,8 +41,8 @@ class EqualityChecker(SubmissionRequest):
         Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
         code_paths = save_code(save_dir=self.ROOT, code=self.code)
 
-        executable_path, compile_result = self.compile(code_paths, self.language)
-        if executable_path is None:
+        executor, compile_result = self.compile(code_paths, self.language)
+        if executor is None:
             return SubmissionResult(overall=compile_result, compile_result=compile_result)
 
         # Lint the code
@@ -71,71 +72,46 @@ class EqualityChecker(SubmissionRequest):
             self.comparison_mode = 'ok'
 
         # Prepare the checker
-        checker_executable_path = None
+        checker_executor = None
         if self.comparison_mode == 'custom':
             checker_code_paths = save_code(save_dir=self.ROOT, code=self.checker_code)
-            checker_executable_path, checker_compile_result = self.compile(checker_code_paths, self.checker_language)
-            if checker_executable_path is None:
+            checker_executor, checker_compile_result = self.compile(checker_code_paths, self.checker_language)
+            if checker_executor is None:
                 checker_compile_result.message = 'Checker compilation failed'
                 return SubmissionResult(overall=checker_compile_result, compile_result=checker_compile_result)
 
         checker = Checker.from_mode(
             mode=self.comparison_mode,
-            float_precision=self.float_precision, delimiter=self.delimiter, executable_path=checker_executable_path
+            float_precision=self.float_precision, delimiter=self.delimiter, executor=checker_executor,
         )
 
         # Run the first test as a warmup to avoid having big time consumption on the first run
         print('Running test warmup', end='...')
-        Process(
-            f'{executable_path}',
-            timeout=self.time_limit, memory_limit_mb=self.memory_limit, output_limit_mb=self.output_limit,
-        ).run(self.test_cases[0].input)
+        executor.run(
+            self.test_cases[0],
+            time_limit=self.time_limit, memory_limit_mb=self.memory_limit, output_limit_mb=self.output_limit
+        )
         print('Done')
 
         # Process all tests
         test_results: list[RunResult] = []
         for i, test in enumerate(self.test_cases):
             print(f'Running test {i}', end='...')
-
-            # Convert asset files to bytes from base64 strings
-            input_assets: dict[str, bytes] = {filename: base64.b64decode(content.encode('utf-8'))
-                                              for filename, content in (test.input_assets or {}).items()}
-            target_assets: dict[str, bytes] = {filename: base64.b64decode(content.encode('utf-8'))
-                                               for filename, content in (test.target_assets or {}).items()}
-
-            # Crete input files and input assets
-            for filename, content in (test.input_files or {}).items():
-                print('Creating file at:', self.ROOT / filename)
-                (self.ROOT / filename).write_text(content)
-            for filename, content in input_assets.items():
-                print('Creating asset at:', self.ROOT / filename)
-                (self.ROOT / filename).write_bytes(content)
-
-            r = Process(
-                f'{executable_path}',
-                timeout=self.time_limit, memory_limit_mb=self.memory_limit, output_limit_mb=self.output_limit,
-            ).run(test.input)
-
-            output_files = {filename: (self.ROOT / filename).read_text() if (self.ROOT / filename).exists() else ''
-                            for filename in (test.target_files or {}).keys()}
-            output_assets = {filename: (self.ROOT / filename).read_bytes() if (self.ROOT / filename).exists() else b''
-                             for filename in target_assets.keys()}
+            r = executor.run(
+                test=test,
+                time_limit=self.time_limit, memory_limit_mb=self.memory_limit, output_limit_mb=self.output_limit,
+            )
 
             (r.status, r.score, r.message) = checker.check(
                 inputs=test.input, output=r.outputs, target=test.target,
                 code=self.code,
-                input_files=test.input_files, output_files=output_files, target_files=test.target_files,
-                input_assets=input_assets, output_assets=output_assets, target_assets=target_assets,
+                input_files=test.input_files, output_files=r.output_files, target_files=test.target_files,
+                input_assets=test.input_assets, output_assets=r.output_assets, target_assets=test.target_assets,
             ) if r.status == Status.OK else (r.status, 0, r.message)
             print(f'Test {i} res: {r.status} => {r.score}')
 
             # Clean up
-            cleanup_files = (test.input_files or {}).keys() | (test.target_files or {}).keys() | \
-                            (test.input_assets or {}).keys() | (test.target_assets or {}).keys()
-            for filename in cleanup_files:
-                if (self.ROOT / filename).exists():
-                    print('Removing file at:', self.ROOT / filename)
-                    (self.ROOT / filename).unlink()
+            executor.cleanup(test)
 
             # Report the result
             test_results.append(r)
@@ -143,18 +119,19 @@ class EqualityChecker(SubmissionRequest):
                 test_results[-1].outputs = None
                 test_results[-1].errors = None
                 test_results[-1].output_files = None
+                test_results[-1].output_assets = None
             else:
                 max_len = 32000     # limit each item to 64KB (2 bytes per character)
                 test_results[-1].outputs = r.outputs[:max_len] if r.outputs else None
                 test_results[-1].errors = r.errors[:max_len] if r.errors else None
                 test_results[-1].output_files = {
                     filename: content[:max_len]
-                    for filename, content in output_files.items()
-                } if output_files else None
+                    for filename, content in r.output_files.items()
+                } if r.output_files else None
                 test_results[-1].output_assets = {
                     filename: base64.b64encode(content[:max_len]).decode('utf-8')
-                    for filename, content in output_assets.items()
-                } if output_assets else None
+                    for filename, content in r.output_assets.items()
+                } if r.output_assets else None
 
             # Stop on failure
             if self.stop_on_first_fail and test_results[-1].status != Status.OK:
