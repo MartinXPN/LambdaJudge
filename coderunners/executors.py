@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Iterable
-from coderunners.process import Process
 
+from coderunners.process import Process
 from models import RunResult, TestCase
 
 
