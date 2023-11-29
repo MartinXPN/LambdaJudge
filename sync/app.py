@@ -36,7 +36,20 @@ def trigger_sync_s3_handler(event, context):
     res = json.loads(res)
     print('invocation result:', res)
 
-    SummaryTable(dynamodb).write(problem, TestCase.schema().load(res['tests_truncated'], many=True))
+    tests = TestCase.schema().load(res['tests_truncated'], many=True)
+    print('tests:', tests)
+
+    # Convert asset files to base64 strings
+    for test in tests:
+        test.input_assets = {
+            filename: base64.b64encode(content).decode('utf-8')
+            for filename, content in test.input_assets.items()
+        } if test.input_assets else None
+        test.target_assets = {
+            filename: base64.b64encode(content).decode('utf-8')
+            for filename, content in test.target_assets.items()
+        } if test.target_assets else None
+    SummaryTable(dynamodb).write(problem, tests)
     print('Wrote to a summary table')
 
 
@@ -57,6 +70,8 @@ def sync_efs_handler(event, context):
 
     tests = zip2tests(zip_path)
     tests_truncated = truncate(tests, max_len=100)
+    print('tests_truncated:', tests_truncated)
+
     # Convert asset files to base64 strings
     for test in tests_truncated:
         test.input_assets = {
@@ -67,6 +82,7 @@ def sync_efs_handler(event, context):
             filename: base64.b64encode(content).decode('utf-8')
             for filename, content in test.target_assets.items()
         } if test.target_assets else None
+    print('tests_truncated after conversion to str:', tests_truncated)
     tests = encrypt_tests(tests, encryption_key=encryption_key)
 
     with open(problem_file, 'wb') as f:

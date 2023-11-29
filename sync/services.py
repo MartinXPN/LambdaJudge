@@ -1,4 +1,3 @@
-import base64
 import glob
 import gzip
 import sys
@@ -11,16 +10,12 @@ from cryptography.fernet import Fernet
 from models import TestCase
 
 
-def read_files(paths: list[Path], mode: str = 'r', remove_prefix: str = '') -> dict[str, str]:
+def read_files(paths: list[Path], mode: str = 'r', remove_prefix: str = '') -> dict[str, str | bytes]:
     contents = {}
     for path in paths:
         with open(path, mode) as f:
             filename = str(path).replace(remove_prefix, '').lstrip('.')
             data = f.read()
-            if mode == 'rb':
-                # Encode binary data into string
-                data = base64.b64encode(data)
-                data = data.decode('utf-8')
             contents[filename] = data
     return contents
 
@@ -60,16 +55,14 @@ def zip2tests(zip_path: Path) -> list[TestCase]:
             input_assets = read_files([Path(f) for f in input_assets], 'rb', remove_prefix=f'{in_prefix}.asset.')
             target_assets = read_files([Path(f) for f in target_assets], 'rb', remove_prefix=f'{out_prefix}.asset.')
 
-            with open(ins) as inf, open(outs) as of:
-                print(ins, outs)
-                tests.append(TestCase(
-                    input=inf.read(),
-                    target=of.read(),
-                    input_files=input_files if len(input_files) != 0 else None,
-                    target_files=target_files if len(target_files) != 0 else None,
-                    input_assets=input_assets if len(input_assets) != 0 else None,
-                    target_assets=target_assets if len(target_assets) != 0 else None,
-                ))
+            tests.append(TestCase(
+                input=Path(ins).read_text(),
+                target=Path(outs).read_text(),
+                input_files=input_files if len(input_files) != 0 else None,
+                target_files=target_files if len(target_files) != 0 else None,
+                input_assets=input_assets if len(input_assets) != 0 else None,
+                target_assets=target_assets if len(target_assets) != 0 else None,
+            ))
     return tests
 
 
