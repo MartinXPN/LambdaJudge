@@ -1,4 +1,3 @@
-import base64
 import gzip
 from pathlib import Path
 
@@ -125,12 +124,10 @@ class EqualityChecker(SubmissionRequest):
                 test_results[-1].outputs = r.outputs[:max_len] if r.outputs else None
                 test_results[-1].errors = r.errors[:max_len] if r.errors else None
                 test_results[-1].output_files = {
-                    filename: content[:max_len]
-                    for filename, content in r.output_files.items()
+                    filename: content[:max_len] for filename, content in r.output_files.items()
                 } if r.output_files else None
                 test_results[-1].output_assets = {
-                    filename: base64.b64encode(content[:max_len]).decode('utf-8')
-                    for filename, content in r.output_assets.items()
+                    filename: content[:max_len] for filename, content in r.output_assets.items()
                 } if r.output_assets else None
 
             # Stop on failure
