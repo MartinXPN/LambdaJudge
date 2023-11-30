@@ -49,7 +49,7 @@ def sync_efs_handler(event, context):
 
     bucket, key, encryption_key = request.bucket, request.key, request.encryption_key
     problem = key.split('.')[0]
-    problem_file = f'/mnt/efs/{problem}.gz.fer'
+    problem_file = Path(f'/mnt/efs/{problem}.gz.fer')
     zip_path = ROOT / f'{problem}.zip'
     print('problem_file', problem_file, 'zip:', zip_path)
 
@@ -60,9 +60,8 @@ def sync_efs_handler(event, context):
     tests_truncated = truncate(tests, max_len=100)
     tests = encrypt_tests(tests, encryption_key=encryption_key)
 
-    with open(problem_file, 'wb') as f:
-        f.write(tests)
-    print(f'{problem_file} size on EFS:', Path(problem_file).stat().st_size)
+    problem_file.write_bytes(tests)
+    print(f'{problem_file} size on EFS:', problem_file.stat().st_size)
     zip_path.unlink(missing_ok=True)
 
     return {
