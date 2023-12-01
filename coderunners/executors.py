@@ -1,9 +1,9 @@
+import sqlite3
 from abc import ABC, abstractmethod
 from collections.abc import Iterable
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
-import sqlite3
 
 from coderunners.process import Process
 from models import RunResult, Status, TestCase
