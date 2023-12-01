@@ -5,7 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import ClassVar
 
-from coderunners.executors import Executor, ProcessExecutor
+from coderunners.executors import Executor, ProcessExecutor, SQLiteExecutor
 from coderunners.process import Process
 from models import RunResult, Status
 
@@ -24,7 +24,7 @@ class Compiler(ABC):
 
     @staticmethod
     def from_language(language: str) -> 'Compiler':
-        language = language.lower()
+        language = language.lower().strip()
         if language in TxtCompiler.supported_standards:
             return TxtCompiler()
         if language in CppCompiler.supported_standards:
@@ -39,6 +39,8 @@ class Compiler(ABC):
             return JsCompiler(language_standard=language)
         if language in JavaCompiler.supported_standards:
             return JavaCompiler()
+        if language in SQLiteCompiler.supported_standards:
+            return SQLiteCompiler()
         raise ValueError(f'{language} does not have a compiler yet')
 
 
@@ -186,3 +188,20 @@ class JavaCompiler(Compiler):
         compile_res = Process(f'cd {self.build_dir} && jar cvf Main.jar *', timeout=10, memory_limit_mb=512).run()
         print('Compile res:', compile_res)
         return ProcessExecutor(command=command), compile_res
+
+
+@dataclass
+class SQLiteCompiler(Compiler):
+    supported_standards = {'sql', 'sqlite'}
+    db_name: str = 'main.db'
+
+    def compile(self, submission_paths: list[Path]):
+        if len(submission_paths) != 1:
+            return ProcessExecutor(command='echo "Only one file is allowed"'), RunResult(
+                status=Status.CE, memory=0, time=0, return_code=0, outputs=None,
+                errors='Only one file is allowed for SQL submissions',
+            )
+
+        script = submission_paths[0].read_text()
+        executor = SQLiteExecutor(script=script, db_name=self.db_name)
+        return executor, RunResult(status=Status.OK, memory=0, time=0, return_code=0, outputs=None, errors=None)
