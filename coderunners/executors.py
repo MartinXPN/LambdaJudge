@@ -98,13 +98,13 @@ class SQLiteExecutor(Executor):
 
         # Execute the self.script as a single command and get the output
         print('Executing script:', self.script)
-        res = pd.read_sql_query(self.script, self.db).to_string(header=False, index=False)
+        res = pd.read_sql_query(self.script, self.db).to_string(index=False)
         print('Result:', res)
 
         r = RunResult(
             status=Status.OK, memory=0, time=0, return_code=0, outputs=res,
             output_files={
-                filename: pd.read_sql_query(f'SELECT * FROM {filename}', self.db).to_string()
+                filename: pd.read_sql_query(f'SELECT * FROM {filename}', self.db).to_string(index=False)
                 for filename in (test.target_files or {}).keys()
             })
 

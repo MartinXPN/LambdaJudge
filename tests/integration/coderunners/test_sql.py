@@ -7,15 +7,21 @@ from tests.integration.config import lambda_client
 
 class TestSQLSubmissions:
     test_cases = [
-        TestCase(input=dedent('''
+        TestCase(
+            input=dedent('''
                 -- Initialization script goes here
-            '''), target='hello world')]
+            '''),
+            target=dedent('''
+                'hello world'
+                  hello world
+            ''').strip()),
+    ]
 
     def test_echo(self):
-        request = SubmissionRequest(test_cases=self.test_cases, language='SQL', code={
+        request = SubmissionRequest(test_cases=self.test_cases, return_outputs=True, language='SQL', code={
             'main.sql': dedent('''
                 SELECT 'hello world'
-            '''.strip()),
+            ''').strip(),
         })
         res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
         print(res)
