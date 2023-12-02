@@ -8,3 +8,4 @@ dataclasses-json>=0.5.14
 psutil>=5.9.5
 requests>=2.31.0
 cryptography>=41.0.3
+pandas>=2.1.3
