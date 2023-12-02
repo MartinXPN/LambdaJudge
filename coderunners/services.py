@@ -90,6 +90,7 @@ class EqualityChecker(SubmissionRequest):
             self.test_cases[0],
             time_limit=self.time_limit, memory_limit_mb=self.memory_limit, output_limit_mb=self.output_limit
         )
+        executor.cleanup(self.test_cases[0])
         print('Done')
 
         # Process all tests

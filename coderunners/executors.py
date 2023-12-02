@@ -83,33 +83,68 @@ class SQLiteExecutor(Executor):
         """
         import pandas as pd
         cursor = self.db.cursor()
-        cursor.executescript(test.input)
+
+        try:
+            cursor.executescript(test.input)
+            self.db.commit()
+        except sqlite3.Error as e:
+            cursor.close()
+            return RunResult(
+                status=Status.RUNTIME_ERROR, memory=0, time=0, return_code=0, outputs=None,
+                errors=str(e),
+            )
 
         for filename, content in (test.input_files or {}).items():
             # Load the content of the file into a dataframe and then load it into the db (filename)
-            print('Creating table:', filename)
-            csv_data = StringIO(content)
-            df = pd.read_csv(csv_data)
-            print(df.head())
-            df.to_sql(filename, self.db, if_exists='replace', index=False)
-            print('--- Done ---')
+            try:
+                print('Creating table:', filename)
+                csv_data = StringIO(content)
+                df = pd.read_csv(csv_data)
+                print(df.head())
+                df.to_sql(filename, self.db, if_exists='replace', index=False)
+                print('--- Done ---')
+            except (sqlite3.Error, pd.errors.ParserError, pd.errors.DatabaseError, ValueError) as e:
+                cursor.close()
+                return RunResult(
+                    status=Status.RUNTIME_ERROR, memory=0, time=0, return_code=0, outputs=None,
+                    errors=str(e),
+                )
 
         self.db.commit()
 
         # Execute the self.script as a single command and get the output
-        print('Executing script:', self.script)
-        res = pd.read_sql_query(self.script, self.db).to_string(index=False)
-        print('Result:', res)
+        try:
+            print('Executing script:', self.script)
+            if self.script.strip().upper().startswith('SELECT'):
+                res = pd.read_sql_query(self.script, self.db).to_csv(index=False)
+            else:
+                cursor.executescript(self.script)
+                self.db.commit()
+                res = ''
+            print('Result:', res)
+        except (sqlite3.Error, pd.errors.ParserError, pd.errors.DatabaseError, ValueError) as e:
+            cursor.close()
+            return RunResult(
+                status=Status.RUNTIME_ERROR, memory=0, time=0, return_code=0, outputs=None,
+                errors=str(e),
+            )
 
-        r = RunResult(
-            status=Status.OK, memory=0, time=0, return_code=0, outputs=res,
-            output_files={
-                filename: pd.read_sql_query(f'SELECT * FROM {filename}', self.db).to_string(index=False)
-                for filename in (test.target_files or {}).keys()
-            })
-
-        cursor.close()
-        return r
+        # Read output files into the result
+        try:
+            r = RunResult(
+                status=Status.OK, memory=0, time=0, return_code=0, outputs=res,
+                output_files={
+                    filename: pd.read_sql_query(f'SELECT * FROM {filename}', self.db).to_csv(index=False)
+                    for filename in (test.target_files or {}).keys()
+                })
+            cursor.close()
+            return r
+        except (sqlite3.Error, pd.errors.ParserError, pd.errors.DatabaseError, ValueError) as e:
+            cursor.close()
+            return RunResult(
+                status=Status.RUNTIME_ERROR, memory=0, time=0, return_code=0, outputs=None,
+                errors=str(e),
+            )
 
     def cleanup(self, test: TestCase) -> None:
         """ Drops all the tables in the database """
