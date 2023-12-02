@@ -29,6 +29,8 @@ class CodeRunner(ABC):
             return JsRunner()
         if language in JavaRunner.supported_standards:
             return JavaRunner()
+        if language in SQLiteRunner.supported_standards:
+            return SQLiteRunner()
         raise ValueError(f'{language} does not have a compiler yet')
 
     def invoke(self, aws_lambda_client, request: SubmissionRequest) -> SubmissionResult:
@@ -100,3 +102,12 @@ class JavaRunner(CodeRunner):
     @property
     def name(self) -> str:
         return 'CodeRunnerJava'
+
+
+@dataclass
+class SQLiteRunner(CodeRunner):
+    supported_standards = {'sql', 'sqlite'}
+
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerSQLite'

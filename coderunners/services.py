@@ -90,6 +90,7 @@ class EqualityChecker(SubmissionRequest):
             self.test_cases[0],
             time_limit=self.time_limit, memory_limit_mb=self.memory_limit, output_limit_mb=self.output_limit
         )
+        executor.cleanup(self.test_cases[0])
         print('Done')
 
         # Process all tests
@@ -107,7 +108,7 @@ class EqualityChecker(SubmissionRequest):
                 input_files=test.input_files, output_files=r.output_files, target_files=test.target_files,
                 input_assets=test.input_assets, output_assets=r.output_assets, target_assets=test.target_assets,
             ) if r.status == Status.OK else (r.status, 0, r.message)
-            print(f'Test {i} res: {r.status} => {r.score}')
+            print(f'Test {i} res: {r.status} => score {r.score}')
 
             # Clean up
             executor.cleanup(test)
@@ -135,8 +136,10 @@ class EqualityChecker(SubmissionRequest):
                 test_results += [
                     RunResult(status=Status.SKIPPED, memory=0, time=0, return_code=0)
                 ] * (len(self.test_cases) - i - 1)
-                print('Expected:', test.target, test.target_files)
-                print('Actual:', test_results[-1].outputs, test_results[-1].output_files)
+                print('Expected:', test.target)
+                print('Actual:', test_results[-1].outputs)
+                print('Expected files:', test.target_files)
+                print('Actual files:', test_results[-1].output_files)
                 break
         print('test_results:', test_results)
         assert len(test_results) == len(self.test_cases)
