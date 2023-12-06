@@ -13,7 +13,7 @@ class TestCompileError:
             SubmissionRequest(test_cases=self.test_cases, language='python', code={
                 'main.py': ' print("hello")',
             }),
-            SubmissionRequest(test_cases=self.test_cases, language='C++17', code={
+            SubmissionRequest(test_cases=self.test_cases, language='C++20', code={
                 'main.cpp': 'int main() { cout << "hello"; return 0; }',
             }),
             SubmissionRequest(test_cases=self.test_cases, language='Java', time_limit=2, code={
@@ -39,7 +39,7 @@ class TestCompileError:
             SubmissionRequest(test_cases=self.test_cases, language='python', code={
                 'main.py': 'print("hello")',
             }),
-            SubmissionRequest(test_cases=self.test_cases, language='C++17', code={
+            SubmissionRequest(test_cases=self.test_cases, language='C++20', code={
                 'main.cpp': '#include <iostream>\nint main() { std::cout << "hello"; return 0; }',
             }),
             SubmissionRequest(test_cases=self.test_cases, language='Java', time_limit=2, code={
