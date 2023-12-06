@@ -1,5 +1,6 @@
 import math
 import random
+import re
 import string
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -88,8 +89,8 @@ class TokenEquality(Checker):
     delimiter: str | None = None
 
     def is_correct(self, output: str, target: str) -> bool:
-        output = output.strip().split(self.delimiter)
-        target = target.strip().split(self.delimiter)
+        output = re.split(self.delimiter or r'\s+', output.strip())
+        target = re.split(self.delimiter or r'\s+', target.strip())
         if len(output) != len(target):
             print(f'Lengths different: out({len(output)}) target({len(target)})')
             return False
