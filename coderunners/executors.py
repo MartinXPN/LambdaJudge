@@ -65,10 +65,11 @@ class ProcessExecutor(Executor):
 @dataclass
 class SQLiteExecutor(Executor):
     script: str
+    ROOT: Path = Path('/tmp/')
     db_name: str = 'main.db'
 
     def __post_init__(self):
-        self.db = sqlite3.connect(self.db_name)
+        self.db = sqlite3.connect(self.ROOT / self.db_name)
 
     def __del__(self):
         self.db.close()
