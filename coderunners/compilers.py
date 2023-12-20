@@ -27,6 +27,8 @@ class Compiler(ABC):
         language = language.lower().strip()
         if language in TxtCompiler.supported_standards:
             return TxtCompiler()
+        if language in CCompiler.supported_standards:
+            return CCompiler(language_standard=language)
         if language in CppCompiler.supported_standards:
             return CppCompiler(language_standard=language)
         if language in PythonCompiler.supported_standards:
@@ -67,6 +69,8 @@ class CCompiler(Compiler):
     def __post_init__(self):
         if self.language_standard == 'c':
             self.language_standard = 'c23'
+        if self.language_standard == 'c23':     # TODO: Remove this when upgrading to gcc 14 and above
+            self.language_standard = 'c2x'
 
     def compile(self, submission_paths: list[Path]):
         submission_paths_str = ' '.join([str(path) for path in submission_paths])
@@ -86,11 +90,13 @@ class CCompiler(Compiler):
 class CppCompiler(Compiler):
     MAIN_FILE_NAME: ClassVar[str] = 'main.cpp'
     language_standard: str
-    supported_standards = {'c++', 'c++11', 'c++14', 'c++17', 'c++20'}
+    supported_standards = {'c++', 'c++11', 'c++14', 'c++17', 'c++20', 'c++23'}
 
     def __post_init__(self):
         if self.language_standard == 'c++':
             self.language_standard = 'c++20'
+        if self.language_standard == 'c++23':   # TODO: Remove this when upgrading to gcc 14 and above
+            self.language_standard = 'c++2b'
 
     def compile(self, submission_paths: list[Path]):
         submission_paths_str = ' '.join([str(path) for path in submission_paths])

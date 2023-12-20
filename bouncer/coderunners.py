@@ -63,7 +63,7 @@ class CRunner(CodeRunner):
 
 @dataclass
 class CppRunner(CodeRunner):
-    supported_standards = {'c++', 'c++11', 'c++14', 'c++17', 'c++20'}
+    supported_standards = {'c++', 'c++11', 'c++14', 'c++17', 'c++20', 'c++23'}
 
     @property
     def name(self) -> str:

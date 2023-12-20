@@ -36,8 +36,13 @@ class TestHelloWorld:
             'main.c': '#include <stdio.h>\nint main() { printf("Hello World!"); return 0; }',
         }))
 
-    def test_cpp(self):
+    def test_cpp17(self):
         self.run_test(SubmissionRequest(test_cases=self.test_cases, language='C++17', code={
+            'main.cpp': '#include <iostream>\nint main() { std::cout << "Hello World!"; return 0; }',
+        }))
+
+    def test_cpp(self):
+        self.run_test(SubmissionRequest(test_cases=self.test_cases, language='C++', code={
             'main.cpp': '#include <iostream>\nint main() { std::cout << "Hello World!"; return 0; }',
         }))
 
