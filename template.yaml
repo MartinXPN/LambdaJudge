@@ -455,6 +455,26 @@ Resources:
       DockerContext: ./
       Dockerfile: coderunners/lang/pythonML.Dockerfile
 
+  CodeRunnerC:
+    Type: AWS::Serverless::Function
+    DependsOn: CodeRunnerMountTarget
+    Properties:
+      FunctionName: CodeRunnerC
+      PackageType: Image
+      Role: !GetAtt ContestantRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt JudgeVPC.DefaultSecurityGroup
+        SubnetIds:
+          - !Ref CodeRunnerPrivateSubnet
+      FileSystemConfigs:
+        - Arn: !GetAtt AccessPointResource.Arn
+          LocalMountPath: '/mnt/efs'
+    Metadata:
+      DockerTag: c-v1
+      DockerContext: ./
+      Dockerfile: coderunners/lang/c.Dockerfile
+
   CodeRunnerCpp:
     Type: AWS::Serverless::Function
     DependsOn: CodeRunnerMountTarget
@@ -578,6 +598,9 @@ Outputs:
   CodeRunnerPythonML:
     Description: 'AWS Lambda for executing a python code for ML applications and getting the outputs'
     Value: !GetAtt CodeRunnerPythonML.Arn
+  CodeRunnerC:
+    Description: 'AWS Lambda for executing a C code and getting the outputs'
+    Value: !GetAtt CodeRunnerC.Arn
   CodeRunnerCpp:
     Description: 'AWS Lambda for executing a C++ code and getting the outputs'
     Value: !GetAtt CodeRunnerCpp.Arn

@@ -17,6 +17,8 @@ class CodeRunner(ABC):
         language = language.lower()
         if language in TxtRunner.supported_standards:
             return TxtRunner()
+        if language in CRunner.supported_standards:
+            return CRunner()
         if language in CppRunner.supported_standards:
             return CppRunner()
         if language in PythonRunner.supported_standards:
@@ -51,8 +53,17 @@ class TxtRunner(CodeRunner):
 
 
 @dataclass
+class CRunner(CodeRunner):
+    supported_standards = {'c', 'c11', 'c17', 'c23'}
+
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerC'
+
+
+@dataclass
 class CppRunner(CodeRunner):
-    supported_standards = {'c++11', 'c++14', 'c++17', 'c++20'}
+    supported_standards = {'c++', 'c++11', 'c++14', 'c++17', 'c++20'}
 
     @property
     def name(self) -> str:

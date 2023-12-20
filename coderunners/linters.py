@@ -22,7 +22,11 @@ class Linter(ABC):
 @dataclass
 class CppLinter(Linter):
     language_standard: str
-    supported_standards = {'c++11', 'c++14', 'c++17', 'c++20'}
+    supported_standards = {'c++', 'c++11', 'c++14', 'c++17', 'c++20'}
+
+    def __post_init__(self):
+        if self.language_standard == 'c++':
+            self.language_standard = 'c++20'
 
     def lint(self, submission_paths: list[Path]) -> RunResult:
         submission_paths_str = ' '.join([str(path) for path in submission_paths])

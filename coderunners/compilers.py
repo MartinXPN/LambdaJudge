@@ -59,10 +59,38 @@ class TxtCompiler(Compiler):
 
 
 @dataclass
+class CCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.c'
+    language_standard: str
+    supported_standards = {'c', 'c11', 'c17', 'c23'}
+
+    def __post_init__(self):
+        if self.language_standard == 'c':
+            self.language_standard = 'c23'
+
+    def compile(self, submission_paths: list[Path]):
+        submission_paths_str = ' '.join([str(path) for path in submission_paths])
+        main_file_path = self.find_main_file_path(submission_paths, self.MAIN_FILE_NAME)
+        executable_path = main_file_path.with_suffix('.o')
+
+        print('Creating executable at:', executable_path)
+        compile_res = Process(f'gcc -O3 '
+                              f'-std={self.language_standard} {submission_paths_str} '
+                              f'-o {executable_path}',
+                              timeout=10, memory_limit_mb=512).run()
+        print('Compile res', compile_res)
+        return ProcessExecutor(command=str(executable_path)), compile_res
+
+
+@dataclass
 class CppCompiler(Compiler):
     MAIN_FILE_NAME: ClassVar[str] = 'main.cpp'
     language_standard: str
-    supported_standards = {'c++11', 'c++14', 'c++17', 'c++20'}
+    supported_standards = {'c++', 'c++11', 'c++14', 'c++17', 'c++20'}
+
+    def __post_init__(self):
+        if self.language_standard == 'c++':
+            self.language_standard = 'c++20'
 
     def compile(self, submission_paths: list[Path]):
         submission_paths_str = ' '.join([str(path) for path in submission_paths])
