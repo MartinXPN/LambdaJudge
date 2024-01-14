@@ -163,6 +163,7 @@ class CustomChecker(Checker):
         # We don't enforce the status to be with the random string (for compatibility)
         if len(status_outputs) == 0:
             status_outputs = outputs
+            outputs = []
 
         if len(status_outputs) < 2:
             return (Status.RUNTIME_ERROR, 0,
