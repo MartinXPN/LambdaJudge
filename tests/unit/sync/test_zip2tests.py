@@ -57,6 +57,36 @@ class TestTruncation:
             assert test.target_files['yoyo.txt'] == 'First file target'
             assert test.target_files['bik.txt'] == 'Second file target'
 
+    def test_subfolders(self):
+        with TemporaryDirectory() as tests_dir:
+            with open(f'{tests_dir}/00.in.txt', 'w') as f:
+                f.write('First input')
+            with open(f'{tests_dir}/00.out.txt', 'w') as f:
+                f.write('First target')
+
+            # subfolder/yoyo.txt in inputs and targets
+            Path(f'{tests_dir}/00.in.subfolder').mkdir(parents=True, exist_ok=True)
+            Path(f'{tests_dir}/00.out.subfolder/subsubfolder').mkdir(parents=True, exist_ok=True)
+            with open(f'{tests_dir}/00.in.subfolder/yoyo.txt', 'w') as f:
+                f.write('First file input')
+            with open(f'{tests_dir}/00.out.subfolder/yoyo.txt', 'w') as f:
+                f.write('First file target')
+            with open(f'{tests_dir}/00.out.subfolder/subsubfolder/hey.txt', 'w') as f:
+                f.write('Second subfolder target')
+            with open(f'{tests_dir}/00.out.bik.txt', 'w') as f:
+                f.write('Second file target')
+
+            shutil.make_archive(f'{tests_dir}/res', 'zip', tests_dir)
+            tests = zip2tests(Path(tests_dir) / 'res.zip')
+            test = tests[0]
+            print(test)
+            assert test.input == 'First input'
+            assert test.target == 'First target'
+            assert test.input_files['subfolder/yoyo.txt'] == 'First file input'
+            assert test.target_files['subfolder/yoyo.txt'] == 'First file target'
+            assert test.target_files['subfolder/subsubfolder/hey.txt'] == 'Second subfolder target'
+            assert test.target_files['bik.txt'] == 'Second file target'
+
     def test_assets(self):
         with TemporaryDirectory() as tests_dir:
             # stdin / stdout

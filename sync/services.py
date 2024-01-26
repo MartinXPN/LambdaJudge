@@ -1,6 +1,6 @@
-import glob
 import gzip
 import sys
+from glob import glob
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from zipfile import ZipFile
@@ -15,19 +15,18 @@ def read_files(paths: list[Path], mode: str = 'r', remove_prefix: str = '') -> d
     for path in paths:
         with open(path, mode) as f:
             filename = str(path).replace(remove_prefix, '').lstrip('.')
-            data = f.read()
-            contents[filename] = data
+            contents[filename] = f.read()
     return contents
 
 
 def zip2tests(zip_path: Path) -> list[TestCase]:
     with TemporaryDirectory() as extraction_dir, ZipFile(zip_path, 'r') as zip_ref:
         zip_ref.extractall(extraction_dir)
-        targets = (glob.glob(f'{extraction_dir}/**/*.ans.txt', recursive=True) +
-                   glob.glob(f'{extraction_dir}/**/*.out.txt', recursive=True) +
-                   glob.glob(f'{extraction_dir}/**/*.a', recursive=True) +
-                   glob.glob(f'{extraction_dir}/**/*.ans', recursive=True) +
-                   glob.glob(f'{extraction_dir}/**/*.out', recursive=True))
+        targets = (glob(f'{extraction_dir}/**/*.ans.txt', recursive=True) +
+                   glob(f'{extraction_dir}/**/*.out.txt', recursive=True) +
+                   glob(f'{extraction_dir}/**/*.a', recursive=True) +
+                   glob(f'{extraction_dir}/**/*.ans', recursive=True) +
+                   glob(f'{extraction_dir}/**/*.out', recursive=True))
         targets = sorted([target for target in targets if '.asset.' not in target])     # Filter out asset files
         inputs = [t.replace('.a', '') if t.endswith('.a') else t.replace('.ans', '.in').replace('.out', '.in')
                   for t in targets]
@@ -39,8 +38,10 @@ def zip2tests(zip_path: Path) -> list[TestCase]:
         for ins, outs in zip(inputs, targets):
             print('Processing:', ins, outs)
             in_prefix, out_prefix = ins.replace('.txt', ''), outs.replace('.txt', '')
-            input_files = set(glob.glob(f'{in_prefix}*')) - {ins, outs}
-            target_files = set(glob.glob(f'{out_prefix}*')) - {ins, outs}
+            input_files = set(glob(f'{in_prefix}*') + glob(f'{in_prefix}*/**', recursive=True)) - {ins, outs}
+            target_files = set(glob(f'{out_prefix}*') + glob(f'{out_prefix}*/**', recursive=True)) - {ins, outs}
+            input_files = [f for f in input_files if Path(f).is_file()]
+            target_files = [f for f in target_files if Path(f).is_file()]
             input_assets = [f for f in input_files if '.asset.' in f]
             target_assets = [f for f in target_files if '.asset.' in f]
             input_files = [f for f in input_files if '.asset.' not in f]
