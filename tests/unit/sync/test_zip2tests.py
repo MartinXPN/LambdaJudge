@@ -105,7 +105,6 @@ class TestTruncation:
             assert test.target == 'lMJUev/mFDLKv/UHhhMCMwE.jpeg'
             assert test.input_files['lMJUev/mFDLKv/UHhhMCMwE.jpeg'] == 'some jpeg file'
 
-
     def test_assets(self):
         with TemporaryDirectory() as tests_dir:
             # stdin / stdout
