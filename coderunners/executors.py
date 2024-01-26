@@ -31,11 +31,15 @@ class ProcessExecutor(Executor):
 
         # Crete input files and input assets
         for filename, content in (test.input_files or {}).items():
-            print('Creating file at:', self.ROOT / filename)
-            (self.ROOT / filename).write_text(content)
+            file = self.ROOT / filename
+            print('Creating file at:', file)
+            file.parent.mkdir(parents=True, exist_ok=True)
+            file.write_text(content)
         for filename, content in (test.input_assets or {}).items():
-            print('Creating asset at:', self.ROOT / filename)
-            (self.ROOT / filename).write_bytes(content)
+            file = self.ROOT / filename
+            print('Creating asset at:', file)
+            file.parent.mkdir(parents=True, exist_ok=True)
+            file.write_bytes(content)
 
         r = Process(
             self.command,
@@ -57,9 +61,8 @@ class ProcessExecutor(Executor):
         cleanup_files = (test.input_files or {}).keys() | (test.target_files or {}).keys() | \
                         (test.input_assets or {}).keys() | (test.target_assets or {}).keys()
         for filename in cleanup_files:
-            if (self.ROOT / filename).exists():
-                print('Removing file at:', self.ROOT / filename)
-                (self.ROOT / filename).unlink()
+            print('Removing file at:', self.ROOT / filename)
+            (self.ROOT / filename).unlink(missing_ok=True)
 
 
 @dataclass
