@@ -116,8 +116,7 @@ pre-commit run --all-files                                        # Tidy-up the 
 sam build --use-container                                         # Builds the project
 sam local start-lambda --env-vars .env.json                       # Start all the functions locally
 # In another terminal tab run the following
-cd tests                                                          # Change the current directory to tests
-pytest --cov=sync --cov=coderunners --cov=bouncer --cov-report term-missing
+pytest tests --cov=sync --cov=coderunners --cov=bouncer --cov-report term-missing
 ```
 
 ### Project structure

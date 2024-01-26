@@ -32,7 +32,7 @@ class TestFiles:
         res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
         print(res)
         assert res.overall.status == Status.WA
-        assert len(res.test_results) == 4
+        assert len(res.test_results) == 5
         assert res.test_results[0].status == Status.OK
         assert res.test_results[1].status == Status.WA
         assert res.test_results[2].status == Status.WA
@@ -41,22 +41,21 @@ class TestFiles:
     def test_with_file(self):
         request = SubmissionRequest(test_cases=self.test_cases, stop_on_first_fail=False, language='python', code={
             'main.py': dedent('''
-                import os
+                from pathlib import Path
                 n = int(input())
                 print(n + 1)
-                with open('res.txt', 'w') as f:
-                    f.write('heyhey')
-                with open('subfolder/hey.txt', 'w') as f:
-                    f.write('hello hello')
-0                with open('subfolder/subsubfolder/res.txt', 'w') as f:
-                    f.write('Result!!!')
+                Path('res.txt').write_text('heyhey')
+                # Create a subfolder and subsubfolder and write to the corresponding files
+                Path('subfolder/subsubfolder').mkdir(parents=True, exist_ok=True)
+                Path('subfolder/hey.txt').write_text('hello hello')
+                Path('subfolder/subsubfolder/res.txt').write_text('Result!!!')
                 # print(os.getcwd())
             '''),
         }, return_outputs=True)
         res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
         print(res)
         assert res.overall.status == Status.WA
-        assert len(res.test_results) == 4
+        assert len(res.test_results) == 5
         assert res.test_results[0].status == Status.OK
         assert res.test_results[1].status == Status.WA
         assert res.test_results[2].status == Status.OK
@@ -77,7 +76,7 @@ class TestFiles:
         res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
         print(res)
         assert res.overall.status == Status.WA
-        assert len(res.test_results) == 4
+        assert len(res.test_results) == 5
         assert res.test_results[0].status == Status.OK
         assert res.test_results[1].status == Status.WA
         assert res.test_results[2].status == Status.OK
