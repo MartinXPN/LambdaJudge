@@ -74,10 +74,10 @@ def encrypt_tests(tests: list[TestCase], encryption_key: str) -> bytes:
     # Compress:   (1) json.dumps   (2) .encode('utf-8')   (3) gzip.compress()   (4) encrypt
     # Decompress: (1) decrypt      (2) gzip.decompress()  (3) .decode('utf-8')  (4) json.loads()
     tests = TestCase.schema().dumps(tests, many=True)                       # (1)
-    print('initial sys.size of tests:', sys.getsizeof(tests))
+    print('initial sys.getsizeof of tests:', sys.getsizeof(tests))
     big = sys.getsizeof(tests) > 50 * 1024 * 1024
     tests = tests.encode('utf-8')                                           # (2)
     tests = gzip.compress(tests, compresslevel=9 if not big else 7)         # (3)
     tests = fernet.encrypt(tests)                                           # (4)
-    print('final sys.size of tests:', sys.getsizeof(tests))
+    print('final sys.getsizeof of tests:', sys.getsizeof(tests))
     return tests

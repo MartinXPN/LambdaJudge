@@ -16,6 +16,7 @@ aws_lambda = boto3.client('lambda', config=cfg)
 
 def check_equality(request: SubmissionRequest) -> SubmissionResult:
     callback_url = copy.copy(request.callback_url)
+    print(f'callback_url: {callback_url}')
     request.callback_url = None
 
     if request.problem:

@@ -137,9 +137,9 @@ class EqualityChecker(SubmissionRequest):
                     RunResult(status=Status.SKIPPED, memory=0, time=0, return_code=0)
                 ] * (len(self.test_cases) - i - 1)
                 print('Expected:', test.target)
-                print('Actual:', test_results[-1].outputs)
+                print('Actual:', r.outputs)
                 print('Expected files:', test.target_files)
-                print('Actual files:', test_results[-1].output_files)
+                print('Actual files:', r.output_files)
                 break
         print('test_results:', test_results)
         assert len(test_results) == len(self.test_cases)
