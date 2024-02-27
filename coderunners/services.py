@@ -71,7 +71,7 @@ class EqualityChecker(SubmissionRequest):
             self.comparison_mode = 'ok'
 
         # Only 1 test case is allowed for text submissions
-        if isinstance(executor, TxtCompiler):
+        if self.language in TxtCompiler.supported_standards and len(self.test_cases) > 1:
             print(f'txt => Reducing the number of test cases from {len(self.test_cases)} to 1...')
             self.test_cases = self.test_cases[:1]
 
