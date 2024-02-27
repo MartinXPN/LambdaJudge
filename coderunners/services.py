@@ -4,7 +4,7 @@ from pathlib import Path
 from cryptography.fernet import Fernet
 
 from coderunners.checkers import Checker
-from coderunners.compilers import Compiler
+from coderunners.compilers import Compiler, TxtCompiler
 from coderunners.executors import Executor
 from coderunners.linters import Linter
 from coderunners.process import Process
@@ -69,6 +69,11 @@ class EqualityChecker(SubmissionRequest):
         if not self.test_cases:
             self.test_cases = [TestCase(input='', target='')]
             self.comparison_mode = 'ok'
+
+        # Only 1 test case is allowed for text submissions
+        if isinstance(executor, TxtCompiler):
+            print(f'txt => Reducing the number of test cases from {len(self.test_cases)} to 1...')
+            self.test_cases = self.test_cases[:1]
 
         # Prepare the checker
         checker_executor = None
