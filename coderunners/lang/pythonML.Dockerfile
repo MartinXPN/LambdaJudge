@@ -7,7 +7,7 @@ RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"
 # Install dependencies
 COPY coderunners/requirements.txt ./
 RUN python -m pip install -r requirements.txt -t "${LAMBDA_TASK_ROOT}"
-RUN python -m pip install --upgrade numpy pandas scikit-learn
+RUN python -m pip install --upgrade numpy pandas matplotlib scikit-learn
 
 # Setup source files
 COPY coderunners/*.py ${LAMBDA_TASK_ROOT}/coderunners/
