@@ -62,9 +62,10 @@ class TestGroup(DataClassJsonCamelMixIn):
 
 @dataclass
 class SubmissionRequest(DataClassJsonCamelMixIn):
-    # Code is a mapping from filename.extension -> content (Http requests have 2MB limit)
-    code: dict[str, str]
+    code: dict[str, str]        # Mapping from filename.extension -> content (Http requests have 2MB limit)
     language: str
+    id: str | None = None       # Used to identify the submission (completely optional)
+
     memory_limit: int = 512     # MB
     time_limit: float = 5       # seconds
     output_limit: float = 1     # MB
