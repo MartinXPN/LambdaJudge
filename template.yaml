@@ -21,6 +21,134 @@ Globals:
 
 
 Resources:
+  # VPC, Subnet, EFS config - source: https://github.com/aws-samples/aws-lambda-efs-samples/blob/master/1-setup/create-efs-cfn.yml
+  JudgeVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 172.31.0.0/16
+      EnableDnsHostnames: true
+      EnableDnsSupport: true
+      Tags:
+        - Key: Name
+          Value: JudgeVPC
+
+  CodeRunnerPrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 172.31.1.0/24
+      VpcId: !Ref JudgeVPC
+      AvailabilityZone: 'us-east-1a'
+      Tags:
+        - Key: Name
+          Value: CodeRunnerPrivateSubnet
+
+  # source: https://github.com/awsdocs/aws-lambda-developer-guide/blob/main/templates/vpc-private.yaml
+  PrivateSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 172.31.2.0/24
+      VpcId: !Ref JudgeVPC
+      AvailabilityZone: 'us-east-1a'
+      MapPublicIpOnLaunch: false
+      Tags:
+        - Key: Name
+          Value: PrivateSubnet
+  PrivateRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref JudgeVPC
+      Tags:
+        - Key: Name
+          Value: Public Routes
+  PrivateSubnetRouteTableAssociation:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      SubnetId: !Ref PrivateSubnet
+      RouteTableId: !Ref PrivateRouteTable
+
+  # EFS
+  FileSystemResource:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      PerformanceMode: generalPurpose  # generalPurpose | maxIO
+      Encrypted: true
+      BackupPolicy:
+        Status: ENABLED
+      FileSystemTags:
+        - Key: Name
+          Value: JudgeFS
+
+  AccessPointResource:
+    Type: AWS::EFS::AccessPoint
+    Properties:
+      FileSystemId: !Ref FileSystemResource
+      PosixUser:
+        Uid: '1000'
+        Gid: '1000'
+      RootDirectory:
+        CreationInfo:
+          OwnerGid: '1000'
+          OwnerUid: '1000'
+          Permissions: '0777'
+        Path: '/mnt/efs'
+  CodeRunnerMountTarget:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref FileSystemResource
+      SubnetId: !Ref CodeRunnerPrivateSubnet
+      SecurityGroups:
+        - !GetAtt JudgeVPC.DefaultSecurityGroup
+
+  # Execution roles
+  TriggerSyncRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+  SyncS3WithEFSRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+  BouncerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+  ContestantRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - lambda.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+
   # Policies
   AllowLoggingPolicy:
     Type: AWS::IAM::Policy
@@ -72,6 +200,7 @@ Resources:
       Roles:
         - Ref: TriggerSyncRole
         - Ref: SyncS3WithEFSRole
+
   AllowEC2NetworkInterfacesPolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -89,6 +218,7 @@ Resources:
       Roles:
         - Ref: SyncS3WithEFSRole
         - Ref: ContestantRole
+
   AllowLambdaInvokationPolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -104,77 +234,37 @@ Resources:
         - Ref: TriggerSyncRole
         - Ref: BouncerRole
 
-  # Execution roles
-  TriggerSyncRole:
-    Type: AWS::IAM::Role
+  SyncS3WithEFSPolicy:
+    Type: AWS::IAM::Policy
     Properties:
-      AssumeRolePolicyDocument:
+      PolicyName: SyncS3WithEFSPolicy
+      PolicyDocument:
         Version: '2012-10-17'
         Statement:
           - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
             Action:
-              - 'sts:AssumeRole'
-  SyncS3WithEFSRole:
-    Type: AWS::IAM::Role
+              - 'elasticfilesystem:ClientMount'
+              - 'elasticfilesystem:ClientRootAccess'
+              - 'elasticfilesystem:ClientWrite'
+              - 'elasticfilesystem:DescribeMountTargets'
+            Resource: !Sub arn:aws:elasticfilesystem:${AWS::Region}:${AWS::AccountId}:file-system/${FileSystemResource}
+      Roles:
+        - Ref: SyncS3WithEFSRole
+
+  ContestantEFSAccessPolicy:
+    Type: AWS::IAM::Policy
     Properties:
-      AssumeRolePolicyDocument:
+      PolicyName: ContestantPolicy
+      PolicyDocument:
         Version: '2012-10-17'
         Statement:
           - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
             Action:
-              - 'sts:AssumeRole'
-      Policies:
-        - PolicyName: SyncS3WithEFSPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'elasticfilesystem:ClientMount'
-                  - 'elasticfilesystem:ClientRootAccess'
-                  - 'elasticfilesystem:ClientWrite'
-                  - 'elasticfilesystem:DescribeMountTargets'
-                Resource: '*'
-  BouncerRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
-  ContestantRole:
-    Type: AWS::IAM::Role
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service:
-                - lambda.amazonaws.com
-            Action:
-              - 'sts:AssumeRole'
-      Policies:
-        - PolicyName: ContestantPolicy
-          PolicyDocument:
-            Version: '2012-10-17'
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'elasticfilesystem:ClientMount'
-                  - 'elasticfilesystem:DescribeMountTargets'
-                Resource: '*'
+              - 'elasticfilesystem:ClientMount'
+              - 'elasticfilesystem:DescribeMountTargets'
+            Resource: !Sub arn:aws:elasticfilesystem:${AWS::Region}:${AWS::AccountId}:file-system/${FileSystemResource}
+      Roles:
+        - Ref: ContestantRole
 
   # S3 bucket for test cases (zip files)
   LambdaJudgeTestsBucket:
@@ -201,93 +291,6 @@ Resources:
         - !Ref PrivateRouteTable
       VpcEndpointType: Gateway
       VpcId: !Ref JudgeVPC
-
-  # EFS
-  FileSystemResource:
-    Type: AWS::EFS::FileSystem
-    Properties:
-      PerformanceMode: generalPurpose  # generalPurpose | maxIO
-      Encrypted: true
-      BackupPolicy:
-        Status: ENABLED
-      FileSystemTags:
-        - Key: Name
-          Value: JudgeFS
-      FileSystemPolicy:
-        Version: '2012-10-17'
-        Statement:
-          - Effect: 'Allow'
-            Action:
-              - 'elasticfilesystem:ClientMount'
-              - 'elasticfilesystem:ClientWrite'
-            Principal:
-              AWS: '*'
-  AccessPointResource:
-    Type: AWS::EFS::AccessPoint
-    Properties:
-      FileSystemId: !Ref FileSystemResource
-      PosixUser:
-        Uid: '1000'
-        Gid: '1000'
-      RootDirectory:
-        CreationInfo:
-          OwnerGid: '1000'
-          OwnerUid: '1000'
-          Permissions: '0777'
-        Path: '/mnt/efs'
-  CodeRunnerMountTarget:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref FileSystemResource
-      SubnetId: !Ref CodeRunnerPrivateSubnet
-      SecurityGroups:
-        - !GetAtt JudgeVPC.DefaultSecurityGroup
-
-  # VPC, Subnet, EFS config
-  # source: https://github.com/aws-samples/aws-lambda-efs-samples/blob/master/1-setup/create-efs-cfn.yml
-  JudgeVPC:
-    Type: AWS::EC2::VPC
-    Properties:
-      CidrBlock: 172.31.0.0/16
-      EnableDnsHostnames: true
-      EnableDnsSupport: true
-      Tags:
-        - Key: Name
-          Value: JudgeVPC
-
-  CodeRunnerPrivateSubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      CidrBlock: 172.31.1.0/24
-      VpcId: !Ref JudgeVPC
-      AvailabilityZone: 'us-east-1a'
-      Tags:
-        - Key: Name
-          Value: CodeRunnerPrivateSubnet
-
-  # source: https://github.com/awsdocs/aws-lambda-developer-guide/blob/main/templates/vpc-private.yaml
-  PrivateSubnet:
-    Type: AWS::EC2::Subnet
-    Properties:
-      CidrBlock: 172.31.2.0/24
-      VpcId: !Ref JudgeVPC
-      AvailabilityZone: 'us-east-1a'
-      MapPublicIpOnLaunch: false
-      Tags:
-        - Key: Name
-          Value: PrivateSubnet
-  PrivateRouteTable:
-    Type: AWS::EC2::RouteTable
-    Properties:
-      VpcId: !Ref JudgeVPC
-      Tags:
-        - Key: Name
-          Value: Public Routes
-  PrivateSubnetRouteTableAssociation:
-    Type: AWS::EC2::SubnetRouteTableAssociation
-    Properties:
-      SubnetId: !Ref PrivateSubnet
-      RouteTableId: !Ref PrivateRouteTable
 
   # Lambda Functions
   # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
@@ -583,7 +586,7 @@ Outputs:
     Description: 'API Gateway endpoint URL for Prod stage for Bouncer function'
     Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/check/'
   Bouncer:
-    Description: 'AWS Lambda checker for determining if the output of a code is exactly the same es the target'
+    Description: 'AWS Lambda checker for determining if the output of a code is exactly the same as the target'
     Value: !GetAtt Bouncer.Arn
   BouncerApiAccessKey:
     Description: "API Access Key for the Bouncer lambda function"
