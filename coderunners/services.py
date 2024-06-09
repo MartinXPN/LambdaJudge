@@ -53,6 +53,8 @@ class EqualityChecker(SubmissionRequest):
                 return SubmissionResult(overall=lint_result, compile_result=compile_result, linting_result=lint_result)
 
         problem_file = Path(f'/mnt/efs/{self.problem}.gz.fer')
+        if self.problem:
+            print(problem_file, 'exists:', problem_file.exists())
         if self.problem and problem_file.exists():
             # Compress:   (1) json.dumps   (2) .encode('utf-8')   (3) gzip.compress()   (4) encrypt
             # Decompress: (1) decrypt      (2) gzip.decompress()  (3) .decode('utf-8')  (4) json.loads()
