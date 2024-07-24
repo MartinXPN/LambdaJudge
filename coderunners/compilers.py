@@ -144,7 +144,6 @@ class PythonMLCompiler(Compiler):
         binary_paths = [path.with_suffix('.pyc') for path in submission_paths]
         submission_paths_str = ' '.join([str(path) for path in submission_paths])
         main_file_path = self.find_main_file_path(submission_paths, self.MAIN_FILE_NAME)
-        command = f'python {main_file_path}'
 
         print('Creating python binary at:', binary_paths)
         compile_res = Process(f'python -m py_compile {submission_paths_str}', timeout=10, memory_limit_mb=512).run()
@@ -152,6 +151,7 @@ class PythonMLCompiler(Compiler):
 
         for path in binary_paths:
             path.unlink(missing_ok=True)
+        command = f'MPLCONFIGDIR=/tmp/matplotlib python {main_file_path}'
         return ProcessExecutor(command=command), compile_res
 
 

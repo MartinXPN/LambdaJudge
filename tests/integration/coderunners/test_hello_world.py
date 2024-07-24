@@ -28,7 +28,11 @@ class TestHelloWorld:
 
     def test_python_ml(self):
         self.run_test(SubmissionRequest(test_cases=self.test_cases, language='pythonml', code={
-            'main.py': 'import numpy as np\nprint("Hello World!")',
+            'main.py': dedent('''
+                import numpy as np
+                from matplotlib import pyplot as plt
+                print('Hello World!')
+            '''),
         }))
 
     def test_c(self):
