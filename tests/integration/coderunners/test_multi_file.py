@@ -1,7 +1,5 @@
 from textwrap import dedent
 
-import pytest
-
 from bouncer.coderunners import CodeRunner
 from models import Status, SubmissionRequest, SubmissionResult, TestCase
 from tests.integration.config import lambda_client
@@ -18,13 +16,24 @@ class TestMultiFile:
         assert len(res.test_results) == 1 and res.test_results[0].status == Status.OK
         return res
 
-    @pytest.mark.skip('This works fine everywhere but does not work on GitHub Actions')
     def test_python(self):
         self.run_test(SubmissionRequest(test_cases=self.test_cases, language='python', code={
-            'main.py': 'from dir.code import one\n\nprint(one() + one())',
-            'ones.py': 'def ret_one():\n    return 1',
+            'main.py': dedent('''
+                from dir.code import one
+                \n
+                print(one() + one())
+            ''').strip(),
+            'ones.py': dedent('''
+                def ret_one():
+                    return 1
+            ''').strip(),
             'dir': {
-                'code.py': 'from ones import ret_one\n\ndef one():\n    return ret_one()'
+                'code.py': dedent('''
+                    from ones import ret_one
+                    \n
+                    def one():
+                        return ret_one()
+                ''').strip(),
             }
         }))
 
@@ -37,7 +46,7 @@ class TestMultiFile:
                     std::cout << one_f() + one_f();
                     return 0;
                 }
-            '''),
+            ''').strip(),
             'one.h': dedent('''
                 #ifndef ONE_H
                 #define ONE_H
@@ -45,20 +54,20 @@ class TestMultiFile:
                     return 1;
                 }
                 #endif //ONE_H
-            ''')
+            ''').strip(),
         }))
 
     def test_js(self):
         self.run_test(SubmissionRequest(test_cases=self.test_cases, language='js', code={
             'index.js': dedent('''
                 console.log(2)
-            '''),
+            ''').strip(),
             'package.json': dedent('''
                 {
                     "name": "hello-world",
                     "version": "1.0.0"
                 }
-            ''')
+            ''').strip(),
         }))
 
     def test_csharp(self):
@@ -71,7 +80,7 @@ class TestMultiFile:
                         }
                     }
                 }
-            '''),
+            ''').strip(),
             'LoggingMethods.cs': dedent('''
                 using System;
                 namespace DelegatesAndEvents {
@@ -81,7 +90,7 @@ class TestMultiFile:
                         }
                     }
                 }
-            ''')
+            ''').strip(),
         }))
 
     def test_java(self):
@@ -92,5 +101,5 @@ class TestMultiFile:
                         System.out.println("2");
                     }
                 }
-            ''')
+            ''').strip(),
         }))

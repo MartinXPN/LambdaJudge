@@ -60,9 +60,13 @@ class TestGroup(DataClassJsonCamelMixIn):
             raise ValueError('Both points and points_per_test values are nonzero')
 
 
+# Defining a recursive type doesn't seem to work with dataclasses-json
+CodeTree = dict[str, str | dict[str, str | dict[str, str]]]
+
+
 @dataclass
 class SubmissionRequest(DataClassJsonCamelMixIn):
-    code: dict[str, str]        # Mapping from filename.extension -> content (Http requests have 2MB limit)
+    code: CodeTree              # Mapping from filename.extension -> content (Http requests have 2MB limit)
     language: str
     id: str | None = None       # Used to identify the submission (completely optional)
 
@@ -83,7 +87,7 @@ class SubmissionRequest(DataClassJsonCamelMixIn):
     comparison_mode: str = 'whole'    # whole | token | custom
     float_precision: float = 1e-5     # Floating point precision
     delimiter: str | None = None
-    checker_code: dict[str, str] | None = None
+    checker_code: CodeTree | None = None
     checker_language: str | None = None
 
     callback_url: str | None = None  # Where to send the results when they're ready
