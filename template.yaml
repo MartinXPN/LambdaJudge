@@ -434,7 +434,7 @@ Resources:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
     Metadata:
-      DockerTag: python3.12-v1
+      DockerTag: python-v1
       DockerContext: ./
       Dockerfile: coderunners/lang/python.Dockerfile
 
@@ -454,7 +454,7 @@ Resources:
         - Arn: !GetAtt AccessPointResource.Arn
           LocalMountPath: '/mnt/efs'
     Metadata:
-      DockerTag: python3ml.12-v1
+      DockerTag: python-ml-v1
       DockerContext: ./
       Dockerfile: coderunners/lang/pythonML.Dockerfile
 
