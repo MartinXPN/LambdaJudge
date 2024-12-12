@@ -41,9 +41,11 @@ class Checker(ABC):
         ...
 
     @staticmethod
-    def from_mode(mode: str,
-                  float_precision: float | None = None, delimiter: str | None = None,
-                  executor: Executor | None = None) -> 'Checker':
+    def from_mode(
+        mode: str,
+        float_precision: float | None = None, delimiter: str | None = None,
+        executor: Executor | None = None,
+    ) -> 'Checker':
         if mode == 'ok':
             return OkChecker()
         if mode == 'whole':
@@ -59,10 +61,10 @@ class Checker(ABC):
 
 class OkChecker(Checker):
     def check(
-            self, inputs: str, output: str, target: str, code: dict[str, str],
-            input_files: dict[str, str] | None = None, output_files: dict[str, str] | None = None,
-            target_files: dict[str, str] | None = None, input_assets: dict[str, bytes] | None = None,
-            output_assets: dict[str, bytes] | None = None, target_assets: dict[str, bytes] | None = None,
+        self, inputs: str, output: str, target: str, code: dict[str, str],
+        input_files: dict[str, str] | None = None, output_files: dict[str, str] | None = None,
+        target_files: dict[str, str] | None = None, input_assets: dict[str, bytes] | None = None,
+        output_assets: dict[str, bytes] | None = None, target_assets: dict[str, bytes] | None = None,
     ) -> tuple[Status, float, str | None]:
         return Status.OK, 100, None
 

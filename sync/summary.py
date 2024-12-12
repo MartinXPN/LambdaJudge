@@ -14,6 +14,12 @@ class SummaryTable:
     def __init__(self, dynamodb):
         self.table = dynamodb.Table(self.TABLE_NAME)
 
+    def log_error(self, problem_id: str, message: str) -> None:
+        self.table.put_item(Item={
+            'id': problem_id,
+            'message': message,
+        })
+
     def write(self, problem_id: str, tests: list[TestCase]) -> None:
         response = self.table.put_item(Item={
             'id': problem_id,
@@ -21,10 +27,7 @@ class SummaryTable:
             'tests': [t.to_dict() for t in tests],
         })
         if response['ResponseMetadata']['HTTPStatusCode'] not in range(200, 300):
-            self.table.put_item(Item={
-                'id': problem_id,
-                'message': 'Could not summarize the tests',
-            })
+            self.log_error(problem_id, 'Could not summarize the tests')
             raise SummaryWriteError('Could not summarize the tests', response)
 
 

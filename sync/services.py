@@ -1,4 +1,5 @@
 import gzip
+import json
 import sys
 from glob import glob
 from pathlib import Path
@@ -73,7 +74,9 @@ def encrypt_tests(tests: list[TestCase], encryption_key: str) -> bytes:
 
     # Compress:   (1) json.dumps   (2) .encode('utf-8')   (3) gzip.compress()   (4) encrypt
     # Decompress: (1) decrypt      (2) gzip.decompress()  (3) .decode('utf-8')  (4) json.loads()
-    tests = TestCase.schema().dumps(tests, many=True)                       # (1)
+    # TestCase.schema().dumps(tests, many=True) does not invoke the decoder function properly
+    # https://github.com/lidatong/dataclasses-json/issues/551 => We'll use json.dumps([t.to_dict()...]) instead
+    tests = json.dumps([test.to_dict() for test in tests])                  # (1)
     print('initial sys.getsizeof of tests:', sys.getsizeof(tests))
     big = sys.getsizeof(tests) > 50 * 1024 * 1024
     tests = tests.encode('utf-8')                                           # (2)

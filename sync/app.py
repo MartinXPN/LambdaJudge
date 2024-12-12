@@ -35,6 +35,11 @@ def trigger_sync_s3_handler(event, context):
     res = json.loads(res)
     print('invocation result:', res)
 
+    if 'tests_truncated' not in res:
+        error = res.get('errorMessage', 'Could not process tests...')
+        print('There was an error and we could not get the tests', error)
+        return SummaryTable(dynamodb).log_error(problem, error)
+
     tests = TestCase.schema().load(res['tests_truncated'], many=True)
     print('tests:', tests)
     SummaryTable(dynamodb).write(problem, tests)

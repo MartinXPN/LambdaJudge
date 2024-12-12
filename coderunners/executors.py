@@ -32,12 +32,12 @@ class ProcessExecutor(Executor):
         # Crete input files and input assets
         for filename, content in (test.input_files or {}).items():
             file = self.ROOT / filename
-            print('Creating file at:', file)
+            print(f'Creating file at: {file} with content len: {len(content)} of type {type(content)}')
             file.parent.mkdir(parents=True, exist_ok=True)
             file.write_text(content)
         for filename, content in (test.input_assets or {}).items():
             file = self.ROOT / filename
-            print('Creating asset at:', file)
+            print(f'Creating asset at: {file} with content len: {len(content)} of type {type(content)}')
             file.parent.mkdir(parents=True, exist_ok=True)
             file.write_bytes(content)
 
