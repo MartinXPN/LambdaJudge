@@ -29,14 +29,8 @@ def check_equality(request: SubmissionRequest) -> SubmissionResult:
         res = coderunner.invoke(aws_lambda, request=request)
     except Exception as e:
         print('Failed to run the code:', e)
-        res = SubmissionResult(
-            overall=RunResult(
-                status=Status.SKIPPED, time=0, memory=0, return_code=1, message='Failed to run the code',
-            ),
-            compile_result=RunResult(
-                status=Status.SKIPPED, time=0, memory=0, return_code=1, message='Failed to run the code',
-            ),
-        )
+        failed_run = RunResult(status=Status.SKIPPED, time=0, memory=0, return_code=1, message='Failed to run the code')
+        res = SubmissionResult(overall=failed_run, compile_result=failed_run)
 
     if callback_url is not None:
         print('Sending results to the callback url:\n', res.to_dict(encode_json=True))
