@@ -10,7 +10,7 @@ import requests as requests
 from bouncer.coderunners import CodeRunner
 from models import RunResult, Status, SubmissionRequest, SubmissionResult
 
-cfg = botocore.config.Config(retries={'max_attempts': 0}, read_timeout=300, connect_timeout=300)
+cfg = botocore.config.Config(retries={'max_attempts': 0}, read_timeout=360, connect_timeout=360)
 aws_lambda = boto3.client('lambda', config=cfg)
 
 
