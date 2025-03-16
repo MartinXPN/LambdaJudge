@@ -1,5 +1,6 @@
 import gzip
 import itertools
+import time
 from copy import copy
 from pathlib import Path
 
@@ -41,6 +42,7 @@ class EqualityChecker(SubmissionRequest):
     def check(self) -> SubmissionResult:
         Process('rm -rf /tmp/*', timeout=5, memory_limit_mb=512).run()  # Avoid having no space left on device issues
         code_paths = save_code(save_dir=self.ROOT, code=self.code)
+        start_time = time.time()
 
         executor, compile_result = self.compile(code_paths, self.language)
         if executor is None:
@@ -168,6 +170,14 @@ class EqualityChecker(SubmissionRequest):
                         RunResult(status=Status.SKIPPED, memory=0, time=0, return_code=0)
                     ] * (len(self.test_cases) - i - 1)
                     break
+
+            # Stop if `start_time` + estimated time for the next test is greater than 5 minutes
+            if time.time() - start_time + test_results[-1].time > 5 * 60:
+                print('Cannot run the next test as it will exceed the 5 minutes limit => stopping...')
+                test_results += [
+                    RunResult(status=Status.SKIPPED, memory=0, time=0, return_code=0)
+                ] * (len(self.test_cases) - i - 1)
+                break
 
         print('test_results:', test_results)
         assert len(test_results) == len(self.test_cases)

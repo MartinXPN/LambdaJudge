@@ -8,7 +8,7 @@ import botocore
 import requests as requests
 
 from bouncer.coderunners import CodeRunner
-from models import SubmissionRequest, SubmissionResult
+from models import RunResult, Status, SubmissionRequest, SubmissionResult
 
 cfg = botocore.config.Config(retries={'max_attempts': 0}, read_timeout=300, connect_timeout=300)
 aws_lambda = boto3.client('lambda', config=cfg)
@@ -25,7 +25,18 @@ def check_equality(request: SubmissionRequest) -> SubmissionResult:
 
     coderunner = CodeRunner.from_language(language=request.language)
     print('coderunner:', coderunner)
-    res = coderunner.invoke(aws_lambda, request=request)
+    try:
+        res = coderunner.invoke(aws_lambda, request=request)
+    except Exception as e:
+        print('Failed to run the code:', e)
+        res = SubmissionResult(
+            overall=RunResult(
+                status=Status.SKIPPED, time=0, memory=0, return_code=1, message='Failed to run the code',
+            ),
+            compile_result=RunResult(
+                status=Status.SKIPPED, time=0, memory=0, return_code=1, message='Failed to run the code',
+            ),
+        )
 
     if callback_url is not None:
         print('Sending results to the callback url:\n', res.to_dict(encode_json=True))

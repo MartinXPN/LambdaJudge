@@ -14,7 +14,7 @@ Parameters:
 
 Globals:
   Function:
-    Timeout: 300        # 5 min
+    Timeout: 360        # 6 minutes
     MemorySize: 1769    # 1769 MB RAM
     EphemeralStorage:   # Temporary storage - for fast processing and to avoid memory errors
       Size: 1769        # 1769 MB SSD
@@ -378,7 +378,8 @@ Resources:
     Type: AWS::Serverless::Function
     Properties:
       FunctionName: Bouncer
-      MemorySize: 256
+      Timeout: 420     # 7 minutes
+      MemorySize: 256  # 256 MB RAM (we don't need a lot for the bouncer)
       PackageType: Image
       Role: !GetAtt BouncerRole.Arn
       Environment:
