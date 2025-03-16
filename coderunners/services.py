@@ -1,4 +1,6 @@
 import gzip
+import itertools
+from copy import copy
 from pathlib import Path
 
 from cryptography.fernet import Fernet
@@ -102,7 +104,8 @@ class EqualityChecker(SubmissionRequest):
 
         # Process all tests
         test_results: list[RunResult] = []
-        for i, test in enumerate(self.test_cases):
+        tests_iter = iter(enumerate(self.test_cases))
+        for i, test in tests_iter:
             print(f'Running test {i}', end='...')
             r = executor.run(
                 test=test,
@@ -120,8 +123,7 @@ class EqualityChecker(SubmissionRequest):
             # Clean up
             executor.cleanup(test)
 
-            # Report the result
-            test_results.append(r)
+            test_results.append(copy(r))
             if not self.return_outputs:
                 test_results[-1].outputs = None
                 test_results[-1].errors = None
@@ -139,15 +141,34 @@ class EqualityChecker(SubmissionRequest):
                 } if r.output_assets else None
 
             # Stop on failure
-            if self.stop_on_first_fail and test_results[-1].status != Status.OK:
-                test_results += [
-                    RunResult(status=Status.SKIPPED, memory=0, time=0, return_code=0)
-                ] * (len(self.test_cases) - i - 1)
+            if test_results[-1].status != Status.OK:
+                print('----- Test failed -----')
                 print('Expected:', test.target)
                 print('Actual:', r.outputs)
                 print('Expected files:', test.target_files)
                 print('Actual files:', r.output_files)
-                break
+                print('----- End of failed test -----')
+
+                if self.test_groups:
+                    # Find the first group that contains test index `i`
+                    group = next((
+                        g for g in self.test_groups if i < sum(g.count for g in self.test_groups[:self.test_groups.index(g) + 1])
+                    ), None)
+
+                    # If the test group has to fully pass => fill test results with SKIPPED for the current group
+                    if group and group.points_per_test == 0:
+                        skip_count = sum(g.count for g in self.test_groups[:self.test_groups.index(group) + 1]) - i - 1
+                        test_results += [
+                            RunResult(status=Status.SKIPPED, memory=0, time=0, return_code=0)
+                        ] * skip_count
+                        # Skip the remaining tests in the group
+                        next(itertools.islice(tests_iter, skip_count, skip_count), None)
+                elif self.stop_on_first_fail:
+                    test_results += [
+                        RunResult(status=Status.SKIPPED, memory=0, time=0, return_code=0)
+                    ] * (len(self.test_cases) - i - 1)
+                    break
+
         print('test_results:', test_results)
         assert len(test_results) == len(self.test_cases)
 
