@@ -109,9 +109,9 @@ class Process:
                     break
 
             # Cleanup and read the final results
-            input_thread.join(timeout=self.timeout / 100)
-            stdout_thread.join(timeout=self.timeout / 100)
-            stderr_thread.join(timeout=self.timeout / 100)
+            input_thread.join(timeout=max(self.timeout / 100, 0.01))
+            stdout_thread.join(timeout=max(self.timeout / 100, 0.01))
+            stderr_thread.join(timeout=max(self.timeout / 100, 0.01))
         except Exception as e:
             print('Program execution resulted in an error:', e)
             status = Status.RUNTIME_ERROR
