@@ -153,17 +153,21 @@ class EqualityChecker(SubmissionRequest):
 
                 if self.test_groups:
                     # Find the first group that contains test index `i`
-                    group = next((
-                        g for g in self.test_groups if i < sum(g.count for g in self.test_groups[:self.test_groups.index(g) + 1])
-                    ), None)
+                    test_groups_count, group = 0, None
+                    for g in self.test_groups:
+                        test_groups_count += g.count
+                        if i < test_groups_count:
+                            group = g
+                            break
 
                     # If the test group has to fully pass => fill test results with SKIPPED for the current group
                     if group and group.points_per_test == 0:
-                        skip_count = sum(g.count for g in self.test_groups[:self.test_groups.index(group) + 1]) - i - 1
+                        skip_count = test_groups_count - i - 1
                         test_results += [
                             RunResult(status=Status.SKIPPED, memory=0, time=0, return_code=0)
                         ] * skip_count
                         # Skip the remaining tests in the group
+                        print(f'Skipping the remaining {skip_count} tests in the group as i={i} and group={group}')
                         next(itertools.islice(tests_iter, skip_count, skip_count), None)
                 elif self.stop_on_first_fail:
                     test_results += [
