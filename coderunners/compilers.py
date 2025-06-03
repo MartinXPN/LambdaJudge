@@ -234,7 +234,7 @@ class SQLiteCompiler(Compiler):
     def compile(self, submission_paths: list[Path]):
         if len(submission_paths) != 1:
             return ProcessExecutor(command='echo "Only one file is allowed"'), RunResult(
-                status=Status.CE, memory=0, time=0, return_code=0, outputs=None,
+                status=Status.COMPILATION_ERROR, memory=0, time=0, return_code=0, outputs=None,
                 errors='Only one file is allowed for SQL submissions',
             )
 
