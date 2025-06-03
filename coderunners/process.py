@@ -1,5 +1,7 @@
 import errno
+import os
 import resource
+import signal
 import subprocess
 import sys
 import time
@@ -86,9 +88,16 @@ class Process:
 
         try:
             self.p = subprocess.Popen(
-                self.command, shell=True,
-                pipesize=1024 * 1024, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-                preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit), cwd=self.cwd,
+                self.command,
+                shell=True,
+                pipesize=1024 * 1024,
+                stdin=subprocess.PIPE,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit),
+                cwd=self.cwd,
+                start_new_session=True,
             )
             self.execution_state = True
 
@@ -195,6 +204,19 @@ class Process:
     def close(self) -> None:
         try:
             root = psutil.Process(self.p.pid)
+            # Kill the whole process group created for the submission
+            try:
+                os.killpg(os.getpgid(self.p.pid), signal.SIGKILL)
+            except OSError:
+                ...
+
+            # Explicitly kill all child processes as an extra precaution
+            for child in root.children(recursive=True):
+                try:
+                    child.kill()
+                except psutil.NoSuchProcess:
+                    ...
+
             root.kill()
             self.p.kill()
         except psutil.NoSuchProcess:
