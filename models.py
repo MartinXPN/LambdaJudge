@@ -26,7 +26,7 @@ def encode_assets(data: dict[str, bytes] | None) -> dict[str, str] | None:
         print('bytes_to_base64:', {filename: type(content) for filename, content in (data or {}).items()})
     if data is not None and all(isinstance(content, bytes) for content in data.values()):
         return {
-            filename: base64.b64encode(gzip.compress(content, mtime=0)).decode('utf-8')
+            filename: base64.b64encode(gzip.compress(content, compresslevel=7, mtime=0)).decode('utf-8')
             for filename, content in data.items()
         }
     return data
