@@ -1,4 +1,5 @@
 import base64
+import gzip
 from dataclasses import dataclass, field
 from enum import Enum
 
@@ -9,19 +10,25 @@ class DataClassJsonCamelMixIn(DataClassJsonMixin):
     dataclass_json_config = config(letter_case=LetterCase.CAMEL, undefined=Undefined.EXCLUDE)['dataclasses_json']
 
 
-def base64_to_bytes(data: dict[str, str] | None) -> dict[str, bytes] | None:
+def decode_assets(data: dict[str, str] | None) -> dict[str, bytes] | None:
     if data is not None:
         print('base64_to_bytes:', {filename: type(content) for filename, content in (data or {}).items()})
     if data is not None and all(isinstance(content, str) for content in data.values()):
-        return {filename: base64.b64decode(content.encode('utf-8')) for filename, content in data.items()}
+        return {
+            filename: gzip.decompress(base64.b64decode(content.encode('utf-8')))
+            for filename, content in data.items()
+        }
     return data
 
 
-def bytes_to_base64(data: dict[str, bytes] | None) -> dict[str, str] | None:
+def encode_assets(data: dict[str, bytes] | None) -> dict[str, str] | None:
     if data is not None:
         print('bytes_to_base64:', {filename: type(content) for filename, content in (data or {}).items()})
     if data is not None and all(isinstance(content, bytes) for content in data.values()):
-        return {filename: base64.b64encode(content).decode('utf-8') for filename, content in data.items()}
+        return {
+            filename: base64.b64encode(gzip.compress(content, compresslevel=7, mtime=0)).decode('utf-8')
+            for filename, content in data.items()
+        }
     return data
 
 
@@ -44,11 +51,11 @@ class TestCase(DataClassJsonCamelMixIn):
     input_files: dict[str, str] | None = None               # mapping filename -> textual content
     target_files: dict[str, str] | None = None              # mapping filename -> textual content
     input_assets: dict[str, bytes] | None = field(          # mapping filename -> binary content
-        metadata=config(encoder=bytes_to_base64, decoder=base64_to_bytes),
+        metadata=config(encoder=encode_assets, decoder=decode_assets),
         default=None,
     )
     target_assets: dict[str, bytes] | None = field(         # mapping filename -> binary content
-        metadata=config(encoder=bytes_to_base64, decoder=base64_to_bytes),
+        metadata=config(encoder=encode_assets, decoder=decode_assets),
         default=None,
     )
 
@@ -121,7 +128,7 @@ class RunResult(DataClassJsonCamelMixIn):
     errors: str | None = None
     output_files: dict[str, str] | None = None              # mapping filename -> textual content
     output_assets: dict[str, bytes] | None = field(         # mapping filename -> binary content
-        metadata=config(encoder=bytes_to_base64, decoder=base64_to_bytes),
+        metadata=config(encoder=encode_assets, decoder=decode_assets),
         default=None,
     )
 
