@@ -128,26 +128,29 @@ class EqualityChecker(SubmissionRequest):
             executor.cleanup(test)
 
             # No output if not requested or the size of `test_results + r` exceeds 1MB
-            test_results.append(copy(r))
-            results_str = [t.to_json() for t in test_results] + [r.to_json()]
+            max_len = 32000     # limit each item to ~64KB (2 bytes per character)
+            latest = copy(r)
+            latest.outputs = r.outputs[:max_len] if r.outputs else None
+            latest.errors = r.errors[:max_len] if r.errors else None
+            latest.output_files = {
+                filename: content[:max_len] for filename, content in r.output_files.items()
+            } if r.output_files else None
+            latest.output_assets = r.output_assets if r.output_assets else None
+
+            results_str = [t.to_json() for t in test_results] + [latest.to_json()]
             total_size = sum(len(s) for s in results_str)
             big = total_size >= 1 * 1024 * 1024
             print(f'Total size after test {i}:', total_size, 'bytes => big:', big)
+
             if not self.return_outputs or big:
                 if big:
-                    test_results[-1].message = 'Omitted outputs as the size of results exceeds 1MB'
-                test_results[-1].outputs = None
-                test_results[-1].errors = None
-                test_results[-1].output_files = None
-                test_results[-1].output_assets = None
-            else:
-                max_len = 32000     # limit each item to ~64KB (2 bytes per character)
-                test_results[-1].outputs = r.outputs[:max_len] if r.outputs else None
-                test_results[-1].errors = r.errors[:max_len] if r.errors else None
-                test_results[-1].output_files = {
-                    filename: content[:max_len] for filename, content in r.output_files.items()
-                } if r.output_files else None
-                test_results[-1].output_assets = r.output_assets if r.output_assets else None
+                    latest.message = 'Omitted outputs as the size of results exceeds 1MB'
+                latest.outputs = None
+                latest.errors = None
+                latest.output_files = None
+                latest.output_assets = None
+
+            test_results.append(latest)
 
             # Stop on failure
             if test_results[-1].status != Status.OK:
