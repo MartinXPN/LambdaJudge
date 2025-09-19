@@ -1,5 +1,7 @@
 import gzip
 import itertools
+import json
+import sys
 import time
 from copy import copy
 from pathlib import Path
@@ -125,22 +127,24 @@ class EqualityChecker(SubmissionRequest):
             # Clean up
             executor.cleanup(test)
 
+            # No output if not requested or the size of `test_results + r` exceeds 1MB
             test_results.append(copy(r))
-            if not self.return_outputs:
+            results_str = json.dumps([t.to_dict() for t in test_results] + [r.to_dict()])
+            exceeds_memory = sys.getsizeof(results_str) >= 1 * 1024 * 1024
+            if not self.return_outputs or exceeds_memory:
+                test_results[-1].message = 'Omitted outputs as the size of results exceeds 1MB' if exceeds_memory else None
                 test_results[-1].outputs = None
                 test_results[-1].errors = None
                 test_results[-1].output_files = None
                 test_results[-1].output_assets = None
             else:
-                max_len = 32000     # limit each item to 64KB (2 bytes per character)
+                max_len = 32000     # limit each item to ~64KB (2 bytes per character)
                 test_results[-1].outputs = r.outputs[:max_len] if r.outputs else None
                 test_results[-1].errors = r.errors[:max_len] if r.errors else None
                 test_results[-1].output_files = {
                     filename: content[:max_len] for filename, content in r.output_files.items()
                 } if r.output_files else None
-                test_results[-1].output_assets = {
-                    filename: content[:max_len] for filename, content in r.output_assets.items()
-                } if r.output_assets else None
+                test_results[-1].output_assets = r.output_assets if r.output_assets else None
 
             # Stop on failure
             if test_results[-1].status != Status.OK:
