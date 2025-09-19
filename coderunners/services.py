@@ -129,10 +129,11 @@ class EqualityChecker(SubmissionRequest):
 
             # No output if not requested or the size of `test_results + r` exceeds 1MB
             test_results.append(copy(r))
-            results_str = json.dumps([t.to_dict() for t in test_results] + [r.to_dict()])
+            results_str = [t.to_json() for t in test_results] + [r.to_json()]
             big = sys.getsizeof(results_str) >= 1 * 1024 * 1024
             if not self.return_outputs or big:
-                test_results[-1].message = 'Omitted outputs as the size of results exceeds 1MB' if big else None
+                if big:
+                    test_results[-1].message = 'Omitted outputs as the size of results exceeds 1MB'
                 test_results[-1].outputs = None
                 test_results[-1].errors = None
                 test_results[-1].output_files = None
