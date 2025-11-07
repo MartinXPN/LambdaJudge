@@ -99,7 +99,7 @@ Resources:
       SecurityGroups:
         - !GetAtt JudgeVPC.DefaultSecurityGroup
 
-  # Execution roles
+  # Test case extraction and sync roles
   TriggerSyncRole:
     Type: AWS::IAM::Role
     Properties:
@@ -124,6 +124,46 @@ Resources:
                 - lambda.amazonaws.com
             Action:
               - 'sts:AssumeRole'
+  # Test case generation roles
+  TestGenerationBouncerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: [lambda.amazonaws.com] }
+            Action: sts:AssumeRole
+  TestGenerationUploadRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !GetAtt TestGenerationBouncerRole.Arn   # only the bouncer may assume
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: AllowPutToTestsBucket
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:PutObject
+                  - s3:AbortMultipartUpload
+                Resource: !Sub arn:aws:s3:::${LambdaJudgeTestsBucket}/*
+  TestGeneratorRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: { Service: [ lambda.amazonaws.com ] }
+            Action: sts:AssumeRole
+  # Code execution roles
   BouncerRole:
     Type: AWS::IAM::Role
     Properties:
@@ -168,7 +208,24 @@ Resources:
         - Ref: ContestantRole
         - Ref: TriggerSyncRole
         - Ref: SyncS3WithEFSRole
+        - Ref: TestGenerationBouncerRole
+        - Ref: TestGeneratorRole
 
+  TestGenerationBouncerDynamoDBPolicy:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: TestGenerationBouncerDynamoDBPolicy
+      Roles:
+        - !Ref TestGenerationBouncerRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - dynamodb:PutItem
+              - dynamodb:UpdateItem
+              - dynamodb:GetItem
+            Resource: !GetAtt PrivateTestsTable.Arn
   DynamoDBAccessPolicy:
     Type: AWS::IAM::Policy
     Properties:
@@ -196,10 +253,37 @@ Resources:
               - 's3:GetBucketLocation'
               - 's3:GetObjectVersion'
               - 's3:GetLifecycleConfiguration'
-            Resource: '*'
+            Resource:
+              - !Sub arn:aws:s3:::${LambdaJudgeTestsBucket}
+              - !Sub arn:aws:s3:::${LambdaJudgeTestsBucket}/*
       Roles:
         - Ref: TriggerSyncRole
         - Ref: SyncS3WithEFSRole
+  LambdaJudgeTestsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref LambdaJudgeTestsBucket
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:*"
+            Resource:
+              - !Sub arn:aws:s3:::${LambdaJudgeTestsBucket}
+              - !Sub arn:aws:s3:::${LambdaJudgeTestsBucket}/*
+            Condition:
+              Bool:
+                aws:SecureTransport: "false"
+          - Sid: RequireSSE
+            Effect: Deny
+            Principal: "*"
+            Action: "s3:PutObject"
+            Resource: !Sub arn:aws:s3:::${LambdaJudgeTestsBucket}/*
+            Condition:
+              StringNotEquals:
+                s3:x-amz-server-side-encryption: "AES256"
 
   AllowEC2NetworkInterfacesPolicy:
     Type: AWS::IAM::Policy
@@ -218,6 +302,7 @@ Resources:
       Roles:
         - Ref: SyncS3WithEFSRole
         - Ref: ContestantRole
+        - Ref: TestGeneratorRole
 
   AllowLambdaInvokationPolicy:
     Type: AWS::IAM::Policy
@@ -233,6 +318,31 @@ Resources:
       Roles:
         - Ref: TriggerSyncRole
         - Ref: BouncerRole
+
+  AllowBouncerInvokeTestGenerator:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AllowBouncerInvokeTestGenerator
+      Roles:
+        - !Ref TestGenerationBouncerRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: lambda:InvokeFunction
+            Resource: !GetAtt TestGenerator.Arn
+  AllowBouncerToAssumeUploadRole:
+    Type: AWS::IAM::Policy
+    Properties:
+      PolicyName: AllowBouncerToAssumeUploadRole
+      Roles:
+        - !Ref TestGenerationBouncerRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Resource: !GetAtt TestGenerationUploadRole.Arn
 
   SyncS3WithEFSPolicy:
     Type: AWS::IAM::Policy
@@ -291,9 +401,28 @@ Resources:
         - !Ref PrivateRouteTable
       VpcEndpointType: Gateway
       VpcId: !Ref JudgeVPC
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal: "*"
+            Action:
+              - s3:ListBucket
+              - s3:GetBucketLocation
+            Resource: !Sub arn:aws:s3:::${LambdaJudgeTestsBucket}
+          - Effect: Allow
+            Principal: "*"
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:AbortMultipartUpload
+            Resource: !Sub arn:aws:s3:::${LambdaJudgeTestsBucket}/*
+
 
   # Lambda Functions
   # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
+
+  # S3 -> EFS Sync functions
   SyncS3Trigger:
     Type: AWS::Serverless::Function
     Properties:
@@ -346,6 +475,60 @@ Resources:
       DockerContext: ./
       Dockerfile: sync/sync.Dockerfile
 
+  # Test generation functions
+  TestGenerationBouncer:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: TestGenerationBouncer
+      PackageType: Image
+      Role: !GetAtt TestGenerationBouncerRole.Arn
+      Timeout: 420     # 7 minutes (API Gateway is still ~29 seconds)
+      MemorySize: 256  # 256 MB RAM (we don't need a lot for the bouncer)
+      Environment:
+        Variables:
+          TESTS_BUCKET: !Ref LambdaJudgeTestsBucket
+          UPLOAD_ROLE_ARN: !GetAtt TestGenerationUploadRole.Arn
+          TEST_GENERATOR_FUNCTION_NAME: !Ref TestGenerator
+          DYNAMODB_TABLE_NAME: !Ref PrivateTestsTable
+          FORCE_SSE: AES256
+      Events:
+        Generate:
+          Type: Api
+          Properties:
+            Path: /generate
+            Method: post
+            RestApiId: !Ref ServerlessRestApi
+            Auth:
+              ApiKeyRequired: true
+    Metadata:
+      DockerTag: testgen-bouncer-v1
+      DockerContext: ./
+      Dockerfile: testgen/bouncer.Dockerfile
+
+  TestGenerator:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: TestGenerator
+      PackageType: Image
+      Role: !GetAtt TestGeneratorRole.Arn
+      Timeout: 900
+      MemorySize: 2048
+      EphemeralStorage:
+        Size: 10240
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt JudgeVPC.DefaultSecurityGroup
+        SubnetIds:
+          - !Ref PrivateSubnet   # has the S3 Gateway Endpoint route; no NAT => no internet
+      Environment:
+        Variables:
+          FORCE_SSE: AES256
+    Metadata:
+      DockerTag: testgen-sandbox-v1
+      DockerContext: ./
+      Dockerfile: testgen/generator.Dockerfile
+
+  # Code execution functions
   BouncerApiAccessKey:
     Type: AWS::ApiGateway::ApiKey
     Properties:
@@ -358,7 +541,7 @@ Resources:
     Properties:
       Description: 'Usage plan for Bouncer API'
       ApiStages:
-        - ApiId: !Ref ServerlessRestApi  # Replace with your RestApi Resource ID if different
+        - ApiId: !Ref ServerlessRestApi
           Stage: Prod
       Throttle:
         BurstLimit: 10000
@@ -583,6 +766,8 @@ Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
   # Find out more about other implicit resources you can reference within SAM
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
+
+  # Code execution bouncer
   Check:
     Description: 'API Gateway endpoint URL for Prod stage for Bouncer function'
     Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/check/'
@@ -593,6 +778,7 @@ Outputs:
     Description: "API Access Key for the Bouncer lambda function"
     Value: !Ref BouncerApiAccessKey
 
+  # Code execution
   CodeRunnerTxt:
     Description: 'AWS Lambda for checking textual outputs'
     Value: !GetAtt CodeRunnerTxt.Arn
@@ -621,6 +807,18 @@ Outputs:
     Description: 'AWS Lambda for executing a SQL/SQLite code and getting the results with tables'
     Value: !GetAtt CodeRunnerSQLite.Arn
 
+  # S3 -> EFS Sync
   SyncS3WithEFSName:
     Description: 'AWS Lambda for syncing S3 bucket for test cases with EFS'
     Value: !GetAtt SyncS3WithEFS.Arn
+
+  # Test generation
+  Generate:
+    Description: 'API Gateway endpoint URL for /generate'
+    Value: !Sub 'https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/generate/'
+  TestGenerationBouncerArn:
+    Description: 'Lambda for orchestrating test generation'
+    Value: !GetAtt TestGenerationBouncer.Arn
+  TestGeneratorArn:
+    Description: 'Sandboxed Lambda that runs user Python to produce a tests zip'
+    Value: !GetAtt TestGenerator.Arn
