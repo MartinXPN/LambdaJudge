@@ -4,8 +4,7 @@ FROM public.ecr.aws/lambda/python:3.13
 RUN pip install --upgrade pip
 RUN pip install awslambdaric -t "${LAMBDA_TASK_ROOT}"
 
-COPY ./testgen/requirements.txt ${LAMBDA_TASK_ROOT}/
-RUN pip install -r ${LAMBDA_TASK_ROOT}/requirements.txt -t "${LAMBDA_TASK_ROOT}"
+RUN python -m pip install --upgrade boto3 dataclasses-json requests
 
 COPY ./testgen/*.py ${LAMBDA_TASK_ROOT}/testgen/
 COPY ./models.py ${LAMBDA_TASK_ROOT}/
