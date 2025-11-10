@@ -511,10 +511,6 @@ Resources:
       FunctionName: TestGenerator
       PackageType: Image
       Role: !GetAtt TestGeneratorRole.Arn
-      Timeout: 900
-      MemorySize: 2048
-      EphemeralStorage:
-        Size: 10240
       VpcConfig:
         SecurityGroupIds:
           - !GetAtt JudgeVPC.DefaultSecurityGroup
