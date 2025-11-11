@@ -3,17 +3,16 @@ import os
 from pathlib import Path
 
 import boto3
-import botocore
+from botocore.config import Config
 
 from models import SyncRequest, TestCase
 from sync.services import encrypt_tests, zip2tests
 from sync.summary import SummaryTable, truncate
 
-ROOT = Path('/tmp/')
-cfg = botocore.config.Config(retries={'max_attempts': 0}, read_timeout=300, connect_timeout=300)
-aws_lambda = boto3.client('lambda', config=cfg)
-s3 = boto3.client('s3')
+aws_lambda = boto3.client('lambda', config=Config(retries={'max_attempts': 0}, read_timeout=300, connect_timeout=300))
 dynamodb = boto3.resource('dynamodb')
+s3 = boto3.client('s3')
+ROOT = Path('/tmp/')
 
 
 def trigger_sync_s3_handler(event, context):
@@ -25,7 +24,7 @@ def trigger_sync_s3_handler(event, context):
     problem = key.split('.')[0]
     print('bucket:', bucket, 'key:', key, 'problem:', problem)
 
-    encryption_key = os.environ.get('EFS_PROBLEMS_ENCRYPTION_KEY', '')
+    encryption_key = os.getenv('EFS_PROBLEMS_ENCRYPTION_KEY')
     print('encryption key len:', len(encryption_key))
 
     request = SyncRequest(bucket=bucket, key=key, encryption_key=encryption_key)

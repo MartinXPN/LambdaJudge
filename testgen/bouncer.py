@@ -1,4 +1,3 @@
-
 def handler(event, context):
     """
     Bouncer that takes the request and forwards it to the generator lambda

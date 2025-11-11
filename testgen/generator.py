@@ -1,4 +1,3 @@
-
 def handler(event, context):
     """
     Lambda to execute code that generates tests.
