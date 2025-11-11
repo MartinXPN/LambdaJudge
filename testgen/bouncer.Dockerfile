@@ -12,4 +12,4 @@ COPY ./models.py ${LAMBDA_TASK_ROOT}/
 
 # Run the lambda function handler
 ENTRYPOINT [ "python", "-m", "awslambdaric" ]
-CMD [ "testgen.bouncer.handler" ]
+CMD [ "testgen.bouncer_app.handler" ]

@@ -4,7 +4,7 @@ import random
 import time
 
 import boto3
-import requests as requests
+import requests
 from botocore.config import Config
 
 from bouncer.coderunners import CodeRunner
