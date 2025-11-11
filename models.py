@@ -72,7 +72,7 @@ class TestGroup(DataClassJsonCamelMixIn):
 
 
 # Defining a recursive type doesn't seem to work with dataclasses-json
-CodeTree = dict[str, str | dict[str, str | dict[str, str]]]
+CodeTree = dict[str, str | dict[str, str | dict[str, str | dict[str, str | dict[str, str]]]]]
 
 
 @dataclass
@@ -146,3 +146,11 @@ class SyncRequest(DataClassJsonCamelMixIn):
     bucket: str
     key: str
     encryption_key: str
+
+
+@dataclass
+class TestGenRequest(DataClassJsonCamelMixIn):
+    code: CodeTree              # Mapping from filename.extension -> content (Http requests have 2MB limit)
+    problem: str                # Problem ID to generate tests for (bucket/problem.zip)
+    language: str = 'python'    # We currently only support Python for test generation
+    bucket: str = 'lambda-judge-tests-bucket'
