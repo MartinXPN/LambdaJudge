@@ -27,6 +27,7 @@ def trigger_sync_s3_handler(event, context):
     encryption_key = os.getenv('EFS_PROBLEMS_ENCRYPTION_KEY')
     print('encryption key len:', len(encryption_key))
 
+    SummaryTable(dynamodb).log_start(problem)
     request = SyncRequest(bucket=bucket, key=key, encryption_key=encryption_key)
     print('request:', request)
     res = aws_lambda.invoke(FunctionName='SyncS3WithEFS', Payload=request.to_json())['Payload']

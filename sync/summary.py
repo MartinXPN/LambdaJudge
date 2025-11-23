@@ -17,7 +17,7 @@ class SummaryTable:
     def log_start(self, problem_id: str) -> None:
         self.table.put_item(Item={
             'id': problem_id,
-            'status': 'in_progress',
+            'status': 'in-progress',
             'message': '',
         })
 
@@ -33,7 +33,7 @@ class SummaryTable:
             'id': problem_id,
             'count': len(tests),
             'tests': [t.to_dict() for t in tests],
-            'status': 'success',
+            'status': 'completed',
             'message': '',
         })
         if response['ResponseMetadata']['HTTPStatusCode'] not in range(200, 300):
