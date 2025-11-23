@@ -507,6 +507,7 @@ Resources:
 
   TestGenerator:
     Type: AWS::Serverless::Function
+    DependsOn: AllowEC2NetworkInterfacesPolicy
     Properties:
       FunctionName: TestGenerator
       PackageType: Image
