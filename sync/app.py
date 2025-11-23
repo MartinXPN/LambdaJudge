@@ -20,7 +20,7 @@ def trigger_sync_s3_handler(event, context):
     print('Context:', context)
 
     bucket = event['Records'][0]['s3']['bucket']['name']
-    key = event['Records'][0]['s3']['object']['key']  # some-bucket/some-folder/img.jpg
+    key = event['Records'][0]['s3']['object']['key']  # bucket/some-folder/problem.zip
     problem = key.split('.')[0]
     print('bucket:', bucket, 'key:', key, 'problem:', problem)
 

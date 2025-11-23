@@ -2,6 +2,7 @@ import base64
 import gzip
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Literal
 
 from dataclasses_json import DataClassJsonMixin, LetterCase, Undefined, config
 
@@ -150,7 +151,13 @@ class SyncRequest(DataClassJsonCamelMixIn):
 
 @dataclass
 class TestGenRequest(DataClassJsonCamelMixIn):
-    code: CodeTree              # Mapping from filename.extension -> content (Http requests have 2MB limit)
+    code: CodeTree              # Mapping from filename.extension -> content
     problem: str                # Problem ID to generate tests for (bucket/problem.zip)
     language: str = 'python'    # We currently only support Python for test generation
     bucket: str = 'lambda-judge-tests-bucket'
+
+
+@dataclass
+class TestGenResponse(DataClassJsonCamelMixIn):
+    status: Literal['success', 'error']
+    message: str | None = None
