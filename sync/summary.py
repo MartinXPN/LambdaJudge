@@ -14,18 +14,18 @@ class SummaryTable:
     def __init__(self, dynamodb):
         self.table = dynamodb.Table(self.TABLE_NAME)
 
-    def log_error(self, problem_id: str, message: str) -> None:
-        self.table.put_item(Item={
-            'id': problem_id,
-            'status': 'error',
-            'message': message,
-        })
-
     def log_start(self, problem_id: str) -> None:
         self.table.put_item(Item={
             'id': problem_id,
             'status': 'in_progress',
             'message': '',
+        })
+
+    def log_error(self, problem_id: str, message: str) -> None:
+        self.table.put_item(Item={
+            'id': problem_id,
+            'status': 'error',
+            'message': message,
         })
 
     def write(self, problem_id: str, tests: list[TestCase]) -> None:
