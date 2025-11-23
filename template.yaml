@@ -487,9 +487,8 @@ Resources:
       Environment:
         Variables:
           TESTS_BUCKET: !Ref LambdaJudgeTestsBucket
-          UPLOAD_ROLE_ARN: !GetAtt TestGenerationUploadRole.Arn
-          TEST_GENERATOR_FUNCTION_NAME: !Ref TestGenerator
           DYNAMODB_TABLE_NAME: !Ref PrivateTestsTable
+          UPLOAD_ROLE_ARN: !GetAtt TestGenerationUploadRole.Arn
           FORCE_SSE: AES256
       Events:
         Generate:
@@ -519,6 +518,7 @@ Resources:
           - !Ref PrivateSubnet   # has the S3 Gateway Endpoint route; no NAT => no internet
       Environment:
         Variables:
+          TESTS_BUCKET: !Ref LambdaJudgeTestsBucket
           FORCE_SSE: AES256
     Metadata:
       DockerTag: testgen-sandbox-v1

@@ -151,10 +151,10 @@ class SyncRequest(DataClassJsonCamelMixIn):
 
 @dataclass
 class TestGenRequest(DataClassJsonCamelMixIn):
-    code: CodeTree              # Mapping from filename.extension -> content
-    problem: str                # Problem ID to generate tests for (bucket/problem.zip)
-    language: str = 'python'    # We currently only support Python for test generation
-    bucket: str = 'lambda-judge-tests-bucket'
+    code: CodeTree                              # Mapping from filename.extension -> content
+    problem: str                                # Problem ID to generate tests for (bucket/problem.zip) (bucket in .env)
+    language: str = 'python'                    # We currently only support Python for test generation
+    credentials: dict[str, str] | None = None   # STS credentials to upload the tests to S3
 
 
 @dataclass
