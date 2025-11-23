@@ -17,7 +17,15 @@ class SummaryTable:
     def log_error(self, problem_id: str, message: str) -> None:
         self.table.put_item(Item={
             'id': problem_id,
+            'status': 'error',
             'message': message,
+        })
+
+    def log_start(self, problem_id: str) -> None:
+        self.table.put_item(Item={
+            'id': problem_id,
+            'status': 'in_progress',
+            'message': '',
         })
 
     def write(self, problem_id: str, tests: list[TestCase]) -> None:
@@ -25,6 +33,8 @@ class SummaryTable:
             'id': problem_id,
             'count': len(tests),
             'tests': [t.to_dict() for t in tests],
+            'status': 'success',
+            'message': '',
         })
         if response['ResponseMetadata']['HTTPStatusCode'] not in range(200, 300):
             self.log_error(problem_id, 'Could not summarize the tests')
