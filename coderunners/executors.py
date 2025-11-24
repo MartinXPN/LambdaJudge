@@ -79,11 +79,11 @@ class SQLiteExecutor(Executor):
 
     def run(self, test: TestCase, **kwargs) -> RunResult:
         """
-        self.script is the SQL script that needs to be run on the database
-        test.input is the initialization SQL script
-        test.input_files are all the tables that need to be populated
-        test.target is the expected output of the SQL script (can be empty)
-        test.target_files are all the tables that need to be populated by the SQL script
+        self.script is the SQL script that needs to be run on the database.
+        test.input is the initialization SQL script.
+        test.input_files are all the tables that need to be populated.
+        test.target is the expected output of the SQL script (can be empty).
+        test.target_files are all the tables that need to be populated by the SQL script.
         """
         import pandas as pd
         cursor = self.db.cursor()

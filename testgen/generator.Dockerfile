@@ -9,7 +9,7 @@ RUN python -m pip install --upgrade boto3 dataclasses-json psutil numpy scipy sc
 COPY ./testgen/*.py ${LAMBDA_TASK_ROOT}/testgen/
 COPY ./models.py ${LAMBDA_TASK_ROOT}/
 COPY ./coderunners/process.py ${LAMBDA_TASK_ROOT}/coderunners/
-
+COPY ./coderunners/util.py ${LAMBDA_TASK_ROOT}/coderunners/
 
 # Run the lambda function handler
 ENTRYPOINT [ "python", "-m", "awslambdaric" ]

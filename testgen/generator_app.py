@@ -3,7 +3,7 @@ import os
 import boto3
 from botocore.config import Config
 
-from models import TestGenRequest, TestGenResponse
+from models import TestGenRequest
 from testgen.generator import generate_tests
 
 TESTS_BUCKET = os.getenv('TESTS_BUCKET')
@@ -25,16 +25,9 @@ def handler(event, context):
 
     # Generate the test cases and compress them into a zip file
     results, zip_path = generate_tests(request)
-    print(f'Done generating tests: {results}')
+    print(f'Zip path: {zip_path} => exists:{zip_path.exists()}, is_file:{zip_path.is_file()}')
     if results.status == 'error':
         return results.to_json()
-
-    print(f'Zip path: {zip_path} => exists:{zip_path.exists()}, is_file:{zip_path.is_file()}')
-    if not zip_path.exists() or not zip_path.is_file():
-        return TestGenResponse(
-            status='error',
-            message='No zip file generated. It should be named `tests.zip`',
-        ).to_json()
 
     # Upload the results to S3
     s3 = boto3.client(
