@@ -81,7 +81,7 @@ def generate_tests(request: TestGenRequest) -> tuple[TestGenResponse, Path]:
     # Save the user code and run it (currently only a single-file generator)
     code_paths = save_code(save_dir=root, code=request.code)
     main_path = code_paths[0]
-    r = Process(f'python {main_path}', timeout=10, memory_limit_mb=512, output_limit_mb=20).run()
+    r = Process(f'python {main_path}', timeout=3 * 60, memory_limit_mb=512, output_limit_mb=20).run()
 
     if r.status != Status.OK:
         return TestGenResponse(

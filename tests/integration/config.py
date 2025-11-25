@@ -1,5 +1,6 @@
 import boto3
 import botocore
+from botocore.config import Config
 
 from models import TestCase, TestGroup
 
@@ -12,7 +13,7 @@ lambda_client = boto3.client(
     endpoint_url='http://127.0.0.1:3001',
     use_ssl=False,
     verify=False,
-    config=botocore.client.Config(
+    config=Config(
         signature_version=botocore.UNSIGNED,
         retries={'max_attempts': 0},
         read_timeout=300,

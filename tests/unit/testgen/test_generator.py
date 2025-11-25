@@ -1,3 +1,0 @@
-class TestGenerator:
-    def test_generate_tests(self):
-        ...
