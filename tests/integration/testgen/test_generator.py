@@ -52,7 +52,7 @@ class TestGenerator:
         assert response.status == 'success', response.message
 
         # Assert the ZIP landed in S3
-        s3_client = boto3.client('s3')
+        s3_client = boto3.client('s3', region_name='us-east-1')
         s3_obj = s3_client.get_object(Bucket=self.bucket_name, Key=f'{problem}.zip')
         body = s3_obj['Body'].read()
         print('S3 Body:', body)
