@@ -23,7 +23,7 @@ class Compiler(ABC):
         return submission_paths[0]
 
     @staticmethod
-    def from_language(language: str) -> 'Compiler':
+    def from_language(language: str) -> Compiler:
         language = language.lower().strip()
         if language in TxtCompiler.supported_standards:
             return TxtCompiler()
@@ -167,7 +167,7 @@ class CSharpCompiler(Compiler):
 
     def compile(self, submission_paths: list[Path]):
         project_create_res = Process(f'{self.dotnet_path} new console -o {self.project_dir}',
-                                     timeout=30, memory_limit_mb=512).run()
+                                     timeout=30, memory_limit_mb=1024).run()
         (self.project_dir / 'Program.cs').unlink(missing_ok=True)   # Remove the default file created by .Net
         print('All files in project dir:', list(self.project_dir.iterdir()))
         print('Project Create res', project_create_res)
@@ -184,7 +184,7 @@ class CSharpCompiler(Compiler):
             shutil.copyfile(path, destination)
 
         compile_cmd = f'{self.dotnet_path} build {self.project_file_path} -c Release -o {self.dll_path.parent}'
-        compile_res = Process(compile_cmd, timeout=30, memory_limit_mb=512).run()
+        compile_res = Process(compile_cmd, timeout=30, memory_limit_mb=1024).run()
         print('Compile res', compile_res)
         return ProcessExecutor(command=command), compile_res
 

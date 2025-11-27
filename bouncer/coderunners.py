@@ -13,7 +13,7 @@ class CodeRunner(ABC):
         ...
 
     @staticmethod
-    def from_language(language: str) -> 'CodeRunner':
+    def from_language(language: str) -> CodeRunner:
         language = language.lower()
         if language in TxtRunner.supported_standards:
             return TxtRunner()

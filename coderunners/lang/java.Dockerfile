@@ -1,4 +1,4 @@
-FROM public.ecr.aws/lambda/python:3.13
+FROM public.ecr.aws/lambda/python:3.14
 
 # Initial setup
 RUN dnf install -y java-21-amazon-corretto-devel

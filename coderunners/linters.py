@@ -12,7 +12,7 @@ class Linter(ABC):
         ...
 
     @staticmethod
-    def from_language(language: str) -> 'Linter':
+    def from_language(language: str) -> Linter:
         language = language.lower()
         if language in CppLinter.supported_standards:
             return CppLinter(language_standard=language)

@@ -15,7 +15,7 @@ class Scorer(ABC):
         ...
 
     @staticmethod
-    def from_request(test_groups: list[TestGroup] | None = None) -> 'Scorer':
+    def from_request(test_groups: list[TestGroup] | None = None) -> Scorer:
         return SubtaskScorer(test_groups=test_groups) if test_groups else PerTestScorer()
 
 

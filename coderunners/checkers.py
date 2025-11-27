@@ -45,7 +45,7 @@ class Checker(ABC):
         mode: str,
         float_precision: float | None = None, delimiter: str | None = None,
         executor: Executor | None = None,
-    ) -> 'Checker':
+    ) -> Checker:
         if mode == 'ok':
             return OkChecker()
         if mode == 'whole':
