@@ -1,7 +1,5 @@
 import gzip
 import itertools
-import json
-import sys
 import time
 from copy import copy
 from pathlib import Path

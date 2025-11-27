@@ -4,14 +4,13 @@ import random
 import time
 
 import boto3
-import botocore
-import requests as requests
+import requests
+from botocore.config import Config
 
 from bouncer.coderunners import CodeRunner
 from models import RunResult, Status, SubmissionRequest, SubmissionResult
 
-cfg = botocore.config.Config(retries={'max_attempts': 0}, read_timeout=360, connect_timeout=360)
-aws_lambda = boto3.client('lambda', config=cfg)
+aws_lambda = boto3.client('lambda', config=Config(retries={'max_attempts': 0}, read_timeout=360, connect_timeout=360))
 
 
 def check_equality(request: SubmissionRequest) -> SubmissionResult:
@@ -21,7 +20,7 @@ def check_equality(request: SubmissionRequest) -> SubmissionResult:
 
     if request.problem:
         # If problem is provided => we'll need an encryption key to decrypt the problem on EFS
-        request.encryption_key = os.environ['EFS_PROBLEMS_ENCRYPTION_KEY']
+        request.encryption_key = os.getenv('EFS_PROBLEMS_ENCRYPTION_KEY')
 
     coderunner = CodeRunner.from_language(language=request.language)
     print('coderunner:', coderunner)

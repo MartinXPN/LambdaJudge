@@ -1,10 +1,13 @@
 import boto3
 import botocore
+from botocore.config import Config
 
-from models import TestCase, TestGroup
+from models import TestCase, TestGenRequest, TestGenResponse, TestGroup
 
 TestCase.__test__ = False
 TestGroup.__test__ = False
+TestGenRequest.__test__ = False
+TestGenResponse.__test__ = False
 
 lambda_client = boto3.client(
     'lambda',
@@ -12,7 +15,7 @@ lambda_client = boto3.client(
     endpoint_url='http://127.0.0.1:3001',
     use_ssl=False,
     verify=False,
-    config=botocore.client.Config(
+    config=Config(
         signature_version=botocore.UNSIGNED,
         retries={'max_attempts': 0},
         read_timeout=300,

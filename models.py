@@ -2,6 +2,7 @@ import base64
 import gzip
 from dataclasses import dataclass, field
 from enum import Enum
+from typing import Literal
 
 from dataclasses_json import DataClassJsonMixin, LetterCase, Undefined, config
 
@@ -72,7 +73,7 @@ class TestGroup(DataClassJsonCamelMixIn):
 
 
 # Defining a recursive type doesn't seem to work with dataclasses-json
-CodeTree = dict[str, str | dict[str, str | dict[str, str]]]
+CodeTree = dict[str, str | dict[str, str | dict[str, str | dict[str, str | dict[str, str]]]]]
 
 
 @dataclass
@@ -146,3 +147,17 @@ class SyncRequest(DataClassJsonCamelMixIn):
     bucket: str
     key: str
     encryption_key: str
+
+
+@dataclass
+class TestGenRequest(DataClassJsonCamelMixIn):
+    code: CodeTree                              # Mapping from filename.extension -> content
+    problem: str                                # Problem ID to generate tests for (bucket/problem.zip) (bucket in .env)
+    language: str = 'python'                    # We currently only support Python for test generation
+    credentials: dict[str, str] | None = None   # STS credentials to upload the tests to S3
+
+
+@dataclass
+class TestGenResponse(DataClassJsonCamelMixIn):
+    status: Literal['success', 'error']
+    message: str | None = None
