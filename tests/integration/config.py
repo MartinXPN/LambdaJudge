@@ -2,10 +2,12 @@ import boto3
 import botocore
 from botocore.config import Config
 
-from models import TestCase, TestGroup
+from models import TestCase, TestGenRequest, TestGenResponse, TestGroup
 
 TestCase.__test__ = False
 TestGroup.__test__ = False
+TestGenRequest.__test__ = False
+TestGenResponse.__test__ = False
 
 lambda_client = boto3.client(
     'lambda',
