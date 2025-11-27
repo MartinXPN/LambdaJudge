@@ -13,6 +13,7 @@ class SummaryTable:
 
     def __init__(self, dynamodb):
         self.table = dynamodb.Table(self.TABLE_NAME)
+        print(f'Initialized SummaryTable: {self.TABLE_NAME}')
 
     def log_start(self, problem_id: str) -> None:
         self.table.put_item(Item={

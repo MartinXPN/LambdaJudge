@@ -419,6 +419,12 @@ Resources:
             Resource: !Sub arn:aws:s3:::${LambdaJudgeTestsBucket}/*
 
 
+  # DynamoDB Table for test metadata
+  PrivateTestsTable:
+    Type: "AWS::Serverless::SimpleTable"
+    Properties:
+      TableName: LambdaJudge-PrivateTestsTable-12BD75YUMPHC8
+
   # Lambda Functions
   # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
 
@@ -450,8 +456,6 @@ Resources:
       DockerContext: ./
       Dockerfile: sync/trigger.Dockerfile
 
-  PrivateTestsTable:
-    Type: "AWS::Serverless::SimpleTable"
   SyncS3WithEFS:
     Type: AWS::Serverless::Function
     DependsOn: CodeRunnerMountTarget

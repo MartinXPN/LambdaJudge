@@ -20,13 +20,16 @@ def handler(event, context):
     request = TestGenRequest.from_dict(event)
     print('Bucket:', TESTS_BUCKET, 'Problem:', request.problem, 'Language:', request.language)
 
-    if request.credentials is None:
-        raise ValueError('No credentials provided to upload tests')
-
     # Generate the test cases and compress them into a zip file
     results, zip_path = generate_tests(request)
     print(f'Zip path: {zip_path} => exists:{zip_path.exists()}, is_file:{zip_path.is_file()}')
     if results.status == 'error':
+        return results.to_json()
+
+    if request.credentials is None:
+        print('No credentials provided to upload tests => stopping here')
+        results.message = (results.message or '') + '\nCould not upload tests: no credentials provided.'
+        results.message = results.message.strip()
         return results.to_json()
 
     # Upload the results to S3
