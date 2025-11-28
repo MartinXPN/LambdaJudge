@@ -66,10 +66,14 @@ Here is the list of plugins for each IDE:
 * [Python 3 installed](https://www.python.org/downloads/)
 * [pre-commit installed](https://pre-commit.com/)
 * Docker - [Install Docker community edition](https://hub.docker.com/search/?type=edition&offering=community)
-* `pip install -r tests/requirements.txt` to run tests
 
 
 ### Setting up the environment:
+
+Install all the required dependencies:
+```shell
+pip install -r tests/requirements.txt
+```
 
 Create an `.env.json` (for local development) file in the root of the project with the following content:
 ```json
