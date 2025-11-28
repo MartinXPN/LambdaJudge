@@ -14,9 +14,6 @@ All the test cases are encrypted and the executor process does not have the key.
 Therefore, the arbitrary code cannot read the answers for the test cases.
 The test cases are kept on EFS (Elastic File System), which is mounted with a read access.
 
-IMPORTANT: The tests do not run properly on Apple Silicon (due to consuming way too much memory per code execution).
-A simple hello world program in C++ consumes more than 1GB of RAM.
-
 
 ## Infrastructure
 LambdaJudge infrastructure is best described in the image below.
