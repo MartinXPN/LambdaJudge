@@ -23,7 +23,7 @@ jobs:
         python -m pip install --upgrade pip
         pip install -r tests/requirements.txt
     - uses: aws-actions/setup-sam@v2
-    - run: sam build --use-container
+    - run: sam build --use-container --parallel
 
     - name: Create env.json for SAM
       env:

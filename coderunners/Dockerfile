@@ -41,12 +41,11 @@ ENV \
 
 
 FROM base AS java
-RUN dnf install -y java-21-amazon-corretto-devel
+RUN dnf install -y java-25-amazon-corretto-devel
 
 
 FROM base AS js
-RUN rpm -ivh https://rpm.nodesource.com/pub_16.x/nodistro/repo/nodesource-release-nodistro-1.noarch.rpm
-RUN dnf install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1
+RUN dnf install -y nodejs24
 
 
 FROM base AS python
