@@ -105,7 +105,7 @@ parameter_overrides = """
 
 ### Running the project (need to have docker up and running):
 ```shell
-sam build --use-container                                         # Builds the project
+sam build --use-container --parallel                              # Builds the project
 sam local invoke <FunctionName> --event events/pythonEcho.json    # Invokes the lambda function locally
 sam local start-api && curl http://localhost:3000/                # Start and invoke API endpoints locally
 sam local start-lambda --env-vars .env.json                       # Start all the functions (you can invoke them with boto3, have a look at integration tests)
@@ -117,7 +117,7 @@ pre-commit run --all-files                                        # Tidy-up the 
 
 ### Running tests (coverage is not reported for integration tests)
 ```shell
-sam build --use-container                                         # Builds the project
+sam build --use-container --parallel                              # Builds the project
 sam local start-lambda --env-vars .env.json                       # Start all the functions locally
 # In another terminal tab run the following
 pytest tests --cov=sync --cov=coderunners --cov=bouncer --cov-report term-missing
