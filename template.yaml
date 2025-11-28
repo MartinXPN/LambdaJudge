@@ -599,7 +599,8 @@ Resources:
     Metadata:
       DockerTag: txt-v1
       DockerContext: ./
-      Dockerfile: coderunners/lang/txt.Dockerfile
+      Dockerfile: coderunners/Dockerfile
+      DockerBuildTarget: txt
 
   CodeRunnerPython:
     Type: AWS::Serverless::Function
@@ -619,7 +620,8 @@ Resources:
     Metadata:
       DockerTag: python-v1
       DockerContext: ./
-      Dockerfile: coderunners/lang/python.Dockerfile
+      Dockerfile: coderunners/Dockerfile
+      DockerBuildTarget: python
 
   CodeRunnerPythonML:
     Type: AWS::Serverless::Function
@@ -639,7 +641,8 @@ Resources:
     Metadata:
       DockerTag: python-ml-v1
       DockerContext: ./
-      Dockerfile: coderunners/lang/pythonML.Dockerfile
+      Dockerfile: coderunners/Dockerfile
+      DockerBuildTarget: python_ml
 
   CodeRunnerC:
     Type: AWS::Serverless::Function
@@ -659,7 +662,8 @@ Resources:
     Metadata:
       DockerTag: c-v1
       DockerContext: ./
-      Dockerfile: coderunners/lang/c.Dockerfile
+      Dockerfile: coderunners/Dockerfile
+      DockerBuildTarget: c
 
   CodeRunnerCpp:
     Type: AWS::Serverless::Function
@@ -679,7 +683,8 @@ Resources:
     Metadata:
       DockerTag: cpp-v1
       DockerContext: ./
-      Dockerfile: coderunners/lang/cpp.Dockerfile
+      Dockerfile: coderunners/Dockerfile
+      DockerBuildTarget: cpp
 
   CodeRunnerCSharp:
     Type: AWS::Serverless::Function
@@ -699,7 +704,8 @@ Resources:
     Metadata:
       DockerTag: csharp-v1
       DockerContext: ./
-      Dockerfile: coderunners/lang/csharp.Dockerfile
+      Dockerfile: coderunners/Dockerfile
+      DockerBuildTarget: csharp
 
   CodeRunnerJs:
     Type: AWS::Serverless::Function
@@ -719,7 +725,8 @@ Resources:
     Metadata:
       DockerTag: js-v1
       DockerContext: ./
-      Dockerfile: coderunners/lang/js.Dockerfile
+      Dockerfile: coderunners/Dockerfile
+      DockerBuildTarget: js
 
   CodeRunnerJava:
     Type: AWS::Serverless::Function
@@ -739,7 +746,8 @@ Resources:
     Metadata:
       DockerTag: java-v1
       DockerContext: ./
-      Dockerfile: coderunners/lang/java.Dockerfile
+      Dockerfile: coderunners/Dockerfile
+      DockerBuildTarget: java
 
   CodeRunnerSQLite:
     Type: AWS::Serverless::Function
@@ -759,7 +767,8 @@ Resources:
     Metadata:
       DockerTag: sqlite-v1
       DockerContext: ./
-      Dockerfile: coderunners/lang/sqlite.Dockerfile
+      Dockerfile: coderunners/Dockerfile
+      DockerBuildTarget: sqlite
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
