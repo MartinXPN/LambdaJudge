@@ -3,7 +3,7 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 
 from models import TestCase
-from sync.services import zip2tests
+from sync.sync import zip2tests
 
 
 class TestTruncation:
