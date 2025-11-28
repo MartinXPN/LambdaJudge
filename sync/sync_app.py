@@ -3,10 +3,11 @@ from pathlib import Path
 import boto3
 
 from models import SyncRequest
-from sync.sync import encrypt_tests, zip2tests
 from sync.summary import truncate
+from sync.sync import encrypt_tests, zip2tests
 
 s3 = boto3.client('s3')
+
 
 def handler(event, context):
     print('Event:', type(event), event)
