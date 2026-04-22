@@ -20,7 +20,7 @@ def handler(event, context):
     problem = key.split('.')[0]
     print('bucket:', bucket, 'key:', key, 'problem:', problem)
 
-    encryption_key = os.getenv('EFS_PROBLEMS_ENCRYPTION_KEY')
+    encryption_key = os.getenv('EFS_PROBLEMS_ENCRYPTION_KEY', '')
     print('encryption key len:', len(encryption_key))
 
     SummaryTable(dynamodb).log_start(problem)

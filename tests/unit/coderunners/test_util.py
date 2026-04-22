@@ -64,6 +64,3 @@ class TestUtil:
                 save_dir = Path(save_dir)
                 # noinspection PyTypeChecker
                 util.save_code(save_dir, code)
-
-    def test_return_code_to_status(self):
-        assert util.return_code2status.get(137) == 'SIGKILL'

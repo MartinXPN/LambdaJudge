@@ -69,7 +69,7 @@ class EqualityChecker(SubmissionRequest):
                 data = gzip.decompress(data)
                 data = data.decode('utf-8')
                 self.test_cases += TestCase.schema().loads(data, many=True)
-        print(f'There are: {len(self.test_cases)} test cases')
+        print(f'There are: {len(self.test_cases or [])} test cases')
 
         # If there are no test cases => run the program and return OK as the result (no comparisons)
         if not self.test_cases:
@@ -84,6 +84,11 @@ class EqualityChecker(SubmissionRequest):
         # Prepare the checker
         checker_executor = None
         if self.comparison_mode == 'custom':
+            if not self.checker_code or not self.checker_language:
+                fail = RunResult(status=Status.COMPILATION_ERROR, memory=0, time=0, score=0, return_code=1)
+                fail.message = 'You should provide `checker_code` or `checker_language` for custom checkers'
+                return SubmissionResult(overall=fail, compile_result=fail)
+
             checker_code_paths = save_code(save_dir=self.ROOT, code=self.checker_code)
             checker_executor, checker_compile_result = self.compile(checker_code_paths, self.checker_language)
             if checker_executor is None:
@@ -115,7 +120,7 @@ class EqualityChecker(SubmissionRequest):
             )
 
             (r.status, r.score, r.message) = checker.check(
-                inputs=test.input, output=r.outputs, target=test.target,
+                inputs=test.input, output=r.outputs or '', target=test.target,
                 code=self.code,
                 input_files=test.input_files, output_files=r.output_files, target_files=test.target_files,
                 input_assets=test.input_assets, output_assets=r.output_assets, target_assets=test.target_assets,

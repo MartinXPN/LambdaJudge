@@ -4,11 +4,22 @@ import sys
 from glob import glob
 from pathlib import Path
 from tempfile import TemporaryDirectory
+from typing import Literal, overload
 from zipfile import ZipFile
 
 from cryptography.fernet import Fernet
 
 from models import TestCase
+
+
+@overload
+def read_files(paths: list[Path], mode: Literal['r'] = 'r', remove_prefix: str = '') -> dict[str, str]:
+    ...
+
+
+@overload
+def read_files(paths: list[Path], mode: Literal['rb'] = 'rb', remove_prefix: str = '') -> dict[str, bytes]:
+    ...
 
 
 def read_files(paths: list[Path], mode: str = 'r', remove_prefix: str = '') -> dict[str, str | bytes]:

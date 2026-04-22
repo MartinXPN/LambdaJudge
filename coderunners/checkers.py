@@ -9,14 +9,14 @@ from tempfile import NamedTemporaryFile, TemporaryDirectory
 
 from coderunners.executors import Executor
 from coderunners.util import is_float, save_code
-from models import Status, TestCase
+from models import CodeTree, Status, TestCase
 
 
 class Checker(ABC):
     @abstractmethod
     def check(
         self, inputs: str, output: str, target: str,
-        code: dict[str, str],
+        code: CodeTree,
         input_files: dict[str, str] | None = None,
         output_files: dict[str, str] | None = None,
         target_files: dict[str, str] | None = None,
@@ -135,9 +135,10 @@ class CustomChecker(Checker):
         input_files=None, output_files=None, target_files=None,
         input_assets=None, output_assets=None, target_assets=None,
     ) -> tuple[Status, float, str | None]:
-        # TODO: How to support files and assets for custom checkers?
-        with NamedTemporaryFile('w') as inf, NamedTemporaryFile('w') as ouf, NamedTemporaryFile('w') as tg, \
-                TemporaryDirectory() as code_dir:
+        with (NamedTemporaryFile('w') as inf,
+              NamedTemporaryFile('w') as ouf,
+              NamedTemporaryFile('w') as tg,
+              TemporaryDirectory() as code_dir):
             code_dir = Path(code_dir)
             save_code(save_dir=code_dir, code=code)
             inf.write(inputs)

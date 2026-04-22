@@ -3,7 +3,6 @@ import resource
 import subprocess
 import sys
 import time
-from collections.abc import Iterable
 from dataclasses import dataclass, field
 from pathlib import Path
 from threading import Thread
@@ -59,7 +58,7 @@ def read_stderr(process: subprocess.Popen, res: Outputs) -> None:
 
 @dataclass
 class Process:
-    command: str | Iterable[str]
+    command: str
     timeout: float
     memory_limit_mb: int
     output_limit_mb: float = 1

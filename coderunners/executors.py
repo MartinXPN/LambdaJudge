@@ -1,6 +1,5 @@
 import sqlite3
 from abc import ABC, abstractmethod
-from collections.abc import Iterable
 from dataclasses import dataclass
 from io import StringIO
 from pathlib import Path
@@ -24,7 +23,7 @@ class Executor(ABC):
 
 @dataclass
 class ProcessExecutor(Executor):
-    command: str | Iterable[str]
+    command: str
     ROOT: Path = Path('/tmp/')
 
     def run(self, test: TestCase, time_limit: float, memory_limit_mb: int, output_limit_mb: float) -> RunResult:
