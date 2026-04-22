@@ -100,15 +100,6 @@ class EqualityChecker(SubmissionRequest):
             float_precision=self.float_precision, delimiter=self.delimiter, executor=checker_executor,
         )
 
-        # Run the first test as a warmup to avoid having big time consumption on the first run
-        print('Running test warmup', end='...')
-        executor.run(
-            self.test_cases[0],
-            time_limit=self.time_limit, memory_limit_mb=self.memory_limit, output_limit_mb=self.output_limit
-        )
-        executor.cleanup(self.test_cases[0])
-        print('Done')
-
         # Process all tests
         test_results: list[RunResult] = []
         tests_iter = iter(enumerate(self.test_cases))

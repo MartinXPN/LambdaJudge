@@ -153,7 +153,7 @@ class CustomChecker(Checker):
             self.executor.command += command_line_args
             res = self.executor.run(
                 test=TestCase(input=random_status_string, target=''),
-                time_limit=5, memory_limit_mb=512, output_limit_mb=1,
+                time_limit=10, memory_limit_mb=512, output_limit_mb=1,
             )
             self.executor.command = self.executor.command.replace(command_line_args, '')
 

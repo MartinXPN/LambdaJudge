@@ -39,6 +39,14 @@ ENV \
 
 COPY --parents models.py coderunners/*.py ./
 
+# Cache the project template and dependencies to speed up cold starts
+RUN /var/dotnet/dotnet new console --force --name program --output /var/task/coderunners/csharp_template && \
+    rm /var/task/coderunners/csharp_template/Program.cs && \
+    mkdir -p /var/task/coderunners/csharp_template/Submission && \
+    printf '%s\n' 'internal static class Program { private static void Main() { } }' \
+      > /var/task/coderunners/csharp_template/Submission/main.cs && \
+    /var/dotnet/dotnet restore /var/task/coderunners/csharp_template/program.csproj
+
 
 FROM base AS java
 RUN dnf install -y java-25-amazon-corretto-devel && dnf clean all && rm -rf /var/cache/dnf
