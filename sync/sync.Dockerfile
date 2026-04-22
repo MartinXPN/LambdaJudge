@@ -1,3 +1,4 @@
+# syntax=docker/dockerfile:1
 FROM public.ecr.aws/lambda/python:3.14
 WORKDIR ${LAMBDA_TASK_ROOT}
 
