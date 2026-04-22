@@ -1,13 +1,9 @@
 FROM public.ecr.aws/lambda/python:3.14
+WORKDIR ${LAMBDA_TASK_ROOT}
 
 # Initial setup
-RUN python -m pip install --upgrade pip
-RUN python -m pip install --upgrade awslambdaric boto3 dataclasses-json requests
-
-COPY bouncer/*.py ${LAMBDA_TASK_ROOT}/bouncer/
-COPY models.py ${LAMBDA_TASK_ROOT}/
-
+RUN python -m pip install --upgrade boto3 dataclasses-json requests
+COPY --parents models.py bouncer/*.py ./
 
 # Run the lambda function handler
-ENTRYPOINT [ "python", "-m", "awslambdaric" ]
 CMD [ "bouncer.app.bouncer_lambda_handler" ]

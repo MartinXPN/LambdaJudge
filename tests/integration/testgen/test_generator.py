@@ -139,7 +139,7 @@ class TestGenerator:
             if __name__ == '__main__':
                 gen = CountVowels()
                 gen.print_tests()
-                gen.zip(Path('/tmp/tests'), include_public_tests=True)
+                gen.zip(Path('/tmp/tests'))
             '''
         ).strip()
 
@@ -150,3 +150,9 @@ class TestGenerator:
         ))
 
         assert response.status == 'success', response.message
+        # Make sure we have the tests in the message (from print_tests)
+        print('Response message:', response.message)
+        assert response.message
+        assert 'Public' in response.message and 'Private' in response.message
+        assert 'Public (3)' in response.message
+        assert 'Private (30)' in response.message

@@ -95,4 +95,4 @@ def generate_tests(request: TestGenRequest) -> tuple[TestGenResponse, Path]:
             message='No zip file generated. It should be named `tests.zip`',
         ), zip_path
 
-    return TestGenResponse(status='success', message=r.message), zip_path
+    return TestGenResponse(status='success', message=r.message or r.outputs), zip_path

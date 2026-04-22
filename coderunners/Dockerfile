@@ -1,31 +1,28 @@
-FROM public.ecr.aws/lambda/python:3.14 as base
+FROM public.ecr.aws/lambda/python:3.14 AS base
+WORKDIR ${LAMBDA_TASK_ROOT}
 
 # Initial setup
-RUN python -m pip install --upgrade pip
-RUN python -m pip install --upgrade awslambdaric cryptography dataclasses-json psutil
-
-# Setup source files
-COPY coderunners/*.py ${LAMBDA_TASK_ROOT}/coderunners/
-COPY models.py ${LAMBDA_TASK_ROOT}/
+RUN python -m pip install --upgrade cryptography dataclasses-json psutil
 
 # Run the lambda function handler
-ENTRYPOINT [ "python", "-m", "awslambdaric" ]
 CMD [ "coderunners.app.run_code_lambda" ]
 
 
 FROM base AS c
-RUN dnf install -y gcc
+RUN dnf install -y gcc && dnf clean all && rm -rf /var/cache/dnf
+COPY --parents models.py coderunners/*.py ./
 
 
 FROM base AS cpp
-RUN dnf install -y gcc-c++ clang-tools-extra libasan
+RUN dnf install -y gcc-c++ clang-tools-extra libasan && dnf clean all && rm -rf /var/cache/dnf
+COPY --parents models.py coderunners/*.py ./
 
 
 FROM base AS csharp
-RUN dnf install -y tar gzip findutils libicu
+RUN dnf install -y tar gzip findutils libicu && dnf clean all && rm -rf /var/cache/dnf
 ADD https://dot.net/v1/dotnet-install.sh ./dotnet-install.sh
 RUN sh dotnet-install.sh --version latest
-RUN mv /root/.dotnet /var/dotnet
+RUN mv /root/.dotnet /var/dotnet && rm -f ./dotnet-install.sh
 
 # 1. Enable detection of running in a container
 # 2. Lambda is opinionated about installing tooling under /var
@@ -39,26 +36,32 @@ ENV \
     DOTNET_CLI_TELEMETRY_OPTOUT=true \
     HOME=/tmp
 
+COPY --parents models.py coderunners/*.py ./
+
 
 FROM base AS java
-RUN dnf install -y java-25-amazon-corretto-devel
+RUN dnf install -y java-25-amazon-corretto-devel && dnf clean all && rm -rf /var/cache/dnf
+COPY --parents models.py coderunners/*.py ./
 
 
 FROM base AS js
-RUN dnf install -y nodejs24
+RUN dnf install -y nodejs24 && dnf clean all && rm -rf /var/cache/dnf
+COPY --parents models.py coderunners/*.py ./
 
 
 FROM base AS python
-# No additional dependencies needed for Python
+COPY --parents models.py coderunners/*.py ./
 
 
 FROM base AS python_ml
 RUN python -m pip install --upgrade numpy pandas matplotlib scikit-learn
+COPY --parents models.py coderunners/*.py ./
 
 
 FROM base AS sqlite
 RUN python -m pip install --upgrade pandas
+COPY --parents models.py coderunners/*.py ./
 
 
 FROM base AS txt
-# No additional dependencies needed for TXT
+COPY --parents models.py coderunners/*.py ./
