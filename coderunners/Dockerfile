@@ -35,6 +35,8 @@ ENV \
     DOTNET_CLI_HOME=/tmp \
     DOTNET_NOLOGO=true \
     DOTNET_CLI_TELEMETRY_OPTOUT=true \
+    DOTNET_SKIP_WORKLOAD_INTEGRITY_CHECK=true \
+    DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE=true \
     HOME=/tmp
 
 COPY --parents models.py coderunners/*.py ./
