@@ -39,8 +39,6 @@ ENV \
     DOTNET_CLI_WORKLOAD_UPDATE_NOTIFY_DISABLE=true \
     HOME=/tmp
 
-COPY --parents models.py coderunners/*.py ./
-
 # Cache the project template and dependencies to speed up cold starts
 RUN /var/dotnet/dotnet new console --force --name program --output /var/task/coderunners/csharp_template && \
     rm /var/task/coderunners/csharp_template/Program.cs && \
@@ -48,6 +46,8 @@ RUN /var/dotnet/dotnet new console --force --name program --output /var/task/cod
     printf '%s\n' 'internal static class Program { private static void Main() { } }' \
       > /var/task/coderunners/csharp_template/Submission/main.cs && \
     /var/dotnet/dotnet restore /var/task/coderunners/csharp_template/program.csproj
+
+COPY --parents models.py coderunners/*.py ./
 
 
 FROM base AS java
