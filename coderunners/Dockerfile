@@ -29,7 +29,9 @@ RUN mv /root/.dotnet /var/dotnet && rm -f ./dotnet-install.sh
 # 2. Lambda is opinionated about installing tooling under /var
 # 3. Don't display welcome message on first run
 # 4. Disable Microsoft's telemetry collection
-# 5. Set HOME to a writable directory
+# 5. Skip workload integrity checks (they require internet access and fail after several seconds)
+# 6. Disable workload update notifications
+# 7. Set HOME to a writable directory
 ENV \
     DOTNET_RUNNING_IN_CONTAINER=true \
     DOTNET_CLI_HOME=/tmp \
