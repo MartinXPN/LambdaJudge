@@ -33,7 +33,7 @@ jobs:
     - name: Start the project locally (and detach)
       run: |
         sam local start-lambda --env-vars env.json --warm-containers EAGER &
-        sleep 30
+        sleep 15
 
     - name: Run integration tests with SAM
       run: pytest tests/integration
