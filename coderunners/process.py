@@ -1,5 +1,8 @@
 import errno
+import ctypes
+import os
 import resource
+import signal
 import subprocess
 import sys
 import time
@@ -10,6 +13,12 @@ from threading import Thread
 import psutil
 
 from models import RunResult, Status
+
+
+# Mark this Python runtime as a Linux child subreaper.
+# If the submitted code daemonizes/setsid() and its parent exits,
+# Linux reparents that process back to us instead of PID 1, so close() can still find, kill, and reap it.
+ctypes.CDLL(None).prctl(36, 1, 0, 0, 0)  # 36 = PR_SET_CHILD_SUBREAPER
 
 
 @dataclass
@@ -71,6 +80,7 @@ class Process:
     finish_time: float = time.time()
     memory_limit: int = field(init=False)
     output_limit: int = field(init=False)
+    process_group_id: int | None = None
 
     def __post_init__(self):
         self.memory_limit = self.memory_limit_mb * 1024 * 1024
@@ -88,7 +98,9 @@ class Process:
                 self.command, shell=True,
                 pipesize=1024 * 1024, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
                 preexec_fn=lambda: limit_resources(max_bytes=self.memory_limit), cwd=self.cwd,
+                start_new_session=True,
             )
+            self.process_group_id = os.getpgid(self.p.pid)
             self.execution_state = True
 
             # Read/write to stdin/stdout/stderr in a separate thread to avoid locking the main program
@@ -192,9 +204,42 @@ class Process:
         return False
 
     def close(self) -> None:
+        if self.p is None:
+            return
+
         try:
             root = psutil.Process(self.p.pid)
+            for child in root.children(recursive=True):
+                child.kill()
             root.kill()
-            self.p.kill()
         except psutil.NoSuchProcess:
             ...
+
+        if self.process_group_id is not None:
+            try:
+                os.killpg(self.process_group_id, signal.SIGKILL)
+            except ProcessLookupError:
+                ...
+
+        for child in psutil.Process().children(recursive=True):
+            try:
+                child.kill()
+            except psutil.NoSuchProcess:
+                ...
+
+        try:
+            self.p.wait(timeout=0.1)
+        except subprocess.TimeoutExpired:
+            try:
+                self.p.kill()
+                self.p.wait(timeout=0.1)
+            except (psutil.NoSuchProcess, subprocess.TimeoutExpired):
+                ...
+
+        while True:
+            try:
+                pid, _ = os.waitpid(-1, os.WNOHANG)
+            except ChildProcessError:
+                break
+            if pid == 0:
+                break
