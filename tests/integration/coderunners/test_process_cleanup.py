@@ -8,7 +8,7 @@ from tests.integration.config import lambda_client
 class TestProcessCleanup:
     test_cases = [TestCase(input='', target='')]
 
-    def test_ok(self):
+    def test_cleanup(self):
         request = SubmissionRequest(test_cases=self.test_cases, language='python', code={
             'main.py': dedent(r'''
                 import os, subprocess, time
