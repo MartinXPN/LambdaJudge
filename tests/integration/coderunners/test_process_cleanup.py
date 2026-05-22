@@ -12,7 +12,7 @@ class TestProcessCleanup:
         request = SubmissionRequest(test_cases=self.test_cases, language='python', code={
             'main.py': dedent(r'''
                 import os, subprocess, time
-                
+
                 # start the detached 'sleep 40'
                 sleeper = subprocess.Popen(
                     ['sleep', '40'],
@@ -21,10 +21,10 @@ class TestProcessCleanup:
                     preexec_fn=os.setsid,
                 )
                 print('Started PID:', sleeper.pid)
-                
+
                 # give the kernel a moment to register the new process
                 time.sleep(0.5)
-                
+
                 # walk /proc and print something ps-like
                 for pid in filter(str.isdigit, os.listdir('/proc')):
                     with open(f'/proc/{pid}/stat') as f:

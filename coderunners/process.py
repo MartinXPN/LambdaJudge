@@ -1,5 +1,5 @@
-import errno
 import ctypes
+import errno
 import os
 import resource
 import signal
@@ -13,7 +13,6 @@ from threading import Thread
 import psutil
 
 from models import RunResult, Status
-
 
 # Mark this Python runtime as a Linux child subreaper.
 # If the submitted code daemonizes/setsid() and its parent exits,
@@ -203,7 +202,7 @@ class Process:
         self.finish_time = time.time()
         return False
 
-    def close(self) -> None:
+    def close(self) -> None:  # noqa: C901
         if self.p is None:
             return
 
