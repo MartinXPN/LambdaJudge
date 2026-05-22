@@ -31,9 +31,7 @@ jobs:
         echo '{"Parameters": {"EFSProblemsEncryptionKey": "'"$EFS_PROBLEMS_ENCRYPTION_KEY"'", "APIAccessKeyValue": "'"$API_ACCESS_KEY"'"}}' > env.json
 
     - name: Start the project locally (and detach)
-      run: |
-        sam local start-lambda --env-vars env.json --warm-containers EAGER &
-        sleep 30
+      run: sam local start-lambda --env-vars env.json &
 
     - name: Run integration tests with SAM
       run: pytest tests/integration
