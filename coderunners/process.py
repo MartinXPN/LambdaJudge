@@ -71,6 +71,7 @@ class Process:
     finish_time: float = time.time()
     memory_limit: int = field(init=False)
     output_limit: int = field(init=False)
+    initial_pids: set[int] = field(default_factory=set)
 
     def __post_init__(self):
         self.memory_limit = self.memory_limit_mb * 1024 * 1024
@@ -84,6 +85,7 @@ class Process:
         outputs = Outputs()
 
         try:
+            self.initial_pids = set(psutil.pids())
             self.p = subprocess.Popen(
                 self.command, shell=True,
                 pipesize=1024 * 1024, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
@@ -192,9 +194,20 @@ class Process:
         return False
 
     def close(self) -> None:
+        if self.p is None:
+            return
+
+        for pid in set(psutil.pids()) - self.initial_pids:
+            try:
+                psutil.Process(pid).kill()
+            except psutil.NoSuchProcess:
+                ...
+
         try:
-            root = psutil.Process(self.p.pid)
-            root.kill()
-            self.p.kill()
-        except psutil.NoSuchProcess:
-            ...
+            self.p.wait(timeout=0.1)
+        except subprocess.TimeoutExpired:
+            try:
+                self.p.kill()
+                self.p.wait(timeout=0.1)
+            except (psutil.NoSuchProcess, subprocess.TimeoutExpired):
+                ...

@@ -102,20 +102,20 @@ parameter_overrides = """
 
 ### Running the project (need to have docker up and running):
 ```shell
-sam build --parallel --use-buildkit                               # Builds the project
-sam local invoke <FunctionName> --event events/pythonEcho.json    # Invokes the lambda function locally
-sam local start-api && curl http://localhost:3000/                # Start and invoke API endpoints locally
-sam local start-lambda --env-vars .env.json                       # Start all the functions (you can invoke them with boto3, have a look at integration tests)
-sam deploy --config-file samconfig.toml                           # Deploy with options loaded from `samconfig.toml`
-sam logs -n <FunctionName> --tail                                 # Print log tail for the deployed function
+sam build --parallel --use-buildkit                                   # Builds the project
+sam local invoke <FunctionName> --event events/pythonEcho.json        # Invokes the lambda function locally
+sam local start-api && curl http://localhost:3000/                    # Start and invoke API endpoints locally
+sam local start-lambda --env-vars .env.json --warm-containers EAGER   # Start all the functions (you can invoke them with boto3, have a look at integration tests)
+sam deploy --config-file samconfig.toml                               # Deploy with options loaded from `samconfig.toml`
+sam logs -n <FunctionName> --tail                                     # Print log tail for the deployed function
 
-pre-commit run --all-files                                        # Tidy-up the files before committing
+pre-commit run --all-files                                            # Tidy-up the files before committing
 ```
 
 ### Running tests (coverage is not reported for integration tests)
 ```shell
-sam build --parallel --use-buildkit                               # Builds the project
-sam local start-lambda --env-vars .env.json                       # Start all the functions locally
+sam build --parallel --use-buildkit                                   # Builds the project
+sam local start-lambda --env-vars .env.json --warm-containers EAGER   # Start all the functions locally
 # In another terminal tab run the following
 pytest tests --cov=sync --cov=coderunners --cov=bouncer --cov-report term-missing
 ```
