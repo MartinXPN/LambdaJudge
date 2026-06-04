@@ -37,7 +37,10 @@ Resources:
     Properties:
       CidrBlock: 172.31.1.0/24
       VpcId: !Ref JudgeVPC
-      AvailabilityZone: 'us-east-1a'
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+          Ref: AWS::Region
       Tags:
         - Key: Name
           Value: CodeRunnerPrivateSubnet
@@ -48,7 +51,10 @@ Resources:
     Properties:
       CidrBlock: 172.31.2.0/24
       VpcId: !Ref JudgeVPC
-      AvailabilityZone: 'us-east-1a'
+      AvailabilityZone: !Select
+        - 0
+        - !GetAZs
+          Ref: AWS::Region
       MapPublicIpOnLaunch: false
       Tags:
         - Key: Name
