@@ -20,4 +20,4 @@ class TestTLE:
         res = CodeRunner.from_language(language=request.language).invoke(lambda_client, request=request)
         print(res)
         assert res.overall.status == Status.TLE
-        assert len(res.test_results) == 1 and res.test_results[0].status == Status.TLE
+        assert res.test_results is not None and len(res.test_results) == 1 and res.test_results[0].status == Status.TLE
