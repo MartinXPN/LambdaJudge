@@ -62,6 +62,8 @@ class Compiler(ABC):
             return ScalaCompiler()
         if language in HaskellCompiler.supported_standards:
             return HaskellCompiler()
+        if language in OcamlCompiler.supported_standards:
+            return OcamlCompiler()
         if language in JavaCompiler.supported_standards:
             return JavaCompiler()
         if language in SQLiteCompiler.supported_standards:
@@ -495,6 +497,36 @@ class HaskellCompiler(Compiler):
         compile_res = Process(compile_cmd, timeout=30, memory_limit_mb=1024).run()
         if compile_res.status == Status.OK and self.executable_path.exists():
             compile_res.errors = None
+        print('Compile res', compile_res)
+        return ProcessExecutor(command=str(self.executable_path)), compile_res
+
+
+@dataclass
+class OcamlCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.ml'
+    supported_standards = {'ocaml', 'ml'}
+    build_dir = Path('/tmp/ocaml_build')
+    executable_path = build_dir / 'main'
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix in {'.ml', '.mli'}]
+        root_dir = Path(os.path.commonpath([str(path.parent) for path in source_files]))
+
+        shutil.rmtree(self.build_dir, ignore_errors=True)
+        self.build_dir.mkdir(parents=True, exist_ok=True)
+
+        source_dirs = sorted({path.parent for path in source_files})
+        include_options = ' '.join(f'-I {path}' for path in source_dirs)
+        source_files_str = ' '.join(str(path) for path in source_files)
+        sort_cmd = f'ocamldep -sort {include_options} {source_files_str}'
+        compile_cmd = (
+            f'cd {root_dir} && '
+            f'ocamlopt -O3 {include_options} -I {self.build_dir} '
+            f'-o {self.executable_path} '
+            f'$({sort_cmd})'
+        )
+
+        compile_res = Process(compile_cmd, timeout=30, memory_limit_mb=1024).run()
         print('Compile res', compile_res)
         return ProcessExecutor(command=str(self.executable_path)), compile_res
 

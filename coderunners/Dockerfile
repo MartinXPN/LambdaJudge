@@ -127,6 +127,13 @@ RUN dnf install -y rust && dnf clean all && rm -rf /var/cache/dnf
 COPY --parents models.py coderunners/*.py ./
 
 
+FROM base AS ocaml
+RUN dnf --setopt=cachedir=/tmp/dnf-cache install -y ocaml gcc && \
+    dnf --setopt=cachedir=/tmp/dnf-cache clean all && \
+    rm -rf /tmp/dnf-cache /var/cache/dnf /var/cache/yum
+COPY --parents models.py coderunners/*.py ./
+
+
 FROM base AS zig
 RUN dnf install -y tar xz && dnf clean all && rm -rf /var/cache/dnf
 ADD https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz /tmp/zig.tar.xz
@@ -163,8 +170,6 @@ COPY --parents models.py coderunners/*.py ./
 
 
 FROM haskell:9.12.4 AS haskell_toolchain
-
-
 FROM base AS haskell
 RUN dnf install -y gcc gmp gmp-devel libffi libffi-devel make && \
     dnf clean all && rm -rf /var/cache/dnf

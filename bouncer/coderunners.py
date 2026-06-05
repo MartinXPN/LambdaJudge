@@ -52,6 +52,8 @@ class CodeRunner(ABC):
             return ScalaRunner()
         if language in HaskellRunner.supported_standards:
             return HaskellRunner()
+        if language in OcamlRunner.supported_standards:
+            return OcamlRunner()
         if language in JavaRunner.supported_standards:
             return JavaRunner()
         if language in SQLiteRunner.supported_standards:
@@ -226,6 +228,15 @@ class HaskellRunner(CodeRunner):
     @property
     def name(self) -> str:
         return 'CodeRunnerHaskell'
+
+
+@dataclass
+class OcamlRunner(CodeRunner):
+    supported_standards = {'ocaml', 'ml'}
+
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerOcaml'
 
 
 @dataclass
