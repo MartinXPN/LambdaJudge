@@ -31,6 +31,8 @@ class CodeRunner(ABC):
             return JsRunner()
         if language in TsRunner.supported_standards:
             return TsRunner()
+        if language in RustRunner.supported_standards:
+            return RustRunner()
         if language in JavaRunner.supported_standards:
             return JavaRunner()
         if language in SQLiteRunner.supported_standards:
@@ -115,6 +117,15 @@ class TsRunner(CodeRunner):
     @property
     def name(self) -> str:
         return 'CodeRunnerTs'
+
+
+@dataclass
+class RustRunner(CodeRunner):
+    supported_standards = {'rust'}
+
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerRust'
 
 
 @dataclass

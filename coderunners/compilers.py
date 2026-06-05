@@ -41,6 +41,8 @@ class Compiler(ABC):
             return JsCompiler(language_standard=language)
         if language in TsCompiler.supported_standards:
             return TsCompiler(language_standard=language)
+        if language in RustCompiler.supported_standards:
+            return RustCompiler()
         if language in JavaCompiler.supported_standards:
             return JavaCompiler()
         if language in SQLiteCompiler.supported_standards:
@@ -238,6 +240,26 @@ class TsCompiler(Compiler):
         print('Compile res', compile_res)
         command = f'node {emitted_main_path}'
         return ProcessExecutor(command=command), compile_res
+
+
+@dataclass
+class RustCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.rs'
+    supported_standards = {'rust'}
+    build_dir = Path('/tmp/rust_build')
+    executable_path = build_dir / 'main'
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix == '.rs']
+        main_file_path = self.find_main_file_path(source_files, self.MAIN_FILE_NAME)
+
+        shutil.rmtree(self.build_dir, ignore_errors=True)
+        self.build_dir.mkdir(parents=True, exist_ok=True)
+
+        compile_cmd = f'rustc -O --edition=2024 {main_file_path} -o {self.executable_path}'
+        compile_res = Process(compile_cmd, timeout=15, memory_limit_mb=512).run()
+        print('Compile res', compile_res)
+        return ProcessExecutor(command=str(self.executable_path)), compile_res
 
 
 @dataclass
