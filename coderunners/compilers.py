@@ -22,6 +22,7 @@ class Compiler(ABC):
                 return path
         return submission_paths[0]
 
+    # flake8: noqa: C901
     @staticmethod
     def from_language(language: str) -> Compiler:
         language = language.lower().strip()
@@ -43,6 +44,8 @@ class Compiler(ABC):
             return TsCompiler(language_standard=language)
         if language in RustCompiler.supported_standards:
             return RustCompiler()
+        if language in ZigCompiler.supported_standards:
+            return ZigCompiler()
         if language in JavaCompiler.supported_standards:
             return JavaCompiler()
         if language in SQLiteCompiler.supported_standards:
@@ -258,6 +261,41 @@ class RustCompiler(Compiler):
 
         compile_cmd = f'rustc -O --edition=2024 {main_file_path} -o {self.executable_path}'
         compile_res = Process(compile_cmd, timeout=15, memory_limit_mb=512).run()
+        print('Compile res', compile_res)
+        return ProcessExecutor(command=str(self.executable_path)), compile_res
+
+
+@dataclass
+class ZigCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.zig'
+    supported_standards = {'zig'}
+    build_dir = Path('/tmp/zig_build')
+    cache_dir = Path('/tmp/zig_cache')
+    global_cache_dir = Path('/tmp/zig_global_cache')
+    executable_path = build_dir / 'main'
+    zig = Path('/var/zig/zig')
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix == '.zig']
+        main_file_path = self.find_main_file_path(source_files, self.MAIN_FILE_NAME)
+
+        shutil.rmtree(self.build_dir, ignore_errors=True)
+        shutil.rmtree(self.cache_dir, ignore_errors=True)
+        shutil.rmtree(self.global_cache_dir, ignore_errors=True)
+        self.build_dir.mkdir(parents=True, exist_ok=True)
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+        self.global_cache_dir.mkdir(parents=True, exist_ok=True)
+
+        compiler_options = (
+            'build-exe',
+            str(main_file_path),
+            '-O ReleaseSafe',
+            f'-femit-bin={self.executable_path}',
+            f'--cache-dir {self.cache_dir}',
+            f'--global-cache-dir {self.global_cache_dir}',
+        )
+        compile_cmd = ' '.join([str(self.zig), *compiler_options])
+        compile_res = Process(compile_cmd, timeout=30, memory_limit_mb=1024).run()
         print('Compile res', compile_res)
         return ProcessExecutor(command=str(self.executable_path)), compile_res
 

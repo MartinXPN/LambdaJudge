@@ -75,6 +75,15 @@ RUN dnf install -y rust && dnf clean all && rm -rf /var/cache/dnf
 COPY --parents models.py coderunners/*.py ./
 
 
+FROM base AS zig
+RUN dnf install -y tar xz && dnf clean all && rm -rf /var/cache/dnf
+ADD https://ziglang.org/download/0.16.0/zig-x86_64-linux-0.16.0.tar.xz /tmp/zig.tar.xz
+RUN mkdir -p /var/zig && \
+    tar -xJf /tmp/zig.tar.xz --strip-components=1 -C /var/zig && \
+    rm -f /tmp/zig.tar.xz
+COPY --parents models.py coderunners/*.py ./
+
+
 FROM base AS python
 COPY --parents models.py coderunners/*.py ./
 
