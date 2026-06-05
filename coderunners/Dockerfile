@@ -70,6 +70,17 @@ RUN mkdir -p /var/task/typescript_runner && \
 COPY --parents models.py coderunners/*.py ./
 
 
+FROM base AS dart
+RUN dnf install -y unzip && dnf clean all && rm -rf /var/cache/dnf
+ADD https://storage.googleapis.com/dart-archive/channels/stable/release/3.12.0/sdk/dartsdk-linux-x64-release.zip /tmp/dart-sdk.zip
+RUN mkdir -p /var/dart && \
+    unzip -q /tmp/dart-sdk.zip -d /var/dart && \
+    rm -f /tmp/dart-sdk.zip && \
+    /var/dart/dart-sdk/bin/dart --disable-analytics && \
+    /var/dart/dart-sdk/bin/dart --version
+COPY --parents models.py coderunners/*.py ./
+
+
 FROM base AS swift
 RUN dnf install -y \
     binutils \

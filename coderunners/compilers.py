@@ -42,6 +42,8 @@ class Compiler(ABC):
             return JsCompiler(language_standard=language)
         if language in TsCompiler.supported_standards:
             return TsCompiler(language_standard=language)
+        if language in DartCompiler.supported_standards:
+            return DartCompiler()
         if language in SwiftCompiler.supported_standards:
             return SwiftCompiler()
         if language in PhpCompiler.supported_standards:
@@ -251,6 +253,27 @@ class TsCompiler(Compiler):
         print('Compile res', compile_res)
         command = f'node {emitted_main_path}'
         return ProcessExecutor(command=command), compile_res
+
+
+@dataclass
+class DartCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.dart'
+    supported_standards = {'dart'}
+    build_dir = Path('/tmp/dart_build')
+    executable_path = build_dir / 'main'
+    dart = Path('/var/dart/dart-sdk/bin/dart')
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix == '.dart']
+        main_file_path = self.find_main_file_path(source_files, self.MAIN_FILE_NAME)
+
+        shutil.rmtree(self.build_dir, ignore_errors=True)
+        self.build_dir.mkdir(parents=True, exist_ok=True)
+
+        compile_cmd = f'{self.dart} compile exe {main_file_path} -o {self.executable_path}'
+        compile_res = Process(compile_cmd, timeout=30, memory_limit_mb=1024).run()
+        print('Compile res', compile_res)
+        return ProcessExecutor(command=str(self.executable_path)), compile_res
 
 
 @dataclass
