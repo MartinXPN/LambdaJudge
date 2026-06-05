@@ -50,6 +50,8 @@ class Compiler(ABC):
             return RustCompiler()
         if language in ZigCompiler.supported_standards:
             return ZigCompiler()
+        if language in KotlinCompiler.supported_standards:
+            return KotlinCompiler()
         if language in JavaCompiler.supported_standards:
             return JavaCompiler()
         if language in SQLiteCompiler.supported_standards:
@@ -335,6 +337,27 @@ class ZigCompiler(Compiler):
         compile_res = Process(compile_cmd, timeout=30, memory_limit_mb=1024).run()
         print('Compile res', compile_res)
         return ProcessExecutor(command=str(self.executable_path)), compile_res
+
+
+@dataclass
+class KotlinCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.kt'
+    supported_standards = {'kotlin', 'kt'}
+    build_dir = Path('/tmp/kotlin_build')
+    jar_path = build_dir / 'main.jar'
+    kotlinc = Path('/var/kotlin/kotlinc/bin/kotlinc')
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix == '.kt']
+
+        shutil.rmtree(self.build_dir, ignore_errors=True)
+        self.build_dir.mkdir(parents=True, exist_ok=True)
+
+        source_files_str = ' '.join(str(path) for path in source_files)
+        compile_cmd = f'{self.kotlinc} {source_files_str} -include-runtime -d {self.jar_path}'
+        compile_res = Process(compile_cmd, timeout=30, memory_limit_mb=1024).run()
+        print('Compile res', compile_res)
+        return ProcessExecutor(command=f'java -jar {self.jar_path}'), compile_res
 
 
 @dataclass

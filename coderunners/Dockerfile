@@ -94,6 +94,15 @@ RUN mkdir -p /var/zig && \
 COPY --parents models.py coderunners/*.py ./
 
 
+FROM base AS kotlin
+RUN dnf install -y java-25-amazon-corretto-devel unzip && dnf clean all && rm -rf /var/cache/dnf
+ADD https://github.com/JetBrains/kotlin/releases/download/v2.3.21/kotlin-compiler-2.3.21.zip /tmp/kotlin-compiler.zip
+RUN mkdir -p /var/kotlin && \
+    unzip -q /tmp/kotlin-compiler.zip -d /var/kotlin && \
+    rm -f /tmp/kotlin-compiler.zip
+COPY --parents models.py coderunners/*.py ./
+
+
 FROM base AS python
 COPY --parents models.py coderunners/*.py ./
 

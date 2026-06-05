@@ -40,6 +40,8 @@ class CodeRunner(ABC):
             return RustRunner()
         if language in ZigRunner.supported_standards:
             return ZigRunner()
+        if language in KotlinRunner.supported_standards:
+            return KotlinRunner()
         if language in JavaRunner.supported_standards:
             return JavaRunner()
         if language in SQLiteRunner.supported_standards:
@@ -160,6 +162,15 @@ class ZigRunner(CodeRunner):
     @property
     def name(self) -> str:
         return 'CodeRunnerZig'
+
+
+@dataclass
+class KotlinRunner(CodeRunner):
+    supported_standards = {'kotlin', 'kt'}
+
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerKotlin'
 
 
 @dataclass
