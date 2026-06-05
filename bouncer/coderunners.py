@@ -29,6 +29,8 @@ class CodeRunner(ABC):
             return CSharpRunner()
         if language in JsRunner.supported_standards:
             return JsRunner()
+        if language in TsRunner.supported_standards:
+            return TsRunner()
         if language in JavaRunner.supported_standards:
             return JavaRunner()
         if language in SQLiteRunner.supported_standards:
@@ -104,6 +106,15 @@ class JsRunner(CodeRunner):
     @property
     def name(self) -> str:
         return 'CodeRunnerJs'
+
+
+@dataclass
+class TsRunner(CodeRunner):
+    supported_standards = {'ts', 'typescript'}
+
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerTs'
 
 
 @dataclass

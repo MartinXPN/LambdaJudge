@@ -62,6 +62,14 @@ RUN dnf install -y nodejs24 && dnf clean all && rm -rf /var/cache/dnf
 COPY --parents models.py coderunners/*.py ./
 
 
+FROM base AS ts
+RUN dnf install -y nodejs24 && dnf clean all && rm -rf /var/cache/dnf
+RUN mkdir -p /var/task/typescript_runner && \
+    cd /var/task/typescript_runner && \
+    npm install typescript @types/node
+COPY --parents models.py coderunners/*.py ./
+
+
 FROM base AS python
 COPY --parents models.py coderunners/*.py ./
 

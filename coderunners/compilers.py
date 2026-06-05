@@ -39,6 +39,8 @@ class Compiler(ABC):
             return CSharpCompiler(language_standard=language)
         if language in JsCompiler.supported_standards:
             return JsCompiler(language_standard=language)
+        if language in TsCompiler.supported_standards:
+            return TsCompiler(language_standard=language)
         if language in JavaCompiler.supported_standards:
             return JavaCompiler()
         if language in SQLiteCompiler.supported_standards:
@@ -199,6 +201,42 @@ class JsCompiler(Compiler):
         compile_res = Process(f'node --check {project}', timeout=10, memory_limit_mb=512).run()
         print('Compile res', compile_res)
         command = f'node {project}'
+        return ProcessExecutor(command=command), compile_res
+
+
+@dataclass
+class TsCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'index.ts'
+    language_standard: str
+    supported_standards = {'ts', 'typescript'}
+    build_dir = Path('/tmp/ts_build')
+    tsc = Path('/var/task/typescript_runner/node_modules/.bin/tsc')
+    node_type_roots = Path('/var/task/typescript_runner/node_modules/@types')
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix == '.ts']
+        root_dir = Path(os.path.commonpath([str(path.parent) for path in source_files]))
+        main_file_path = self.find_main_file_path(source_files, self.MAIN_FILE_NAME)
+        emitted_main_path = self.build_dir / main_file_path.relative_to(root_dir).with_suffix('.js')
+
+        shutil.rmtree(self.build_dir, ignore_errors=True)
+        self.build_dir.mkdir(parents=True, exist_ok=True)
+
+        compiler_options = (
+            f'--outDir {self.build_dir}',
+            f'--rootDir {root_dir}',
+            '--target ESNext',
+            '--module NodeNext',
+            '--moduleResolution NodeNext',
+            '--lib ESNext',
+            '--types node',
+            f'--typeRoots {self.node_type_roots}',
+            '--noEmitOnError',
+        )
+        compile_cmd = ' '.join([str(self.tsc), *(str(path) for path in source_files), *compiler_options])
+        compile_res = Process(compile_cmd, timeout=15, memory_limit_mb=512).run()
+        print('Compile res', compile_res)
+        command = f'node {emitted_main_path}'
         return ProcessExecutor(command=command), compile_res
 
 
