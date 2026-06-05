@@ -70,6 +70,11 @@ RUN mkdir -p /var/task/typescript_runner && \
 COPY --parents models.py coderunners/*.py ./
 
 
+FROM base AS r
+RUN dnf install -y R-core && dnf clean all && rm -rf /var/cache/dnf
+COPY --parents models.py coderunners/*.py ./
+
+
 FROM base AS go
 RUN dnf install -y golang && dnf clean all && rm -rf /var/cache/dnf
 COPY --parents models.py coderunners/*.py ./
