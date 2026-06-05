@@ -42,6 +42,8 @@ class Compiler(ABC):
             return JsCompiler(language_standard=language)
         if language in TsCompiler.supported_standards:
             return TsCompiler(language_standard=language)
+        if language in PhpCompiler.supported_standards:
+            return PhpCompiler()
         if language in RubyCompiler.supported_standards:
             return RubyCompiler()
         if language in RustCompiler.supported_standards:
@@ -244,6 +246,22 @@ class TsCompiler(Compiler):
         compile_res = Process(compile_cmd, timeout=15, memory_limit_mb=512).run()
         print('Compile res', compile_res)
         command = f'node {emitted_main_path}'
+        return ProcessExecutor(command=command), compile_res
+
+
+@dataclass
+class PhpCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.php'
+    supported_standards = {'php'}
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix == '.php']
+        main_file_path = self.find_main_file_path(source_files, self.MAIN_FILE_NAME)
+
+        compile_cmd = ' && '.join(f'php -l {path}' for path in source_files)
+        compile_res = Process(compile_cmd, timeout=10, memory_limit_mb=512).run()
+        print('Compile res', compile_res)
+        command = f'php {main_file_path}'
         return ProcessExecutor(command=command), compile_res
 
 

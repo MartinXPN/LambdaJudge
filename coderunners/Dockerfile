@@ -70,6 +70,11 @@ RUN mkdir -p /var/task/typescript_runner && \
 COPY --parents models.py coderunners/*.py ./
 
 
+FROM base AS php
+RUN dnf install -y php8.5-cli && dnf clean all && rm -rf /var/cache/dnf
+COPY --parents models.py coderunners/*.py ./
+
+
 FROM base AS ruby
 RUN dnf install -y ruby3.4 && dnf clean all && rm -rf /var/cache/dnf
 COPY --parents models.py coderunners/*.py ./
