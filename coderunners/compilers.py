@@ -42,6 +42,8 @@ class Compiler(ABC):
             return JsCompiler(language_standard=language)
         if language in TsCompiler.supported_standards:
             return TsCompiler(language_standard=language)
+        if language in SwiftCompiler.supported_standards:
+            return SwiftCompiler()
         if language in PhpCompiler.supported_standards:
             return PhpCompiler()
         if language in RubyCompiler.supported_standards:
@@ -249,6 +251,27 @@ class TsCompiler(Compiler):
         print('Compile res', compile_res)
         command = f'node {emitted_main_path}'
         return ProcessExecutor(command=command), compile_res
+
+
+@dataclass
+class SwiftCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.swift'
+    supported_standards = {'swift'}
+    build_dir = Path('/tmp/swift_build')
+    executable_path = build_dir / 'main'
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix == '.swift']
+        self.find_main_file_path(source_files, self.MAIN_FILE_NAME)
+
+        shutil.rmtree(self.build_dir, ignore_errors=True)
+        self.build_dir.mkdir(parents=True, exist_ok=True)
+
+        source_files_str = ' '.join(str(path) for path in source_files)
+        compile_cmd = f'swiftc -O {source_files_str} -o {self.executable_path}'
+        compile_res = Process(compile_cmd, timeout=15, memory_limit_mb=1024).run()
+        print('Compile res', compile_res)
+        return ProcessExecutor(command=str(self.executable_path)), compile_res
 
 
 @dataclass

@@ -70,6 +70,32 @@ RUN mkdir -p /var/task/typescript_runner && \
 COPY --parents models.py coderunners/*.py ./
 
 
+FROM base AS swift
+RUN dnf install -y \
+    binutils \
+    gcc \
+    glibc-static \
+    gzip \
+    libbsd \
+    libcurl-devel \
+    libedit \
+    libicu \
+    libstdc++-static \
+    libuuid \
+    libxml2-devel \
+    openssl-devel \
+    tar \
+    tzdata && \
+    dnf clean all && rm -rf /var/cache/dnf
+ADD https://download.swift.org/swift-6.3.2-release/amazonlinux2023/swift-6.3.2-RELEASE/swift-6.3.2-RELEASE-amazonlinux2023.tar.gz /tmp/swift.tar.gz
+RUN set -eux; \
+    tar -xzf /tmp/swift.tar.gz --directory / --strip-components=1; \
+    chmod -R o+r /usr/lib/swift; \
+    rm -f /tmp/swift.tar.gz; \
+    swift --version
+COPY --parents models.py coderunners/*.py ./
+
+
 FROM base AS php
 RUN dnf install -y php8.5-cli && dnf clean all && rm -rf /var/cache/dnf
 COPY --parents models.py coderunners/*.py ./
