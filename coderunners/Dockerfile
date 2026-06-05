@@ -75,6 +75,16 @@ RUN dnf install -y R-core && dnf clean all && rm -rf /var/cache/dnf
 COPY --parents models.py coderunners/*.py ./
 
 
+FROM base AS julia
+RUN dnf install -y tar gzip && dnf clean all && rm -rf /var/cache/dnf
+ADD https://julialang-s3.julialang.org/bin/linux/x64/1.12/julia-1.12.6-linux-x86_64.tar.gz /tmp/julia.tar.gz
+RUN mkdir -p /var/julia && \
+    tar -xzf /tmp/julia.tar.gz --strip-components=1 -C /var/julia && \
+    rm -f /tmp/julia.tar.gz && \
+    /var/julia/bin/julia --startup-file=no --history-file=no --version
+COPY --parents models.py coderunners/*.py ./
+
+
 FROM base AS go
 RUN dnf install -y golang && dnf clean all && rm -rf /var/cache/dnf
 COPY --parents models.py coderunners/*.py ./

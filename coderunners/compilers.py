@@ -1,4 +1,5 @@
 import os
+import shlex
 import shutil
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
@@ -44,6 +45,8 @@ class Compiler(ABC):
             return TsCompiler(language_standard=language)
         if language in RCompiler.supported_standards:
             return RCompiler()
+        if language in JuliaCompiler.supported_standards:
+            return JuliaCompiler()
         if language in GoCompiler.supported_standards:
             return GoCompiler()
         if language in DartCompiler.supported_standards:
@@ -285,6 +288,38 @@ class RCompiler(Compiler):
         compile_res = Process(compile_cmd, timeout=10, memory_limit_mb=512).run()
         print('Compile res', compile_res)
         command = f'{self.rscript} --vanilla {main_file_path}'
+        return ProcessExecutor(command=command), compile_res
+
+
+@dataclass
+class JuliaCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.jl'
+    supported_standards = {'julia', 'jl'}
+    julia = Path('/var/julia/bin/julia')
+    env = 'JULIA_DEPOT_PATH=/tmp/julia_depot HOME=/tmp'
+    options = '--startup-file=no --history-file=no'
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix == '.jl']
+        main_file_path = self.find_main_file_path(source_files, self.MAIN_FILE_NAME)
+        source_files_str = ' '.join(shlex.quote(str(path)) for path in source_files)
+        parse_expr = (
+            'function has_incomplete(ex); '
+            'ex isa Expr && (ex.head === :incomplete || any(has_incomplete, ex.args)); '
+            'end; '
+            'for path in ARGS; '
+            'ex = Meta.parseall(read(path, String)); '
+            'has_incomplete(ex) && error("syntax error in $path"); '
+            'end'
+        )
+
+        compile_cmd = (
+            f'{self.env} {self.julia} {self.options} '
+            f'-e {shlex.quote(parse_expr)} -- {source_files_str}'
+        )
+        compile_res = Process(compile_cmd, timeout=10, memory_limit_mb=512).run()
+        print('Compile res', compile_res)
+        command = f'{self.env} {self.julia} {self.options} {shlex.quote(str(main_file_path))}'
         return ProcessExecutor(command=command), compile_res
 
 

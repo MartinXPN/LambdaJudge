@@ -34,6 +34,8 @@ class CodeRunner(ABC):
             return TsRunner()
         if language in RRunner.supported_standards:
             return RRunner()
+        if language in JuliaRunner.supported_standards:
+            return JuliaRunner()
         if language in GoRunner.supported_standards:
             return GoRunner()
         if language in DartRunner.supported_standards:
@@ -151,6 +153,15 @@ class RRunner(CodeRunner):
     @property
     def name(self) -> str:
         return 'CodeRunnerR'
+
+
+@dataclass
+class JuliaRunner(CodeRunner):
+    supported_standards = {'julia', 'jl'}
+
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerJulia'
 
 
 @dataclass
