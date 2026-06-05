@@ -117,6 +117,11 @@ RUN dnf install -y ruby3.4 && dnf clean all && rm -rf /var/cache/dnf
 COPY --parents models.py coderunners/*.py ./
 
 
+FROM base AS lua
+RUN dnf install -y lua && dnf clean all && rm -rf /var/cache/dnf
+COPY --parents models.py coderunners/*.py ./
+
+
 FROM base AS rust
 RUN dnf install -y rust && dnf clean all && rm -rf /var/cache/dnf
 COPY --parents models.py coderunners/*.py ./

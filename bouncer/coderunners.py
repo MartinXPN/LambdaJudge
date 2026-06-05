@@ -40,6 +40,8 @@ class CodeRunner(ABC):
             return PhpRunner()
         if language in RubyRunner.supported_standards:
             return RubyRunner()
+        if language in LuaRunner.supported_standards:
+            return LuaRunner()
         if language in RustRunner.supported_standards:
             return RustRunner()
         if language in ZigRunner.supported_standards:
@@ -168,6 +170,15 @@ class RubyRunner(CodeRunner):
     @property
     def name(self) -> str:
         return 'CodeRunnerRuby'
+
+
+@dataclass
+class LuaRunner(CodeRunner):
+    supported_standards = {'lua', 'lua5.4'}
+
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerLua'
 
 
 @dataclass

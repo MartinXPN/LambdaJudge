@@ -50,6 +50,8 @@ class Compiler(ABC):
             return PhpCompiler()
         if language in RubyCompiler.supported_standards:
             return RubyCompiler()
+        if language in LuaCompiler.supported_standards:
+            return LuaCompiler()
         if language in RustCompiler.supported_standards:
             return RustCompiler()
         if language in ZigCompiler.supported_standards:
@@ -329,6 +331,22 @@ class RubyCompiler(Compiler):
         compile_res = Process(compile_cmd, timeout=10, memory_limit_mb=512).run()
         print('Compile res', compile_res)
         command = f'{self.ruby} {main_file_path}'
+        return ProcessExecutor(command=command), compile_res
+
+
+@dataclass
+class LuaCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.lua'
+    supported_standards = {'lua', 'lua5.4'}
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix == '.lua']
+        main_file_path = self.find_main_file_path(source_files, self.MAIN_FILE_NAME)
+
+        compile_cmd = ' && '.join(f'luac -p {path}' for path in source_files)
+        compile_res = Process(compile_cmd, timeout=10, memory_limit_mb=512).run()
+        print('Compile res', compile_res)
+        command = f'lua {main_file_path}'
         return ProcessExecutor(command=command), compile_res
 
 
