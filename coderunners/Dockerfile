@@ -140,6 +140,23 @@ RUN mkdir -p /var/kotlin && \
 COPY --parents models.py coderunners/*.py ./
 
 
+FROM base AS scala
+RUN dnf install -y java-25-amazon-corretto-devel gzip && dnf clean all && rm -rf /var/cache/dnf
+ADD https://github.com/VirtusLab/scala-cli/releases/download/v1.14.0/scala-cli-x86_64-pc-linux-mostly-static.gz /tmp/scala-cli.gz
+RUN gzip -dc /tmp/scala-cli.gz > /usr/local/bin/scala-cli && \
+    chmod +x /usr/local/bin/scala-cli && \
+    rm -f /tmp/scala-cli.gz
+RUN mkdir -p /var/task/scala_runner/coursier-cache /tmp/scala_cache_warm && \
+    printf '%s\n' '@main def main(): Unit = println("warm")' > /tmp/scala_cache_warm/main.scala && \
+    COURSIER_CACHE=/var/task/scala_runner/coursier-cache \
+        scala-cli --power package /tmp/scala_cache_warm/main.scala \
+        --server=false --assembly --preamble=false \
+        -o /tmp/scala_cache_warm/main.jar --force && \
+    chmod -R a+rX /var/task/scala_runner/coursier-cache && \
+    rm -rf /tmp/scala_cache_warm
+COPY --parents models.py coderunners/*.py ./
+
+
 FROM base AS python
 COPY --parents models.py coderunners/*.py ./
 

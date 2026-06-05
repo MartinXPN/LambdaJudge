@@ -902,6 +902,27 @@ Resources:
       Dockerfile: coderunners/Dockerfile
       DockerBuildTarget: kotlin
 
+  CodeRunnerScala:
+    Type: AWS::Serverless::Function
+    DependsOn: CodeRunnerMountTarget
+    Properties:
+      FunctionName: CodeRunnerScala
+      PackageType: Image
+      Role: !GetAtt ContestantRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt JudgeVPC.DefaultSecurityGroup
+        SubnetIds:
+          - !Ref CodeRunnerPrivateSubnet
+      FileSystemConfigs:
+        - Arn: !GetAtt AccessPointResource.Arn
+          LocalMountPath: '/mnt/efs'
+    Metadata:
+      DockerTag: scala-v1
+      DockerContext: ./
+      Dockerfile: coderunners/Dockerfile
+      DockerBuildTarget: scala
+
   CodeRunnerJava:
     Type: AWS::Serverless::Function
     DependsOn: CodeRunnerMountTarget
@@ -1006,6 +1027,9 @@ Outputs:
   CodeRunnerKotlin:
     Description: 'AWS Lambda for executing a Kotlin code and getting the outputs'
     Value: !GetAtt CodeRunnerKotlin.Arn
+  CodeRunnerScala:
+    Description: 'AWS Lambda for executing a Scala code and getting the outputs'
+    Value: !GetAtt CodeRunnerScala.Arn
   CodeRunnerJava:
     Description: 'AWS Lambda for executing a Java code and getting the outputs'
     Value: !GetAtt CodeRunnerJava.Arn

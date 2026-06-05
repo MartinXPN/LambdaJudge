@@ -56,6 +56,8 @@ class Compiler(ABC):
             return ZigCompiler()
         if language in KotlinCompiler.supported_standards:
             return KotlinCompiler()
+        if language in ScalaCompiler.supported_standards:
+            return ScalaCompiler()
         if language in JavaCompiler.supported_standards:
             return JavaCompiler()
         if language in SQLiteCompiler.supported_standards:
@@ -402,6 +404,44 @@ class KotlinCompiler(Compiler):
         source_files_str = ' '.join(str(path) for path in source_files)
         compile_cmd = f'{self.kotlinc} {source_files_str} -include-runtime -d {self.jar_path}'
         compile_res = Process(compile_cmd, timeout=30, memory_limit_mb=1024).run()
+        print('Compile res', compile_res)
+        return ProcessExecutor(command=f'java -jar {self.jar_path}'), compile_res
+
+
+@dataclass
+class ScalaCompiler(Compiler):
+    supported_standards = {'scala', 'scala3'}
+    build_dir = Path('/tmp/scala_build')
+    jar_path = build_dir / 'main.jar'
+    cache_template_dir = Path('/var/task/scala_runner/coursier-cache')
+    cache_dir = Path('/tmp/scala_coursier_cache')
+    scala_cli = Path('/usr/local/bin/scala-cli')
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix == '.scala']
+
+        shutil.rmtree(self.build_dir, ignore_errors=True)
+        shutil.rmtree(self.cache_dir, ignore_errors=True)
+        self.build_dir.mkdir(parents=True, exist_ok=True)
+        if self.cache_template_dir.exists():
+            shutil.copytree(self.cache_template_dir, self.cache_dir, dirs_exist_ok=True)
+
+        source_files_str = ' '.join(str(path) for path in source_files)
+        compiler_options = (
+            '--power',
+            'package',
+            source_files_str,
+            '--server=false',
+            '--offline',
+            '--assembly',
+            '--preamble=false',
+            f'-o {self.jar_path}',
+            '--force',
+        )
+        compile_cmd = f'COURSIER_CACHE={self.cache_dir} ' + ' '.join([str(self.scala_cli), *compiler_options])
+        compile_res = Process(compile_cmd, timeout=60, memory_limit_mb=1024).run()
+        if compile_res.status == Status.OK and self.jar_path.exists():
+            compile_res.errors = None
         print('Compile res', compile_res)
         return ProcessExecutor(command=f'java -jar {self.jar_path}'), compile_res
 
