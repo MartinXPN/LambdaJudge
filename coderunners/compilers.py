@@ -42,6 +42,8 @@ class Compiler(ABC):
             return JsCompiler(language_standard=language)
         if language in TsCompiler.supported_standards:
             return TsCompiler(language_standard=language)
+        if language in GoCompiler.supported_standards:
+            return GoCompiler()
         if language in DartCompiler.supported_standards:
             return DartCompiler()
         if language in SwiftCompiler.supported_standards:
@@ -261,6 +263,34 @@ class TsCompiler(Compiler):
         print('Compile res', compile_res)
         command = f'node {emitted_main_path}'
         return ProcessExecutor(command=command), compile_res
+
+
+@dataclass
+class GoCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.go'
+    supported_standards = {'go', 'golang'}
+    build_dir = Path('/tmp/go_build')
+    cache_dir = Path('/tmp/go_cache')
+    executable_path = build_dir / 'main'
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix == '.go']
+        main_file_path = self.find_main_file_path(source_files, self.MAIN_FILE_NAME)
+        root_dir = main_file_path.parent
+
+        shutil.rmtree(self.build_dir, ignore_errors=True)
+        shutil.rmtree(self.cache_dir, ignore_errors=True)
+        self.build_dir.mkdir(parents=True, exist_ok=True)
+        self.cache_dir.mkdir(parents=True, exist_ok=True)
+
+        compile_cmd = (
+            f'cd {root_dir} && '
+            f'GOCACHE={self.cache_dir} GOTMPDIR=/tmp CGO_ENABLED=0 GO111MODULE=off '
+            f'go build -o {self.executable_path} .'
+        )
+        compile_res = Process(compile_cmd, timeout=30, memory_limit_mb=1024).run()
+        print('Compile res', compile_res)
+        return ProcessExecutor(command=str(self.executable_path)), compile_res
 
 
 @dataclass

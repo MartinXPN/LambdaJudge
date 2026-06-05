@@ -755,6 +755,27 @@ Resources:
       Dockerfile: coderunners/Dockerfile
       DockerBuildTarget: ts
 
+  CodeRunnerGo:
+    Type: AWS::Serverless::Function
+    DependsOn: CodeRunnerMountTarget
+    Properties:
+      FunctionName: CodeRunnerGo
+      PackageType: Image
+      Role: !GetAtt ContestantRole.Arn
+      VpcConfig:
+        SecurityGroupIds:
+          - !GetAtt JudgeVPC.DefaultSecurityGroup
+        SubnetIds:
+          - !Ref CodeRunnerPrivateSubnet
+      FileSystemConfigs:
+        - Arn: !GetAtt AccessPointResource.Arn
+          LocalMountPath: '/mnt/efs'
+    Metadata:
+      DockerTag: go-v1
+      DockerContext: ./
+      Dockerfile: coderunners/Dockerfile
+      DockerBuildTarget: go
+
   CodeRunnerDart:
     Type: AWS::Serverless::Function
     DependsOn: CodeRunnerMountTarget
@@ -1069,6 +1090,9 @@ Outputs:
   CodeRunnerTs:
     Description: 'AWS Lambda for executing a TypeScript code and getting the outputs'
     Value: !GetAtt CodeRunnerTs.Arn
+  CodeRunnerGo:
+    Description: 'AWS Lambda for executing a Go code and getting the outputs'
+    Value: !GetAtt CodeRunnerGo.Arn
   CodeRunnerDart:
     Description: 'AWS Lambda for executing a Dart code and getting the outputs'
     Value: !GetAtt CodeRunnerDart.Arn

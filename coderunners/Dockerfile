@@ -70,6 +70,11 @@ RUN mkdir -p /var/task/typescript_runner && \
 COPY --parents models.py coderunners/*.py ./
 
 
+FROM base AS go
+RUN dnf install -y golang && dnf clean all && rm -rf /var/cache/dnf
+COPY --parents models.py coderunners/*.py ./
+
+
 FROM base AS dart
 RUN dnf install -y unzip && dnf clean all && rm -rf /var/cache/dnf
 ADD https://storage.googleapis.com/dart-archive/channels/stable/release/3.12.0/sdk/dartsdk-linux-x64-release.zip /tmp/dart-sdk.zip
