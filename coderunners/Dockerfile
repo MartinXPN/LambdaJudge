@@ -162,6 +162,18 @@ RUN mkdir -p /var/task/scala_runner/coursier-cache /tmp/scala_cache_warm && \
 COPY --parents models.py coderunners/*.py ./
 
 
+FROM haskell:9.12.4 AS haskell_toolchain
+
+
+FROM base AS haskell
+RUN dnf install -y gcc gmp gmp-devel libffi libffi-devel make && \
+    dnf clean all && rm -rf /var/cache/dnf
+COPY --from=haskell_toolchain /opt/ghc/9.12.4 /opt/ghc/9.12.4
+ENV PATH="/opt/ghc/9.12.4/bin:${PATH}"
+RUN ghc --version
+COPY --parents models.py coderunners/*.py ./
+
+
 FROM base AS python
 COPY --parents models.py coderunners/*.py ./
 

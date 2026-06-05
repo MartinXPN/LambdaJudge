@@ -8,7 +8,7 @@ Serverless Online Judge for automated solution checking written in Python.
 
 
 LambdaJudge compiles and executes code in several languages and returns the results stating if the code passed given tests or resulted in an error.
-The judge supports several languages including `C++`, `Python3`, `C#`, `JavaScript (Node.js)`, `TypeScript`, `Dart`, `Swift`, `PHP`, `Ruby`, `Lua`, `Rust`, `Zig`, `Kotlin`, `Scala`.
+The judge supports several languages including `C++`, `Python3`, `C#`, `JavaScript (Node.js)`, `TypeScript`, `Dart`, `Swift`, `PHP`, `Ruby`, `Lua`, `Rust`, `Zig`, `Kotlin`, `Scala`, `Haskell`.
 The whole execution happens in an AWS Lambda which does not have internet access (is in a VPC inside a private subnet) and does not have access outside the container.
 All the test cases are encrypted and the executor process does not have the key.
 Therefore, the arbitrary code cannot read the answers for the test cases.

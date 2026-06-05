@@ -60,6 +60,8 @@ class Compiler(ABC):
             return KotlinCompiler()
         if language in ScalaCompiler.supported_standards:
             return ScalaCompiler()
+        if language in HaskellCompiler.supported_standards:
+            return HaskellCompiler()
         if language in JavaCompiler.supported_standards:
             return JavaCompiler()
         if language in SQLiteCompiler.supported_standards:
@@ -462,6 +464,39 @@ class ScalaCompiler(Compiler):
             compile_res.errors = None
         print('Compile res', compile_res)
         return ProcessExecutor(command=f'java -jar {self.jar_path}'), compile_res
+
+
+@dataclass
+class HaskellCompiler(Compiler):
+    supported_standards = {'haskell', 'hs'}
+    build_dir = Path('/tmp/haskell_build')
+    executable_path = build_dir / 'main'
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix == '.hs']
+        root_dir = Path(os.path.commonpath([str(path.parent) for path in source_files]))
+        main_file_path = self.find_main_file_path(source_files, 'Main.hs')
+        if main_file_path == source_files[0]:
+            main_file_path = self.find_main_file_path(source_files, 'main.hs')
+
+        shutil.rmtree(self.build_dir, ignore_errors=True)
+        self.build_dir.mkdir(parents=True, exist_ok=True)
+
+        compiler_options = (
+            '+RTS -V0 -RTS',
+            '-O2',
+            '-optl-fuse-ld=bfd',
+            f'-i{root_dir}',
+            f'-outputdir {self.build_dir}',
+            str(main_file_path),
+            f'-o {self.executable_path}',
+        )
+        compile_cmd = ' '.join(['ghc', *compiler_options])
+        compile_res = Process(compile_cmd, timeout=30, memory_limit_mb=1024).run()
+        if compile_res.status == Status.OK and self.executable_path.exists():
+            compile_res.errors = None
+        print('Compile res', compile_res)
+        return ProcessExecutor(command=str(self.executable_path)), compile_res
 
 
 @dataclass
