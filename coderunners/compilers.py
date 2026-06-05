@@ -42,6 +42,8 @@ class Compiler(ABC):
             return JsCompiler(language_standard=language)
         if language in TsCompiler.supported_standards:
             return TsCompiler(language_standard=language)
+        if language in RubyCompiler.supported_standards:
+            return RubyCompiler()
         if language in RustCompiler.supported_standards:
             return RustCompiler()
         if language in ZigCompiler.supported_standards:
@@ -242,6 +244,23 @@ class TsCompiler(Compiler):
         compile_res = Process(compile_cmd, timeout=15, memory_limit_mb=512).run()
         print('Compile res', compile_res)
         command = f'node {emitted_main_path}'
+        return ProcessExecutor(command=command), compile_res
+
+
+@dataclass
+class RubyCompiler(Compiler):
+    MAIN_FILE_NAME: ClassVar[str] = 'main.rb'
+    supported_standards = {'ruby'}
+    ruby = Path('/usr/bin/ruby3.4')
+
+    def compile(self, submission_paths: list[Path]):
+        source_files = [path for path in submission_paths if path.suffix == '.rb']
+        main_file_path = self.find_main_file_path(source_files, self.MAIN_FILE_NAME)
+
+        compile_cmd = ' && '.join(f'{self.ruby} -c {path}' for path in source_files)
+        compile_res = Process(compile_cmd, timeout=10, memory_limit_mb=512).run()
+        print('Compile res', compile_res)
+        command = f'{self.ruby} {main_file_path}'
         return ProcessExecutor(command=command), compile_res
 
 

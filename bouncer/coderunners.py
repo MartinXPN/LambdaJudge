@@ -32,6 +32,8 @@ class CodeRunner(ABC):
             return JsRunner()
         if language in TsRunner.supported_standards:
             return TsRunner()
+        if language in RubyRunner.supported_standards:
+            return RubyRunner()
         if language in RustRunner.supported_standards:
             return RustRunner()
         if language in ZigRunner.supported_standards:
@@ -120,6 +122,15 @@ class TsRunner(CodeRunner):
     @property
     def name(self) -> str:
         return 'CodeRunnerTs'
+
+
+@dataclass
+class RubyRunner(CodeRunner):
+    supported_standards = {'ruby'}
+
+    @property
+    def name(self) -> str:
+        return 'CodeRunnerRuby'
 
 
 @dataclass
