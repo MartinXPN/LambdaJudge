@@ -204,10 +204,10 @@ class Process:
                 ...
 
         try:
-            self.p.wait(timeout=0.1)
+            self.p.wait(timeout=0.01)
         except subprocess.TimeoutExpired:
             try:
                 self.p.kill()
-                self.p.wait(timeout=0.1)
+                self.p.wait(timeout=0.01)
             except (psutil.NoSuchProcess, subprocess.TimeoutExpired):
                 ...
