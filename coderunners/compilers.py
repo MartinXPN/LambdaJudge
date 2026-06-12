@@ -457,7 +457,7 @@ class RustCompiler(Compiler):
         self.build_dir.mkdir(parents=True, exist_ok=True)
 
         compile_cmd = f'rustc -O --edition=2024 {main_file_path} -o {self.executable_path}'
-        compile_res = Process(compile_cmd, timeout=15, memory_limit_mb=512).run()
+        compile_res = Process(compile_cmd, timeout=60, memory_limit_mb=1024).run()
         print('Compile res', compile_res)
         return ProcessExecutor(command=str(self.executable_path)), compile_res
 
