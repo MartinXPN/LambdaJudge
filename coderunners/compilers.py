@@ -456,7 +456,7 @@ class RustCompiler(Compiler):
         shutil.rmtree(self.build_dir, ignore_errors=True)
         self.build_dir.mkdir(parents=True, exist_ok=True)
 
-        compile_cmd = f'rustc -O --edition=2024 {main_file_path} -o {self.executable_path}'
+        compile_cmd = f'rustc -C opt-level=1 -C embed-bitcode=no --edition=2024 {main_file_path} -o {self.executable_path}'
         compile_res = Process(compile_cmd, timeout=60, memory_limit_mb=1024).run()
         print('Compile res', compile_res)
         return ProcessExecutor(command=str(self.executable_path)), compile_res
